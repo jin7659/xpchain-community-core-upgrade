@@ -20,6 +20,8 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+using namespace boost::placeholders;
+
 #include <memory> // for unique_ptr
 #include <unordered_map>
 
