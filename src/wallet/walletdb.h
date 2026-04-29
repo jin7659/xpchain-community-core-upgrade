@@ -1,10 +1,10 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2018 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_WALLETDB_H
-#define BITCOIN_WALLET_WALLETDB_H
+#ifndef XPCHAIN_WALLET_WALLETDB_H
+#define XPCHAIN_WALLET_WALLETDB_H
 
 #include <amount.h>
 #include <script/standard.h>
@@ -294,4 +294,4 @@ private:
 //! Compacts BDB state so that wallet.dat is self-contained (if there are changes)
 void MaybeCompactWalletDB();
 
-#endif // BITCOIN_WALLET_WALLETDB_H
+#endif // XPCHAIN_WALLET_WALLETDB_H

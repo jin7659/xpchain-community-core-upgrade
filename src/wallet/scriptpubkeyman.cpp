@@ -1,9 +1,9 @@
-// Copyright (c) 2019-2020 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 //
 // XPChain adaptation — uses XPChain's CCryptoKeyStore/CBasicKeyStore hierarchy
-// and txnouttype (not Bitcoin Core v0.21's TxoutType enum class).
+// and txnouttype (not XPChain Core v0.21's TxoutType enum class).
 
 #include <keystore.h>
 #include <key_io.h>
@@ -587,7 +587,7 @@ SigningResult LegacyScriptPubKeyMan::SignMessage(const std::string& message,
     CKey key;
     if (!GetKey(keyid, key)) return SigningResult::PRIVATE_KEY_NOT_AVAILABLE;
 
-    // Simple message signing: prepend the Bitcoin/XPChain message magic prefix
+    // Simple message signing: prepend the XPChain/XPChain message magic prefix
     // (same as CMessageSigner in earlier versions)
     static const std::string MSG_MAGIC = "XPChain Signed Message:\n";
     CHashWriter ss(SER_GETHASH, 0);

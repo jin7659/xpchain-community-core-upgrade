@@ -1,5 +1,5 @@
-#ifndef BITCOIN_GUICONSTANTS_H
-#define BITCOIN_GUICONSTANTS_H
+#ifndef XPCHAIN_GUICONSTANTS_H
+#define XPCHAIN_GUICONSTANTS_H
 
 /* Milliseconds between model updates */
 static const int MODEL_UPDATE_DELAY = 250;
@@ -7,7 +7,7 @@ static const int MODEL_UPDATE_DELAY = 250;
 /* AskPassphraseDialog -- Maximum passphrase length */
 static const int MAX_PASSPHRASE_SIZE = 1024;
 
-/* BitcoinGUI -- Size of icons in status bar */
+/* XPChainGUI -- Size of icons in status bar */
 static const int STATUSBAR_ICONSIZE = 16;
 
 /* Invalid field background style */
@@ -40,4 +40,4 @@ static const int MAX_URI_LENGTH = 255;
 #define COLOR_MINT_MATURE QColor(64, 128, 64)
 #define COLOR_MINT_OLD QColor(26, 77, 26)
 
-#endif // BITCOIN_GUICONSTANTS_H
+#endif // XPCHAIN_GUICONSTANTS_H

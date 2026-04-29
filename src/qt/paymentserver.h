@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_PAYMENTSERVER_H
-#define BITCOIN_QT_PAYMENTSERVER_H
+#ifndef XPCHAIN_QT_PAYMENTSERVER_H
+#define XPCHAIN_QT_PAYMENTSERVER_H
 
 // This class handles payment requests from clicking on
 // xpchain: URIs
@@ -143,4 +143,4 @@ private:
     OptionsModel *optionsModel;
 };
 
-#endif // BITCOIN_QT_PAYMENTSERVER_H
+#endif // XPCHAIN_QT_PAYMENTSERVER_H

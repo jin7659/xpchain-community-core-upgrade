@@ -6,9 +6,9 @@
 // XPChain defines SigningProvider in script/sign.h;
 // scriptpubkeyman.h expects script/signingprovider.h
 
-#ifndef BITCOIN_SCRIPT_SIGNINGPROVIDER_H
-#define BITCOIN_SCRIPT_SIGNINGPROVIDER_H
+#ifndef XPCHAIN_SCRIPT_SIGNINGPROVIDER_H
+#define XPCHAIN_SCRIPT_SIGNINGPROVIDER_H
 
 #include <script/sign.h>
 
-#endif // BITCOIN_SCRIPT_SIGNINGPROVIDER_H
+#endif // XPCHAIN_SCRIPT_SIGNINGPROVIDER_H

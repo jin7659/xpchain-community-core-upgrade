@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_STAKINGREWARDSETTINGPAGE_H
-#define BITCOIN_QT_STAKINGREWARDSETTINGPAGE_H
+#ifndef XPCHAIN_QT_STAKINGREWARDSETTINGPAGE_H
+#define XPCHAIN_QT_STAKINGREWARDSETTINGPAGE_H
 
 #include <QDialog>
 
@@ -74,4 +74,4 @@ Q_SIGNALS:
     void sendCoins(QString addr);
 };
 
-#endif // BITCOIN_QT_SRAKINGREWARDSETTINGPAGE_H
+#endif // XPCHAIN_QT_SRAKINGREWARDSETTINGPAGE_H

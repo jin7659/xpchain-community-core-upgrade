@@ -1,5 +1,5 @@
-#ifndef BITCOIN_QT_MINTINGFILTERPROXY_H
-#define BITCOIN_QT_MINTINGFILTERPROXY_H
+#ifndef XPCHAIN_QT_MINTINGFILTERPROXY_H
+#define XPCHAIN_QT_MINTINGFILTERPROXY_H
 
 #include <QSortFilterProxyModel>
 
@@ -10,4 +10,4 @@ public:
     explicit MintingFilterProxy(QObject *parent = 0);
 };
 
-#endif // BITCOIN_QT_MINTINGFILTERPROXY_H
+#endif // XPCHAIN_QT_MINTINGFILTERPROXY_H

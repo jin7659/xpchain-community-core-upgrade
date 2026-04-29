@@ -1,5 +1,5 @@
-#ifndef BITCOIN_QT_MINTINGVIEW_H
-#define BITCOIN_QT_MINTINGVIEW_H
+#ifndef XPCHAIN_QT_MINTINGVIEW_H
+#define XPCHAIN_QT_MINTINGVIEW_H
 
 #include <qt/guiutil.h>
 
@@ -60,4 +60,4 @@ public Q_SLOTS:
     void chooseMintingInterval(int idx);
 };
 
-#endif // BITCOIN_QT_MINTINGVIEW_H
+#endif // XPCHAIN_QT_MINTINGVIEW_H

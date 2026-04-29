@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_UTIL_BIP32_H
-#define BITCOIN_UTIL_BIP32_H
+#ifndef XPCHAIN_UTIL_BIP32_H
+#define XPCHAIN_UTIL_BIP32_H
 
 #include <cstdint>
 #include <string>
@@ -19,4 +19,4 @@ bool ParseHDKeypath(const std::string& keypath_str, std::vector<uint32_t>& keypa
  */
 std::string FormatHDKeypath(const std::vector<uint32_t>& path);
 
-#endif // BITCOIN_UTIL_BIP32_H
+#endif // XPCHAIN_UTIL_BIP32_H

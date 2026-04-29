@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_WALLETMODEL_H
-#define BITCOIN_QT_WALLETMODEL_H
+#ifndef XPCHAIN_QT_WALLETMODEL_H
+#define XPCHAIN_QT_WALLETMODEL_H
 
 #include <amount.h>
 #include <key.h>
@@ -109,7 +109,7 @@ public:
     }
 };
 
-/** Interface to Bitcoin wallet from Qt view code. */
+/** Interface to XPChain wallet from Qt view code. */
 class WalletModel : public QObject
 {
     Q_OBJECT
@@ -287,4 +287,4 @@ public Q_SLOTS:
     void pollBalanceChanged();
 };
 
-#endif // BITCOIN_QT_WALLETMODEL_H
+#endif // XPCHAIN_QT_WALLETMODEL_H

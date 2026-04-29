@@ -1,6 +1,6 @@
 #include <qt/mintingview.h>
 
-#include <qt/bitcoinunits.h>
+#include <qt/xpchainunits.h>
 #include <qt/guiconstants.h>
 #include <qt/csvmodelwriter.h>
 #include <qt/optionsmodel.h>

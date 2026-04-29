@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016 The Bitcoin Core developers
+# Copyright (c) 2013-2016 The XPChain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -19,42 +19,42 @@ else
 LIBUNIVALUE = $(UNIVALUE_LIBS)
 endif
 
-BITCOIN_INCLUDES=-I$(builddir) $(BDB_CPPFLAGS) $(SQLITE3_CFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
+XPCHAIN_INCLUDES=-I$(builddir) $(BDB_CPPFLAGS) $(SQLITE3_CFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
-BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
-BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
+XPCHAIN_INCLUDES += -I$(srcdir)/secp256k1/include
+XPCHAIN_INCLUDES += $(UNIVALUE_CFLAGS)
 
-LIBBITCOIN_SERVER=libbitcoin_server.a
-LIBBITCOIN_COMMON=libbitcoin_common.a
-LIBBITCOIN_CONSENSUS=libbitcoin_consensus.a
-LIBBITCOIN_CLI=libbitcoin_cli.a
-LIBBITCOIN_UTIL=libbitcoin_util.a
-LIBBITCOIN_CRYPTO_BASE=crypto/libbitcoin_crypto_base.a
-LIBBITCOINQT=qt/libbitcoinqt.a
+LIBXPCHAIN_SERVER=libxpchain_server.a
+LIBXPCHAIN_COMMON=libxpchain_common.a
+LIBXPCHAIN_CONSENSUS=libxpchain_consensus.a
+LIBXPCHAIN_CLI=libxpchain_cli.a
+LIBXPCHAIN_UTIL=libxpchain_util.a
+LIBXPCHAIN_CRYPTO_BASE=crypto/libxpchain_crypto_base.a
+LIBXPCHAIN_QT=qt/libxpchainqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 
 if ENABLE_ZMQ
-LIBBITCOIN_ZMQ=libbitcoin_zmq.a
+LIBXPCHAIN_ZMQ=libxpchain_zmq.a
 endif
-if BUILD_BITCOIN_LIBS
+if BUILD_XPCHAIN_LIBS
 LIBXPCHAINCONSENSUS=libxpchainconsensus.la
 endif
 if ENABLE_WALLET
-LIBBITCOIN_WALLET=libbitcoin_wallet.a
+LIBXPCHAIN_WALLET=libxpchain_wallet.a
 endif
 
-LIBBITCOIN_CRYPTO= $(LIBBITCOIN_CRYPTO_BASE)
+LIBXPCHAIN_CRYPTO= $(LIBXPCHAIN_CRYPTO_BASE)
 if ENABLE_SSE41
-LIBBITCOIN_CRYPTO_SSE41 = crypto/libbitcoin_crypto_sse41.a
-LIBBITCOIN_CRYPTO += $(LIBBITCOIN_CRYPTO_SSE41)
+LIBXPCHAIN_CRYPTO_SSE41 = crypto/libxpchain_crypto_sse41.a
+LIBXPCHAIN_CRYPTO += $(LIBXPCHAIN_CRYPTO_SSE41)
 endif
 if ENABLE_AVX2
-LIBBITCOIN_CRYPTO_AVX2 = crypto/libbitcoin_crypto_avx2.a
-LIBBITCOIN_CRYPTO += $(LIBBITCOIN_CRYPTO_AVX2)
+LIBXPCHAIN_CRYPTO_AVX2 = crypto/libxpchain_crypto_avx2.a
+LIBXPCHAIN_CRYPTO += $(LIBXPCHAIN_CRYPTO_AVX2)
 endif
 if ENABLE_SHANI
-LIBBITCOIN_CRYPTO_SHANI = crypto/libbitcoin_crypto_shani.a
-LIBBITCOIN_CRYPTO += $(LIBBITCOIN_CRYPTO_SHANI)
+LIBXPCHAIN_CRYPTO_SHANI = crypto/libxpchain_crypto_shani.a
+LIBXPCHAIN_CRYPTO += $(LIBXPCHAIN_CRYPTO_SHANI)
 endif
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*.h) $(wildcard secp256k1/src/*.c) $(wildcard secp256k1/include/*)
@@ -63,14 +63,14 @@ $(LIBSECP256K1): $(wildcard secp256k1/src/*.h) $(wildcard secp256k1/src/*.c) $(w
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
 EXTRA_LIBRARIES += \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_CLI) \
-  $(LIBBITCOIN_WALLET) \
-  $(LIBBITCOIN_ZMQ)
+  $(LIBXPCHAIN_CRYPTO) \
+  $(LIBXPCHAIN_UTIL) \
+  $(LIBXPCHAIN_COMMON) \
+  $(LIBXPCHAIN_CONSENSUS) \
+  $(LIBXPCHAIN_SERVER) \
+  $(LIBXPCHAIN_CLI) \
+  $(LIBXPCHAIN_WALLET) \
+  $(LIBXPCHAIN_ZMQ)
 
 lib_LTLIBRARIES = $(LIBXPCHAINCONSENSUS)
 
@@ -83,13 +83,13 @@ if BUILD_XPCHAIND
   bin_PROGRAMS += xpchaind
 endif
 
-if BUILD_BITCOIN_UTILS
+if BUILD_XPCHAIN_UTILS
   bin_PROGRAMS += xpchain-cli xpchain-tx
 endif
 
 .PHONY: FORCE check-symbols check-security
-# bitcoin core #
-BITCOIN_CORE_H = \
+# xpchain core #
+XPCHAIN_CORE_H = \
   addrdb.h \
   addrman.h \
   base58.h \
@@ -220,12 +220,12 @@ obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh "$(abs_top_builddir)/src/obj/build.h" \
 	  "$(abs_top_srcdir)"
-libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
+libxpchain_util_a-clientversion.$(OBJEXT): obj/build.h
 
 # server: shared between xpchaind and xpchain-qt
-libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
-libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_server_a_SOURCES = \
+libxpchain_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
+libxpchain_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libxpchain_server_a_SOURCES = \
   addrdb.cpp \
   addrman.cpp \
   bloom.cpp \
@@ -269,12 +269,12 @@ libbitcoin_server_a_SOURCES = \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
-  $(BITCOIN_CORE_H)
+  $(XPCHAIN_CORE_H)
 
 if ENABLE_ZMQ
-libbitcoin_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
-libbitcoin_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_zmq_a_SOURCES = \
+libxpchain_zmq_a_CPPFLAGS = $(XPCHAIN_INCLUDES) $(ZMQ_CFLAGS)
+libxpchain_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libxpchain_zmq_a_SOURCES = \
   zmq/zmqabstractnotifier.cpp \
   zmq/zmqnotificationinterface.cpp \
   zmq/zmqpublishnotifier.cpp \
@@ -284,9 +284,9 @@ endif
 
 # wallet: shared between xpchaind and xpchain-qt, but only linked
 # when wallet enabled
-libbitcoin_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(SQLITE3_CFLAGS)
-libbitcoin_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_wallet_a_SOURCES = \
+libxpchain_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES) $(SQLITE3_CFLAGS)
+libxpchain_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libxpchain_wallet_a_SOURCES = \
   interfaces/wallet.cpp \
   wallet/coincontrol.cpp \
   wallet/crypter.cpp \
@@ -303,14 +303,14 @@ libbitcoin_wallet_a_SOURCES = \
   wallet/coinselection.cpp \
   wallet/rpcdescriptor.cpp
 if USE_SQLITE
-libbitcoin_wallet_a_SOURCES += wallet/sqlite.cpp
+libxpchain_wallet_a_SOURCES += wallet/sqlite.cpp
 endif
-libbitcoin_wallet_a_SOURCES += $(BITCOIN_CORE_H)
+libxpchain_wallet_a_SOURCES += $(XPCHAIN_CORE_H)
 
 # crypto primitives library
-crypto_libbitcoin_crypto_base_a_CPPFLAGS = $(AM_CPPFLAGS)
-crypto_libbitcoin_crypto_base_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libbitcoin_crypto_base_a_SOURCES = \
+crypto_libxpchain_crypto_base_a_CPPFLAGS = $(AM_CPPFLAGS)
+crypto_libxpchain_crypto_base_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+crypto_libxpchain_crypto_base_a_SOURCES = \
   crypto/aes.cpp \
   crypto/aes.h \
   crypto/chacha20.h \
@@ -330,31 +330,31 @@ crypto_libbitcoin_crypto_base_a_SOURCES = \
   crypto/sha512.h
 
 if USE_ASM
-crypto_libbitcoin_crypto_base_a_SOURCES += crypto/sha256_sse4.cpp
+crypto_libxpchain_crypto_base_a_SOURCES += crypto/sha256_sse4.cpp
 endif
 
-crypto_libbitcoin_crypto_sse41_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libbitcoin_crypto_sse41_a_CPPFLAGS = $(AM_CPPFLAGS)
-crypto_libbitcoin_crypto_sse41_a_CXXFLAGS += $(SSE41_CXXFLAGS)
-crypto_libbitcoin_crypto_sse41_a_CPPFLAGS += -DENABLE_SSE41
-crypto_libbitcoin_crypto_sse41_a_SOURCES = crypto/sha256_sse41.cpp
+crypto_libxpchain_crypto_sse41_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+crypto_libxpchain_crypto_sse41_a_CPPFLAGS = $(AM_CPPFLAGS)
+crypto_libxpchain_crypto_sse41_a_CXXFLAGS += $(SSE41_CXXFLAGS)
+crypto_libxpchain_crypto_sse41_a_CPPFLAGS += -DENABLE_SSE41
+crypto_libxpchain_crypto_sse41_a_SOURCES = crypto/sha256_sse41.cpp
 
-crypto_libbitcoin_crypto_avx2_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libbitcoin_crypto_avx2_a_CPPFLAGS = $(AM_CPPFLAGS)
-crypto_libbitcoin_crypto_avx2_a_CXXFLAGS += $(AVX2_CXXFLAGS)
-crypto_libbitcoin_crypto_avx2_a_CPPFLAGS += -DENABLE_AVX2
-crypto_libbitcoin_crypto_avx2_a_SOURCES = crypto/sha256_avx2.cpp
+crypto_libxpchain_crypto_avx2_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+crypto_libxpchain_crypto_avx2_a_CPPFLAGS = $(AM_CPPFLAGS)
+crypto_libxpchain_crypto_avx2_a_CXXFLAGS += $(AVX2_CXXFLAGS)
+crypto_libxpchain_crypto_avx2_a_CPPFLAGS += -DENABLE_AVX2
+crypto_libxpchain_crypto_avx2_a_SOURCES = crypto/sha256_avx2.cpp
 
-crypto_libbitcoin_crypto_shani_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libbitcoin_crypto_shani_a_CPPFLAGS = $(AM_CPPFLAGS)
-crypto_libbitcoin_crypto_shani_a_CXXFLAGS += $(SHANI_CXXFLAGS)
-crypto_libbitcoin_crypto_shani_a_CPPFLAGS += -DENABLE_SHANI
-crypto_libbitcoin_crypto_shani_a_SOURCES = crypto/sha256_shani.cpp
+crypto_libxpchain_crypto_shani_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+crypto_libxpchain_crypto_shani_a_CPPFLAGS = $(AM_CPPFLAGS)
+crypto_libxpchain_crypto_shani_a_CXXFLAGS += $(SHANI_CXXFLAGS)
+crypto_libxpchain_crypto_shani_a_CPPFLAGS += -DENABLE_SHANI
+crypto_libxpchain_crypto_shani_a_SOURCES = crypto/sha256_shani.cpp
 
 # consensus: shared between all executables that validate any consensus rules.
-libbitcoin_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_consensus_a_SOURCES = \
+libxpchain_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES)
+libxpchain_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libxpchain_consensus_a_SOURCES = \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
@@ -371,7 +371,7 @@ libbitcoin_consensus_a_SOURCES = \
   primitives/transaction.h \
   pubkey.cpp \
   pubkey.h \
-  script/bitcoinconsensus.cpp \
+  script/xpchainconsensus.cpp \
   script/interpreter.cpp \
   script/interpreter.h \
   script/script.cpp \
@@ -388,9 +388,9 @@ libbitcoin_consensus_a_SOURCES = \
   version.h
 
 # common: shared between xpchaind, and xpchain-qt and non-server tools
-libbitcoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_common_a_SOURCES = \
+libxpchain_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES)
+libxpchain_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libxpchain_common_a_SOURCES = \
   base58.cpp \
   bech32.cpp \
   chainparams.cpp \
@@ -413,14 +413,14 @@ libbitcoin_common_a_SOURCES = \
   script/standard.cpp \
   util/bip32.cpp \
   warnings.cpp \
-  $(BITCOIN_CORE_H)
+  $(XPCHAIN_CORE_H)
 
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
 # backward-compatibility objects and their sanity checks are linked.
-libbitcoin_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_util_a_SOURCES = \
+libxpchain_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES)
+libxpchain_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libxpchain_util_a_SOURCES = \
   support/lockedpool.cpp \
   chainparamsbase.cpp \
   clientversion.cpp \
@@ -440,26 +440,26 @@ libbitcoin_util_a_SOURCES = \
   utilmoneystr.cpp \
   utilstrencodings.cpp \
   utiltime.cpp \
-  $(BITCOIN_CORE_H)
+  $(XPCHAIN_CORE_H)
 
 if GLIBC_BACK_COMPAT
-libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
+libxpchain_util_a_SOURCES += compat/glibc_compat.cpp
 AM_LDFLAGS += $(COMPAT_LDFLAGS)
 endif
 
 # cli: shared between xpchain-cli and xpchain-qt
-libbitcoin_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_cli_a_SOURCES = \
+libxpchain_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES)
+libxpchain_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libxpchain_cli_a_SOURCES = \
   rpc/client.cpp \
-  $(BITCOIN_CORE_H)
+  $(XPCHAIN_CORE_H)
 
-nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
+nodist_libxpchain_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
 # xpchaind binary #
 xpchaind_SOURCES = xpchaind.cpp
-xpchaind_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+xpchaind_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES)
 xpchaind_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xpchaind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
@@ -468,14 +468,14 @@ xpchaind_SOURCES += xpchaind-res.rc
 endif
 
 xpchaind_LDADD = \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_WALLET) \
-  $(LIBBITCOIN_COMMON) \
+  $(LIBXPCHAIN_SERVER) \
+  $(LIBXPCHAIN_WALLET) \
+  $(LIBXPCHAIN_COMMON) \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_ZMQ) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
+  $(LIBXPCHAIN_UTIL) \
+  $(LIBXPCHAIN_ZMQ) \
+  $(LIBXPCHAIN_CONSENSUS) \
+  $(LIBXPCHAIN_CRYPTO) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \
@@ -485,7 +485,7 @@ xpchaind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SQLITE3_LIBS) $(SSL_LIBS) $(CRYPTO
 
 # xpchain-cli binary #
 xpchain_cli_SOURCES = xpchain-cli.cpp
-xpchain_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
+xpchain_cli_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES) $(EVENT_CFLAGS)
 xpchain_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xpchain_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
@@ -494,17 +494,17 @@ xpchain_cli_SOURCES += xpchain-cli-res.rc
 endif
 
 xpchain_cli_LDADD = \
-  $(LIBBITCOIN_CLI) \
+  $(LIBXPCHAIN_CLI) \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CRYPTO)
+  $(LIBXPCHAIN_UTIL) \
+  $(LIBXPCHAIN_CRYPTO)
 
 xpchain_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
 # xpchain-tx binary #
 xpchain_tx_SOURCES = xpchain-tx.cpp
-xpchain_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+xpchain_tx_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES)
 xpchain_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xpchain_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
@@ -514,19 +514,19 @@ endif
 
 xpchain_tx_LDADD = \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
+  $(LIBXPCHAIN_COMMON) \
+  $(LIBXPCHAIN_UTIL) \
+  $(LIBXPCHAIN_CONSENSUS) \
+  $(LIBXPCHAIN_CRYPTO) \
   $(LIBSECP256K1)
 
 xpchain_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
-# bitcoinconsensus library #
-if BUILD_BITCOIN_LIBS
-include_HEADERS = script/bitcoinconsensus.h
-libxpchainconsensus_la_SOURCES = $(crypto_libbitcoin_crypto_base_a_SOURCES) $(libbitcoin_consensus_a_SOURCES)
+# xpchainconsensus library #
+if BUILD_XPCHAIN_LIBS
+include_HEADERS = script/xpchainconsensus.h
+libxpchainconsensus_la_SOURCES = $(crypto_libxpchain_crypto_base_a_SOURCES) $(libxpchain_consensus_a_SOURCES)
 
 if GLIBC_BACK_COMPAT
   libxpchainconsensus_la_SOURCES += compat/glibc_compat.cpp
@@ -534,7 +534,7 @@ endif
 
 libxpchainconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
 libxpchainconsensus_la_LIBADD = $(LIBSECP256K1)
-libxpchainconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
+libxpchainconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_XPCHAIN_INTERNAL
 libxpchainconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
 endif
@@ -565,12 +565,12 @@ CLEANFILES += obj/build.h
 EXTRA_DIST = $(CTAES_DIST)
 
 
-config/bitcoin-config.h: config/stamp-h1
+config/xpchain-config.h: config/stamp-h1
 	@$(MAKE) -C $(top_builddir) $(subdir)/$(@)
-config/stamp-h1: $(top_srcdir)/$(subdir)/config/bitcoin-config.h.in $(top_builddir)/config.status
+config/stamp-h1: $(top_srcdir)/$(subdir)/config/xpchain-config.h.in $(top_builddir)/config.status
 	$(AM_V_at)$(MAKE) -C $(top_builddir) $(subdir)/$(@)
-$(top_srcdir)/$(subdir)/config/bitcoin-config.h.in:  $(am__configure_deps)
-	$(AM_V_at)$(MAKE) -C $(top_srcdir) $(subdir)/config/bitcoin-config.h.in
+$(top_srcdir)/$(subdir)/config/xpchain-config.h.in:  $(am__configure_deps)
+	$(AM_V_at)$(MAKE) -C $(top_srcdir) $(subdir)/config/xpchain-config.h.in
 
 clean-local:
 	-$(MAKE) -C secp256k1 clean

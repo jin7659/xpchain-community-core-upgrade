@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_DESCRIPTOR_H
-#define BITCOIN_SCRIPT_DESCRIPTOR_H
+#ifndef XPCHAIN_SCRIPT_DESCRIPTOR_H
+#define XPCHAIN_SCRIPT_DESCRIPTOR_H
 
 #include <script/script.h>
 #include <script/sign.h>
@@ -104,5 +104,5 @@ std::unique_ptr<Descriptor> Parse(const std::string& descriptor, FlatSigningProv
 /** 데스크립터의 체크섬을 계산합니다. (BIP 173 style) */
 std::string GetDescriptorChecksum(const std::string& descriptor);
 
-#endif // BITCOIN_SCRIPT_DESCRIPTOR_H
+#endif // XPCHAIN_SCRIPT_DESCRIPTOR_H
 

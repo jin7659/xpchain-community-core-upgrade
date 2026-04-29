@@ -1,13 +1,13 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2018 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_VALIDATION_H
-#define BITCOIN_VALIDATION_H
+#ifndef XPCHAIN_VALIDATION_H
+#define XPCHAIN_VALIDATION_H
 
 #if defined(HAVE_CONFIG_H)
-#include <config/bitcoin-config.h>
+#include <config/xpchain-config.h>
 #endif
 
 #include <amount.h>
@@ -510,4 +510,4 @@ bool IsPoSHeight(int n, const Consensus::Params& params);
 uint256 GetRewardHash(const std::vector<std::pair<CScript, CAmount>>& vReward,CTransactionRef txCoinStake, uint32_t nTime);
 bool VerifyCoinBaseTx(const CBlock& block, CValidationState& state);
 
-#endif // BITCOIN_VALIDATION_H
+#endif // XPCHAIN_VALIDATION_H

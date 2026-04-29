@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2022 The Bitcoin Core developers
+// Copyright (c) 2020-2022 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_SQLITE_H
-#define BITCOIN_WALLET_SQLITE_H
+#ifndef XPCHAIN_WALLET_SQLITE_H
+#define XPCHAIN_WALLET_SQLITE_H
 
 #include <wallet/db.h>
 
@@ -94,4 +94,4 @@ public:
     int Read(CDataStream& ssKey, CDataStream& ssValue) override;
 };
 
-#endif // BITCOIN_WALLET_SQLITE_H
+#endif // XPCHAIN_WALLET_SQLITE_H

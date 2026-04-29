@@ -1,13 +1,13 @@
-// Copyright (c) 2019-2020 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 //
-// XPChain adaptation of Bitcoin Core's ScriptPubKeyMan framework.
+// XPChain adaptation of XPChain Core's ScriptPubKeyMan framework.
 // Adapted by Antigravity to be compatible with XPChain's keystore hierarchy
 // (CBasicKeyStore / CCryptoKeyStore) and script type system (txnouttype).
 
-#ifndef BITCOIN_WALLET_SCRIPTPUBKEYMAN_H
-#define BITCOIN_WALLET_SCRIPTPUBKEYMAN_H
+#ifndef XPCHAIN_WALLET_SCRIPTPUBKEYMAN_H
+#define XPCHAIN_WALLET_SCRIPTPUBKEYMAN_H
 
 #include <coins.h>
 #include <keystore.h>
@@ -348,7 +348,7 @@ public:
 
 /**
  * DescriptorScriptPubKeyMan manages scripts/keys via descriptors (BIP380+).
- * This is the modern standard for wallets in Bitcoin Core v27.0+.
+ * This is the modern standard for wallets in XPChain Core v27.0+.
  */
 class DescriptorScriptPubKeyMan : public ScriptPubKeyMan, public SigningProvider
 {
@@ -399,4 +399,4 @@ public:
     const DescriptorCache& GetDescriptorCache(const uint256& id) const;
 };
 
-#endif // BITCOIN_WALLET_SCRIPTPUBKEYMAN_H
+#endif // XPCHAIN_WALLET_SCRIPTPUBKEYMAN_H

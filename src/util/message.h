@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_UTIL_MESSAGE_H
-#define BITCOIN_UTIL_MESSAGE_H
+#ifndef XPCHAIN_UTIL_MESSAGE_H
+#define XPCHAIN_UTIL_MESSAGE_H
 
 #include <string>
 
@@ -35,4 +35,4 @@ MessageVerificationResult MessageVerify(
 /** Prefix that is prepended to a message before it is signed. */
 extern const std::string MESSAGE_MAGIC;
 
-#endif // BITCOIN_UTIL_MESSAGE_H
+#endif // XPCHAIN_UTIL_MESSAGE_H

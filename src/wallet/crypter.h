@@ -1,9 +1,9 @@
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2018 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_CRYPTER_H
-#define BITCOIN_WALLET_CRYPTER_H
+#ifndef XPCHAIN_WALLET_CRYPTER_H
+#define XPCHAIN_WALLET_CRYPTER_H
 
 #include <keystore.h>
 #include <serialize.h>
@@ -176,4 +176,4 @@ bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned
 bool DecryptKey(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCryptedSecret,
                 const CPubKey& vchPubKey, CKey& key);
 
-#endif // BITCOIN_WALLET_CRYPTER_H
+#endif // XPCHAIN_WALLET_CRYPTER_H

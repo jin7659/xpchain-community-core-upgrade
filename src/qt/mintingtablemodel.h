@@ -1,7 +1,7 @@
-#ifndef BITCOIN_QT_MINTINGTABLEMODEL_H
-#define BITCOIN_QT_MINTINGTABLEMODEL_H
+#ifndef XPCHAIN_QT_MINTINGTABLEMODEL_H
+#define XPCHAIN_QT_MINTINGTABLEMODEL_H
 
-#include <qt/bitcoinunits.h>
+#include <qt/xpchainunits.h>
 
 #include <QAbstractTableModel>
 #include <QStringList>
@@ -76,4 +76,4 @@ public Q_SLOTS:
     friend class MintingTablePriv;
 };
 
-#endif // BITCOIN_QT_MINTINGTABLEMODEL_H
+#endif // XPCHAIN_QT_MINTINGTABLEMODEL_H

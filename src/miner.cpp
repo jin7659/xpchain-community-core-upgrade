@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2009-2018 The XPChain Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -666,7 +666,7 @@ static bool GetPrevBlockIndex(const COutput& coin, CBlockIndex** pIndex)
     return true;
 }
 
-void BitcoinMinter(const std::shared_ptr<CWallet>& wallet)
+void XPChainMinter(const std::shared_ptr<CWallet>& wallet)
 {
     LogPrintf("CPUMiner started for proof-of-stake\n");
     RenameThread("xpchain-stake-minter");
@@ -780,7 +780,7 @@ void static ThreadStakeMinter(const std::shared_ptr<CWallet>& wallet)
     while(true){
         try
         {
-            BitcoinMinter(wallet);
+            XPChainMinter(wallet);
             LogPrintf("ThreadStakeMinter exiting\n");
             return; // correct exiting
         }

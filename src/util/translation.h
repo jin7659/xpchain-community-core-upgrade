@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_UTIL_TRANSLATION_H
-#define BITCOIN_UTIL_TRANSLATION_H
+#ifndef XPCHAIN_UTIL_TRANSLATION_H
+#define XPCHAIN_UTIL_TRANSLATION_H
 
 #include <util/error.h>
 
@@ -24,4 +24,4 @@ inline bilingual_str _(const std::string& str)
     return bilingual_str{str, str};
 }
 
-#endif // BITCOIN_UTIL_TRANSLATION_H
+#endif // XPCHAIN_UTIL_TRANSLATION_H

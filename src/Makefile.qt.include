@@ -1,98 +1,98 @@
-# Copyright (c) 2013-2016 The Bitcoin Core developers
+# Copyright (c) 2013-2016 The XPChain Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 bin_PROGRAMS += qt/xpchain-qt
-EXTRA_LIBRARIES += qt/libbitcoinqt.a
+EXTRA_LIBRARIES += qt/libxpchainqt.a
 
-# bitcoin qt core #
+# xpchain qt core #
 QT_TS = \
-  qt/locale/bitcoin_af.ts \
-  qt/locale/bitcoin_af_ZA.ts \
-  qt/locale/bitcoin_ar.ts \
-  qt/locale/bitcoin_be_BY.ts \
-  qt/locale/bitcoin_bg_BG.ts \
-  qt/locale/bitcoin_bg.ts \
-  qt/locale/bitcoin_ca_ES.ts \
-  qt/locale/bitcoin_ca.ts \
-  qt/locale/bitcoin_ca@valencia.ts \
-  qt/locale/bitcoin_cs.ts \
-  qt/locale/bitcoin_cy.ts \
-  qt/locale/bitcoin_da.ts \
-  qt/locale/bitcoin_de.ts \
-  qt/locale/bitcoin_el_GR.ts \
-  qt/locale/bitcoin_el.ts \
-  qt/locale/bitcoin_en_GB.ts \
-  qt/locale/bitcoin_en.ts \
-  qt/locale/bitcoin_eo.ts \
-  qt/locale/bitcoin_es_AR.ts \
-  qt/locale/bitcoin_es_CL.ts \
-  qt/locale/bitcoin_es_CO.ts \
-  qt/locale/bitcoin_es_DO.ts \
-  qt/locale/bitcoin_es_ES.ts \
-  qt/locale/bitcoin_es_MX.ts \
-  qt/locale/bitcoin_es.ts \
-  qt/locale/bitcoin_es_UY.ts \
-  qt/locale/bitcoin_es_VE.ts \
-  qt/locale/bitcoin_et_EE.ts \
-  qt/locale/bitcoin_et.ts \
-  qt/locale/bitcoin_eu_ES.ts \
-  qt/locale/bitcoin_fa_IR.ts \
-  qt/locale/bitcoin_fa.ts \
-  qt/locale/bitcoin_fi.ts \
-  qt/locale/bitcoin_fr_CA.ts \
-  qt/locale/bitcoin_fr_FR.ts \
-  qt/locale/bitcoin_fr.ts \
-  qt/locale/bitcoin_gl.ts \
-  qt/locale/bitcoin_he.ts \
-  qt/locale/bitcoin_hi_IN.ts \
-  qt/locale/bitcoin_hr.ts \
-  qt/locale/bitcoin_hu.ts \
-  qt/locale/bitcoin_id_ID.ts \
-  qt/locale/bitcoin_it_IT.ts \
-  qt/locale/bitcoin_it.ts \
-  qt/locale/bitcoin_ja.ts \
-  qt/locale/bitcoin_ka.ts \
-  qt/locale/bitcoin_kk_KZ.ts \
-  qt/locale/bitcoin_ko_KR.ts \
-  qt/locale/bitcoin_ku_IQ.ts \
-  qt/locale/bitcoin_ky.ts \
-  qt/locale/bitcoin_la.ts \
-  qt/locale/bitcoin_lt.ts \
-  qt/locale/bitcoin_lv_LV.ts \
-  qt/locale/bitcoin_mk_MK.ts \
-  qt/locale/bitcoin_mn.ts \
-  qt/locale/bitcoin_ms_MY.ts \
-  qt/locale/bitcoin_nb.ts \
-  qt/locale/bitcoin_ne.ts \
-  qt/locale/bitcoin_nl.ts \
-  qt/locale/bitcoin_pam.ts \
-  qt/locale/bitcoin_pl.ts \
-  qt/locale/bitcoin_pt_BR.ts \
-  qt/locale/bitcoin_pt_PT.ts \
-  qt/locale/bitcoin_ro_RO.ts \
-  qt/locale/bitcoin_ro.ts \
-  qt/locale/bitcoin_ru_RU.ts \
-  qt/locale/bitcoin_ru.ts \
-  qt/locale/bitcoin_sk.ts \
-  qt/locale/bitcoin_sl_SI.ts \
-  qt/locale/bitcoin_sq.ts \
-  qt/locale/bitcoin_sr@latin.ts \
-  qt/locale/bitcoin_sr.ts \
-  qt/locale/bitcoin_sv.ts \
-  qt/locale/bitcoin_ta.ts \
-  qt/locale/bitcoin_th_TH.ts \
-  qt/locale/bitcoin_tr_TR.ts \
-  qt/locale/bitcoin_tr.ts \
-  qt/locale/bitcoin_uk.ts \
-  qt/locale/bitcoin_ur_PK.ts \
-  qt/locale/bitcoin_uz@Cyrl.ts \
-  qt/locale/bitcoin_vi.ts \
-  qt/locale/bitcoin_vi_VN.ts \
-  qt/locale/bitcoin_zh_CN.ts \
-  qt/locale/bitcoin_zh_HK.ts \
-  qt/locale/bitcoin_zh.ts \
-  qt/locale/bitcoin_zh_TW.ts
+  qt/locale/xpchain_af.ts \
+  qt/locale/xpchain_af_ZA.ts \
+  qt/locale/xpchain_ar.ts \
+  qt/locale/xpchain_be_BY.ts \
+  qt/locale/xpchain_bg_BG.ts \
+  qt/locale/xpchain_bg.ts \
+  qt/locale/xpchain_ca_ES.ts \
+  qt/locale/xpchain_ca.ts \
+  qt/locale/xpchain_ca@valencia.ts \
+  qt/locale/xpchain_cs.ts \
+  qt/locale/xpchain_cy.ts \
+  qt/locale/xpchain_da.ts \
+  qt/locale/xpchain_de.ts \
+  qt/locale/xpchain_el_GR.ts \
+  qt/locale/xpchain_el.ts \
+  qt/locale/xpchain_en_GB.ts \
+  qt/locale/xpchain_en.ts \
+  qt/locale/xpchain_eo.ts \
+  qt/locale/xpchain_es_AR.ts \
+  qt/locale/xpchain_es_CL.ts \
+  qt/locale/xpchain_es_CO.ts \
+  qt/locale/xpchain_es_DO.ts \
+  qt/locale/xpchain_es_ES.ts \
+  qt/locale/xpchain_es_MX.ts \
+  qt/locale/xpchain_es.ts \
+  qt/locale/xpchain_es_UY.ts \
+  qt/locale/xpchain_es_VE.ts \
+  qt/locale/xpchain_et_EE.ts \
+  qt/locale/xpchain_et.ts \
+  qt/locale/xpchain_eu_ES.ts \
+  qt/locale/xpchain_fa_IR.ts \
+  qt/locale/xpchain_fa.ts \
+  qt/locale/xpchain_fi.ts \
+  qt/locale/xpchain_fr_CA.ts \
+  qt/locale/xpchain_fr_FR.ts \
+  qt/locale/xpchain_fr.ts \
+  qt/locale/xpchain_gl.ts \
+  qt/locale/xpchain_he.ts \
+  qt/locale/xpchain_hi_IN.ts \
+  qt/locale/xpchain_hr.ts \
+  qt/locale/xpchain_hu.ts \
+  qt/locale/xpchain_id_ID.ts \
+  qt/locale/xpchain_it_IT.ts \
+  qt/locale/xpchain_it.ts \
+  qt/locale/xpchain_ja.ts \
+  qt/locale/xpchain_ka.ts \
+  qt/locale/xpchain_kk_KZ.ts \
+  qt/locale/xpchain_ko_KR.ts \
+  qt/locale/xpchain_ku_IQ.ts \
+  qt/locale/xpchain_ky.ts \
+  qt/locale/xpchain_la.ts \
+  qt/locale/xpchain_lt.ts \
+  qt/locale/xpchain_lv_LV.ts \
+  qt/locale/xpchain_mk_MK.ts \
+  qt/locale/xpchain_mn.ts \
+  qt/locale/xpchain_ms_MY.ts \
+  qt/locale/xpchain_nb.ts \
+  qt/locale/xpchain_ne.ts \
+  qt/locale/xpchain_nl.ts \
+  qt/locale/xpchain_pam.ts \
+  qt/locale/xpchain_pl.ts \
+  qt/locale/xpchain_pt_BR.ts \
+  qt/locale/xpchain_pt_PT.ts \
+  qt/locale/xpchain_ro_RO.ts \
+  qt/locale/xpchain_ro.ts \
+  qt/locale/xpchain_ru_RU.ts \
+  qt/locale/xpchain_ru.ts \
+  qt/locale/xpchain_sk.ts \
+  qt/locale/xpchain_sl_SI.ts \
+  qt/locale/xpchain_sq.ts \
+  qt/locale/xpchain_sr@latin.ts \
+  qt/locale/xpchain_sr.ts \
+  qt/locale/xpchain_sv.ts \
+  qt/locale/xpchain_ta.ts \
+  qt/locale/xpchain_th_TH.ts \
+  qt/locale/xpchain_tr_TR.ts \
+  qt/locale/xpchain_tr.ts \
+  qt/locale/xpchain_uk.ts \
+  qt/locale/xpchain_ur_PK.ts \
+  qt/locale/xpchain_uz@Cyrl.ts \
+  qt/locale/xpchain_vi.ts \
+  qt/locale/xpchain_vi_VN.ts \
+  qt/locale/xpchain_zh_CN.ts \
+  qt/locale/xpchain_zh_HK.ts \
+  qt/locale/xpchain_zh.ts \
+  qt/locale/xpchain_zh_TW.ts
 
 QT_FORMS_UI = \
   qt/forms/addressbookpage.ui \
@@ -122,10 +122,10 @@ QT_MOC_CPP = \
   qt/moc_askpassphrasedialog.cpp \
   qt/moc_createwalletdialog.cpp \
   qt/moc_bantablemodel.cpp \
-  qt/moc_bitcoinaddressvalidator.cpp \
-  qt/moc_bitcoinamountfield.cpp \
-  qt/moc_bitcoingui.cpp \
-  qt/moc_bitcoinunits.cpp \
+  qt/moc_xpchainaddressvalidator.cpp \
+  qt/moc_xpchainamountfield.cpp \
+  qt/moc_xpchaingui.cpp \
+  qt/moc_xpchainunits.cpp \
   qt/moc_callback.cpp \
   qt/moc_clientmodel.cpp \
   qt/moc_coincontroldialog.cpp \
@@ -172,37 +172,37 @@ QT_MOC_CPP = \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp
 
-BITCOIN_MM = \
+XPCHAIN_MM = \
   qt/macdockiconhandler.mm \
   qt/macnotificationhandler.mm
 
 QT_MOC = \
-  qt/bitcoin.moc \
-  qt/bitcoinamountfield.moc \
+  qt/xpchain.moc \
+  qt/xpchainamountfield.moc \
   qt/callback.moc \
   qt/intro.moc \
   qt/overviewpage.moc \
   qt/rpcconsole.moc
 
-QT_QRC_CPP = qt/qrc_bitcoin.cpp
-QT_QRC = qt/bitcoin.qrc
-QT_QRC_LOCALE_CPP = qt/qrc_bitcoin_locale.cpp
-QT_QRC_LOCALE = qt/bitcoin_locale.qrc
+QT_QRC_CPP = qt/qrc_xpchain.cpp
+QT_QRC = qt/xpchain.qrc
+QT_QRC_LOCALE_CPP = qt/qrc_xpchain_locale.cpp
+QT_QRC_LOCALE = qt/xpchain_locale.qrc
 
 PROTOBUF_CC = qt/paymentrequest.pb.cc
 PROTOBUF_H = qt/paymentrequest.pb.h
 PROTOBUF_PROTO = qt/paymentrequest.proto
 
-BITCOIN_QT_H = \
+XPCHAIN_QT_H = \
   qt/addressbookpage.h \
   qt/addresstablemodel.h \
   qt/askpassphrasedialog.h \
   qt/createwalletdialog.h \
   qt/bantablemodel.h \
-  qt/bitcoinaddressvalidator.h \
-  qt/bitcoinamountfield.h \
-  qt/bitcoingui.h \
-  qt/bitcoinunits.h \
+  qt/xpchainaddressvalidator.h \
+  qt/xpchainamountfield.h \
+  qt/xpchaingui.h \
+  qt/xpchainunits.h \
   qt/callback.h \
   qt/clientmodel.h \
   qt/coincontroldialog.h \
@@ -314,12 +314,12 @@ RES_ICONS = \
   qt/res/icons/warning.png \
   qt/res/icons/verify.png
 
-BITCOIN_QT_BASE_CPP = \
+XPCHAIN_QT_BASE_CPP = \
   qt/bantablemodel.cpp \
-  qt/bitcoinaddressvalidator.cpp \
-  qt/bitcoinamountfield.cpp \
-  qt/bitcoingui.cpp \
-  qt/bitcoinunits.cpp \
+  qt/xpchainaddressvalidator.cpp \
+  qt/xpchainamountfield.cpp \
+  qt/xpchaingui.cpp \
+  qt/xpchainunits.cpp \
   qt/clientmodel.cpp \
   qt/csvmodelwriter.cpp \
   qt/guiutil.cpp \
@@ -338,9 +338,9 @@ BITCOIN_QT_BASE_CPP = \
   qt/trafficgraphwidget.cpp \
   qt/utilitydialog.cpp
 
-BITCOIN_QT_WINDOWS_CPP = qt/winshutdownmonitor.cpp
+XPCHAIN_QT_WINDOWS_CPP = qt/winshutdownmonitor.cpp
 
-BITCOIN_QT_WALLET_CPP = \
+XPCHAIN_QT_WALLET_CPP = \
   qt/addressbookpage.cpp \
   qt/addresstablemodel.cpp \
   qt/askpassphrasedialog.cpp \
@@ -376,31 +376,31 @@ BITCOIN_QT_WALLET_CPP = \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp
 
-BITCOIN_QT_CPP = $(BITCOIN_QT_BASE_CPP)
+XPCHAIN_QT_CPP = $(XPCHAIN_QT_BASE_CPP)
 if TARGET_WINDOWS
-BITCOIN_QT_CPP += $(BITCOIN_QT_WINDOWS_CPP)
+XPCHAIN_QT_CPP += $(XPCHAIN_QT_WINDOWS_CPP)
 endif
 if ENABLE_WALLET
-BITCOIN_QT_CPP += $(BITCOIN_QT_WALLET_CPP)
+XPCHAIN_QT_CPP += $(XPCHAIN_QT_WALLET_CPP)
 endif
 
 RES_IMAGES =
 
 RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.png)
 
-BITCOIN_RC = qt/res/bitcoin-qt-res.rc
+XPCHAIN_RC = qt/res/xpchain-qt-res.rc
 
-BITCOIN_QT_INCLUDES = -DQT_NO_KEYWORDS
+XPCHAIN_QT_INCLUDES = -DQT_NO_KEYWORDS
 
-qt_libbitcoinqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
+qt_libxpchainqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES) $(XPCHAIN_QT_INCLUDES) \
   $(QT_INCLUDES) $(QT_DBUS_INCLUDES) $(PROTOBUF_CFLAGS) $(QR_CFLAGS)
-qt_libbitcoinqt_a_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
-qt_libbitcoinqt_a_OBJCXXFLAGS = $(AM_OBJCXXFLAGS) $(QT_PIE_FLAGS)
+qt_libxpchainqt_a_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
+qt_libxpchainqt_a_OBJCXXFLAGS = $(AM_OBJCXXFLAGS) $(QT_PIE_FLAGS)
 
-qt_libbitcoinqt_a_SOURCES = $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(QT_FORMS_UI) \
+qt_libxpchainqt_a_SOURCES = $(XPCHAIN_QT_CPP) $(XPCHAIN_QT_H) $(QT_FORMS_UI) \
   $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES)
 
-nodist_qt_libbitcoinqt_a_SOURCES = $(QT_MOC_CPP) $(QT_MOC) $(PROTOBUF_CC) \
+nodist_qt_libxpchainqt_a_SOURCES = $(QT_MOC_CPP) $(QT_MOC) $(PROTOBUF_CC) \
   $(PROTOBUF_H) $(QT_QRC_CPP) $(QT_QRC_LOCALE_CPP)
 
 # forms/foo.h -> forms/ui_foo.h
@@ -409,7 +409,7 @@ QT_FORMS_H=$(join $(dir $(QT_FORMS_UI)),$(addprefix ui_, $(notdir $(QT_FORMS_UI:
 # Most files will depend on the forms and moc files as includes. Generate them
 # before anything else.
 $(QT_MOC): $(QT_FORMS_H)
-$(qt_libbitcoinqt_a_OBJECTS) $(qt_xpchain_qt_OBJECTS) : | $(QT_MOC)
+$(qt_libxpchainqt_a_OBJECTS) $(qt_xpchain_qt_OBJECTS) : | $(QT_MOC)
 
 #Generating these with a half-written protobuf header leads to wacky results.
 #This makes sure it's done.
@@ -417,25 +417,25 @@ $(QT_MOC): $(PROTOBUF_H)
 $(QT_MOC_CPP): $(PROTOBUF_H)
 
 # xpchain-qt binary #
-qt_xpchain_qt_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
+qt_xpchain_qt_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES) $(XPCHAIN_QT_INCLUDES) \
   $(QT_INCLUDES) $(PROTOBUF_CFLAGS) $(QR_CFLAGS)
 qt_xpchain_qt_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
 
-qt_xpchain_qt_SOURCES = qt/bitcoin.cpp
+qt_xpchain_qt_SOURCES = qt/xpchain.cpp
 if TARGET_DARWIN
-  qt_xpchain_qt_SOURCES += $(BITCOIN_MM)
+  qt_xpchain_qt_SOURCES += $(XPCHAIN_MM)
 endif
 if TARGET_WINDOWS
-  qt_xpchain_qt_SOURCES += $(BITCOIN_RC)
+  qt_xpchain_qt_SOURCES += $(XPCHAIN_RC)
 endif
-qt_xpchain_qt_LDADD = qt/libbitcoinqt.a $(LIBBITCOIN_SERVER)
+qt_xpchain_qt_LDADD = qt/libxpchainqt.a $(LIBXPCHAIN_SERVER)
 if ENABLE_WALLET
-qt_xpchain_qt_LDADD += $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET)
+qt_xpchain_qt_LDADD += $(LIBXPCHAIN_UTIL) $(LIBXPCHAIN_WALLET)
 endif
 if ENABLE_ZMQ
-qt_xpchain_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
+qt_xpchain_qt_LDADD += $(LIBXPCHAIN_ZMQ) $(ZMQ_LIBS)
 endif
-qt_xpchain_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
+qt_xpchain_qt_LDADD += $(LIBXPCHAIN_CLI) $(LIBXPCHAIN_COMMON) $(LIBXPCHAIN_UTIL) $(LIBXPCHAIN_CONSENSUS) $(LIBXPCHAIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
   $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(PROTOBUF_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) \
   $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(SQLITE3_LIBS)
 qt_xpchain_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
@@ -446,32 +446,32 @@ QT_QM=$(QT_TS:.ts=.qm)
 
 SECONDARY: $(QT_QM)
 
-$(srcdir)/qt/bitcoinstrings.cpp: $(libbitcoin_server_a_SOURCES) $(libbitcoin_wallet_a_SOURCES) $(libbitcoin_common_a_SOURCES) $(libbitcoin_zmq_a_SOURCES) $(libbitcoin_consensus_a_SOURCES) $(libbitcoin_util_a_SOURCES)
+$(srcdir)/qt/xpchainstrings.cpp: $(libxpchain_server_a_SOURCES) $(libxpchain_wallet_a_SOURCES) $(libxpchain_common_a_SOURCES) $(libxpchain_zmq_a_SOURCES) $(libxpchain_consensus_a_SOURCES) $(libxpchain_util_a_SOURCES)
 	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"
 	$(AM_V_GEN) cd $(srcdir); XGETTEXT=$(XGETTEXT) PACKAGE_NAME="$(PACKAGE_NAME)" COPYRIGHT_HOLDERS="$(COPYRIGHT_HOLDERS)" COPYRIGHT_HOLDERS_SUBSTITUTION="$(COPYRIGHT_HOLDERS_SUBSTITUTION)" $(PYTHON) ../share/qt/extract_strings_qt.py $^
 
-translate: $(srcdir)/qt/bitcoinstrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(BITCOIN_QT_BASE_CPP) qt/bitcoin.cpp $(BITCOIN_QT_WINDOWS_CPP) $(BITCOIN_QT_WALLET_CPP) $(BITCOIN_QT_H) $(BITCOIN_MM)
+translate: $(srcdir)/qt/xpchainstrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(XPCHAIN_QT_BASE_CPP) qt/xpchain.cpp $(XPCHAIN_QT_WINDOWS_CPP) $(XPCHAIN_QT_WALLET_CPP) $(XPCHAIN_QT_H) $(XPCHAIN_MM)
 	@test -n $(LUPDATE) || echo "lupdate is required for updating translations"
-	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts $(srcdir)/qt/locale/bitcoin_en.ts
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts $(srcdir)/qt/locale/xpchain_en.ts
 
 $(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
 	@test -f $(RCC)
 	@cp -f $< $(@D)/temp_$(<F)
-	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) -name bitcoin_locale $(@D)/temp_$(<F) | \
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) -name xpchain_locale $(@D)/temp_$(<F) | \
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
 	@rm $(@D)/temp_$(<F)
 
 $(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) $(PROTOBUF_H)
 	@test -f $(RCC)
-	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) -name bitcoin $< | \
+	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) -name xpchain $< | \
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
 
-CLEAN_QT = $(nodist_qt_libbitcoinqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda qt/*.gcno qt/temp_bitcoin_locale.qrc
+CLEAN_QT = $(nodist_qt_libxpchainqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda qt/*.gcno qt/temp_xpchain_locale.qrc
 
 CLEANFILES += $(CLEAN_QT)
 
 xpchain_qt_clean: FORCE
-	rm -f $(CLEAN_QT) $(qt_libbitcoinqt_a_OBJECTS) $(qt_xpchain_qt_OBJECTS) qt/xpchain-qt$(EXEEXT) $(LIBBITCOINQT)
+	rm -f $(CLEAN_QT) $(qt_libxpchainqt_a_OBJECTS) $(qt_xpchain_qt_OBJECTS) qt/xpchain-qt$(EXEEXT) $(LIBXPCHAIN_QT)
 
 xpchain_qt : qt/xpchain-qt$(EXEEXT)
 

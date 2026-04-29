@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_STAKINGREWARDSETTINGENTRYDELEGATE_H
-#define BITCOIN_QT_STAKINGREWARDSETTINGENTRYDELEGATE_H
+#ifndef XPCHAIN_QT_STAKINGREWARDSETTINGENTRYDELEGATE_H
+#define XPCHAIN_QT_STAKINGREWARDSETTINGENTRYDELEGATE_H
 
 #include <QStyledItemDelegate>
 
@@ -30,4 +30,4 @@ private Q_SLOTS:
     void commitAndCloseSpinBox();
 };
 
-#endif // BITCOIN_QT_STAKINGREWARDSETTINGENTRYDELEGATE_H
+#endif // XPCHAIN_QT_STAKINGREWARDSETTINGENTRYDELEGATE_H

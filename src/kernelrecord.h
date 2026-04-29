@@ -1,5 +1,5 @@
-#ifndef BITCOIN_KERNELRECORD_H
-#define BITCOIN_KERNELRECORD_H
+#ifndef XPCHAIN_KERNELRECORD_H
+#define XPCHAIN_KERNELRECORD_H
 
 #include <amount.h>
 #include <uint256.h>
@@ -52,4 +52,4 @@ protected:
     double prevProbability;
 };
 
-#endif // BITCOIN_KERNELRECORD_H
+#endif // XPCHAIN_KERNELRECORD_H
