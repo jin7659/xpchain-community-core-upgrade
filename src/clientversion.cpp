@@ -12,7 +12,7 @@
  * for both xpchaind and xpchain-qt, to make it harder for attackers to
  * target servers or GUI users specifically.
  */
-const std::string CLIENT_NAME("Satoshi");
+const std::string CLIENT_NAME("XPChain Core");
 
 /**
  * Client version number

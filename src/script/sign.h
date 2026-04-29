@@ -12,6 +12,10 @@
 #include <script/interpreter.h>
 #include <streams.h>
 
+#include <algorithm>
+#include <set>
+#include <vector>
+
 class CKey;
 class CKeyID;
 class CScript;
@@ -20,14 +24,29 @@ class CTransaction;
 
 struct CMutableTransaction;
 
+/** BIP32 key origin information: parent key fingerprint and derivation path. */
+struct KeyOriginInfo {
+    unsigned char fingerprint[4] = {0, 0, 0, 0}; //!< Parent key fingerprint (first 4 bytes of key ID)
+    std::vector<uint32_t> path;                    //!< Derivation path indices
+
+    bool operator==(const KeyOriginInfo& other) const {
+        return std::equal(fingerprint, fingerprint + 4, other.fingerprint) &&
+               path == other.path;
+    }
+};
+
 /** An interface to be implemented by keystores that support signing. */
 class SigningProvider
 {
 public:
     virtual ~SigningProvider() {}
     virtual bool GetCScript(const CScriptID &scriptid, CScript& script) const { return false; }
+    virtual bool HaveCScript(const CScriptID &scriptid) const { return false; }
     virtual bool GetPubKey(const CKeyID &address, CPubKey& pubkey) const { return false; }
     virtual bool GetKey(const CKeyID &address, CKey& key) const { return false; }
+    virtual bool HaveKey(const CKeyID &address) const { return false; }
+    virtual std::set<CKeyID> GetKeys() const { return {}; }
+    virtual bool GetKeyOrigin(const CKeyID& keyid, KeyOriginInfo& info) const { return false; }
 };
 
 extern const SigningProvider& DUMMY_SIGNING_PROVIDER;
@@ -72,10 +91,12 @@ class MutableTransactionSignatureCreator : public BaseSignatureCreator {
     unsigned int nIn;
     int nHashType;
     CAmount amount;
+    const PrecomputedTransactionData* m_txdata;
     const MutableTransactionSignatureChecker checker;
 
 public:
     MutableTransactionSignatureCreator(const CMutableTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, int nHashTypeIn = SIGHASH_ALL);
+    MutableTransactionSignatureCreator(const CMutableTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData* txdataIn, int nHashTypeIn = SIGHASH_ALL);
     const BaseSignatureChecker& Checker() const override { return checker; }
     bool CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const override;
 };

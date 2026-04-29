@@ -1465,6 +1465,23 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
         // Of course, if an assumed valid block is invalid due to false scriptSigs
         // this optimization would allow an invalid chain to be accepted.
         if (fScriptChecks) {
+            if (tx.HasWitness() && !txdata.m_taproot_ready) {
+                std::vector<CTxOut> spent_outputs;
+                spent_outputs.reserve(tx.vin.size());
+                bool all_found = true;
+                for (const auto& input : tx.vin) {
+                    const Coin& coin = inputs.AccessCoin(input.prevout);
+                    if (coin.IsSpent()) {
+                        all_found = false;
+                        break;
+                    }
+                    spent_outputs.push_back(coin.out);
+                }
+                if (all_found) {
+                    txdata.InitTaproot(tx, std::move(spent_outputs));
+                }
+            }
+
             // First check if script executions have been cached with the same
             // flags. Note that this assumes that the inputs provided are
             // correct (ie that the transaction hash which is in tx's prevouts
@@ -1854,6 +1871,13 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consens
 
     if (IsNullDummyEnabled(pindex->pprev, consensusparams)) {
         flags |= SCRIPT_VERIFY_NULLDUMMY;
+    }
+
+    if (pindex->nHeight >= consensusparams.TaprootHeight) {
+        flags |= SCRIPT_VERIFY_TAPROOT;
+        flags |= SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION;
+        flags |= SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS;
+        flags |= SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE;
     }
 
     return flags;
@@ -4052,7 +4076,7 @@ static FILE* OpenDiskFile(const CDiskBlockPos &pos, const char *prefix, bool fRe
     if (pos.IsNull())
         return nullptr;
     fs::path path = GetBlockPosFilename(pos, prefix);
-    fs::create_directories(path.parent_path());
+    TryCreateDirectories(path.parent_path());
     FILE* file = fsbridge::fopen(path, fReadOnly ? "rb": "rb+");
     if (!file && !fReadOnly)
         file = fsbridge::fopen(path, "wb+");

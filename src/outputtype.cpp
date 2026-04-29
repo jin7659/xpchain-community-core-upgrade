@@ -16,6 +16,7 @@
 static const std::string OUTPUT_TYPE_STRING_LEGACY = "legacy";
 static const std::string OUTPUT_TYPE_STRING_P2SH_SEGWIT = "p2sh-segwit";
 static const std::string OUTPUT_TYPE_STRING_BECH32 = "bech32";
+static const std::string OUTPUT_TYPE_STRING_BECH32M = "bech32m";
 
 bool ParseOutputType(const std::string& type, OutputType& output_type)
 {
@@ -28,6 +29,9 @@ bool ParseOutputType(const std::string& type, OutputType& output_type)
     } else if (type == OUTPUT_TYPE_STRING_BECH32) {
         output_type = OutputType::BECH32;
         return true;
+    } else if (type == OUTPUT_TYPE_STRING_BECH32M) {
+        output_type = OutputType::BECH32M;
+        return true;
     }
     return false;
 }
@@ -38,6 +42,7 @@ const std::string& FormatOutputType(OutputType type)
     case OutputType::LEGACY: return OUTPUT_TYPE_STRING_LEGACY;
     case OutputType::P2SH_SEGWIT: return OUTPUT_TYPE_STRING_P2SH_SEGWIT;
     case OutputType::BECH32: return OUTPUT_TYPE_STRING_BECH32;
+    case OutputType::BECH32M: return OUTPUT_TYPE_STRING_BECH32M;
     default: assert(false);
     }
 }
@@ -57,6 +62,10 @@ CTxDestination GetDestinationForKey(const CPubKey& key, OutputType type)
             return witdest;
         }
     }
+    case OutputType::BECH32M: {
+        if (!key.IsCompressed()) return key.GetID();
+        return WitnessV1Taproot(XOnlyPubKey(key));
+    }
     default: assert(false);
     }
 }
@@ -67,7 +76,8 @@ std::vector<CTxDestination> GetAllDestinationsForKey(const CPubKey& key)
     if (key.IsCompressed()) {
         CTxDestination segwit = WitnessV0KeyHash(keyid);
         CTxDestination p2sh = CScriptID(GetScriptForDestination(segwit));
-        return std::vector<CTxDestination>{std::move(keyid), std::move(p2sh), std::move(segwit)};
+        CTxDestination taproot = WitnessV1Taproot(XOnlyPubKey(key));
+        return std::vector<CTxDestination>{std::move(keyid), std::move(p2sh), std::move(segwit), std::move(taproot)};
     } else {
         return std::vector<CTxDestination>{std::move(keyid)};
     }
@@ -94,6 +104,12 @@ CTxDestination AddAndGetDestinationForScript(CKeyStore& keystore, const CScript&
         } else {
             return CScriptID(witprog);
         }
+    }
+    case OutputType::BECH32M: {
+        // Taproot for scripts is more complex (merkle roots), 
+        // fallback to BECH32 for simple script destinations if not specifically handled.
+        // For now, let's just make it return a WitnessV0 to avoid non-spendable outputs.
+        return WitnessV0ScriptHash(script);
     }
     default: assert(false);
     }

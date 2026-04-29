@@ -1,4 +1,4 @@
-﻿<TS language="ko_KR" version="2.1">
+<TS language="ko_KR" version="2.1">
 <context>
     <name>AddressBookPage</name>
     <message>
@@ -738,7 +738,7 @@
     </message>
     <message>
         <source>Can vary +/- %1 mocha(s) per input.</source>
-        <translation>입력마다 +/- %1 사토시(s)가 변할 수 있습니다.</translation>
+        <translation>입력마다 +/- %1 모카(s)가 변할 수 있습니다.</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -2401,7 +2401,7 @@
 Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mochas per kB&quot; for a transaction size of 500 bytes (half of 1 kB) would ultimately yield a fee of only 50 mochas.</source>
         <translation>거래 가상 크기의 kB (1,000 바이트)당 수수료을 지정하십시오.
 
-참고 : 수수료는 바이트 단위로 계산되므로 거래 크기가 500 바이트 (1kB의 절반)일때에 수수료가 "100 satoshis / kB"이면 궁극적으로 50사토시의 수수료만 발생합니다.</translation>
+참고 : 수수료는 바이트 단위로 계산되므로 거래 크기가 500 바이트 (1kB의 절반)일때에 수수료가 "100 satoshis / kB"이면 궁극적으로 50모카의 수수료만 발생합니다.</translation>
     </message>
     <message>
         <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for xpchain transactions than the network can process.</source>

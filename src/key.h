@@ -115,6 +115,7 @@ public:
      * The test_case parameter tweaks the deterministic nonce.
      */
     bool Sign(const uint256& hash, std::vector<unsigned char>& vchSig, bool grind = true, uint32_t test_case = 0) const;
+    bool SignSchnorr(const uint256& hash, std::vector<unsigned char>& vchSig, const uint256* merkel_root = nullptr, const uint256& aux = uint256()) const;
 
     /**
      * Create a compact signature (65 bytes), which allows reconstructing the used public key.

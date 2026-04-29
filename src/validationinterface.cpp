@@ -113,7 +113,9 @@ void UnregisterAllValidationInterfaces() {
 }
 
 void CallFunctionInValidationInterfaceQueue(std::function<void ()> func) {
-    g_signals.m_internals->m_schedulerClient.AddToProcessQueue(std::move(func));
+    if (g_signals.m_internals) {
+        g_signals.m_internals->m_schedulerClient.AddToProcessQueue(std::move(func));
+    }
 }
 
 void SyncWithValidationInterfaceQueue() {

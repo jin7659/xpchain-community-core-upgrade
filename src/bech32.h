@@ -16,14 +16,30 @@
 #include <string>
 #include <vector>
 
+enum class Encoding {
+    INVALID,
+    BECH32,
+    BECH32M,
+};
+
 namespace bech32
 {
 
-/** Encode a Bech32 string. Returns the empty string in case of failure. */
-std::string Encode(const std::string& hrp, const std::vector<uint8_t>& values);
+/** Encode a Bech32 or Bech32m string. Returns the empty string in case of failure. */
+std::string Encode(Encoding encoding, const std::string& hrp, const std::vector<uint8_t>& values);
 
-/** Decode a Bech32 string. Returns (hrp, data). Empty hrp means failure. */
-std::pair<std::string, std::vector<uint8_t>> Decode(const std::string& str);
+/** Decode a Bech32 or Bech32m string. Returns (encoding, hrp, data). */
+struct DecodeResult
+{
+    Encoding encoding;
+    std::string hrp;
+    std::vector<uint8_t> data;
+
+    DecodeResult() : encoding(Encoding::INVALID) {}
+    DecodeResult(Encoding enc, std::string h, std::vector<uint8_t> d) : encoding(enc), hrp(std::move(h)), data(std::move(d)) {}
+};
+
+DecodeResult Decode(const std::string& str);
 
 } // namespace bech32
 

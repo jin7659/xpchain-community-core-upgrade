@@ -8,6 +8,8 @@
 #include <qt/clientmodel.h>
 #include <qt/guiconstants.h>
 #include <qt/guiutil.h>
+#include <qt/createwalletdialog.h>
+#include <qt/intro.h>
 #include <qt/modaloverlay.h>
 #include <qt/networkstyle.h>
 #include <qt/notificator.h>
@@ -36,11 +38,13 @@
 
 #include <iostream>
 
+#include <univalue.h>
 #include <QAction>
 #include <QApplication>
 #include <QComboBox>
 #include <QDateTime>
 #include <QDesktopWidget>
+#include <QFileDialog>
 #include <QDragEnterEvent>
 #include <QListWidget>
 #include <QMenuBar>
@@ -226,6 +230,15 @@ void BitcoinGUI::createActions()
 {
     QActionGroup *tabGroup = new QActionGroup(this);
 
+    createWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/add"), tr("&Create Wallet..."), this);
+    createWalletAction->setStatusTip(tr("Create a new wallet"));
+
+    openWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/open"), tr("&Open Wallet..."), this);
+    openWalletAction->setStatusTip(tr("Open an existing wallet"));
+
+    backupAllWalletsAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup All Wallets..."), this);
+    backupAllWalletsAction->setStatusTip(tr("Backup all loaded wallets to a specific directory"));
+
     overviewAction = new QAction(platformStyle->SingleColorIcon(":/icons/overview"), tr("&Overview"), this);
     overviewAction->setStatusTip(tr("Show general overview of wallet"));
     overviewAction->setToolTip(overviewAction->statusTip());
@@ -347,6 +360,9 @@ void BitcoinGUI::createActions()
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(showHelpMessageAction, SIGNAL(triggered()), this, SLOT(showHelpMessageClicked()));
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
+    connect(createWalletAction, SIGNAL(triggered()), this, SLOT(createWallet()));
+    connect(openWalletAction, SIGNAL(triggered()), this, SLOT(openWallet()));
+    connect(backupAllWalletsAction, SIGNAL(triggered()), this, SLOT(backupAllWallets()));
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
 
@@ -384,6 +400,9 @@ void BitcoinGUI::createMenuBar()
     QMenu *file = appMenuBar->addMenu(tr("&File"));
     if(walletFrame)
     {
+        file->addAction(createWalletAction);
+        file->addAction(openWalletAction);
+        file->addAction(backupAllWalletsAction);
         file->addAction(openAction);
         file->addAction(backupWalletAction);
         file->addAction(signMessageAction);
@@ -526,6 +545,7 @@ bool BitcoinGUI::addWallet(WalletModel *walletModel)
         return false;
     const QString name = walletModel->getWalletName();
     QString display_name = name.isEmpty() ? "["+tr("default wallet")+"]" : name;
+    display_name.remove("<br>"); // Potential fix for the observed UI glitch
     setWalletActionsEnabled(true);
     m_wallet_selector->addItem(display_name, name);
     if (m_wallet_selector->count() == 2) {
@@ -1340,5 +1360,94 @@ void UnitDisplayStatusBarControl::onMenuSelection(QAction* action)
     if (action)
     {
         optionsModel->setDisplayUnit(action->data());
+    }
+}
+void BitcoinGUI::createWallet()
+{
+    CreateWalletDialog dlg(this);
+    if(dlg.exec())
+    {
+        UniValue params(UniValue::VARR);
+        params.push_back(dlg.walletName().toStdString());
+        params.push_back(dlg.disablePrivateKeys());
+        params.push_back(dlg.descriptors());
+        params.push_back(""); // passphrase (empty for now)
+        params.push_back(true); // load_on_startup
+
+        try {
+            m_node.executeRpc("createwallet", params, "");
+        } catch (const UniValue& e) {
+            QMessageBox::critical(this, tr("Wallet Creation Failed"), QString::fromStdString(e["message"].get_str()));
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, tr("Wallet Creation Failed"), QString::fromStdString(e.what()));
+        }
+    }
+}
+
+void BitcoinGUI::openWallet()
+{
+    // Try user's specific path first
+    QString wallets_dir = "/Users/jeongjinseob/xpchain/wallets";
+    
+    // Fallback logic if the specific path doesn't exist
+    if (!QDir(wallets_dir).exists()) {
+        wallets_dir = Intro::getDefaultDataDirectory() + "/wallets";
+    }
+    
+    // Ensure the directory exists so the dialog starts there
+    QDir().mkpath(wallets_dir);
+
+    QString path = QFileDialog::getExistingDirectory(this, tr("Open Wallet"), wallets_dir, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (!path.isEmpty()) {
+        QString wallet_name = QDir(wallets_dir).relativeFilePath(path);
+        if (wallet_name.startsWith("../")) {
+             // If selected path is outside prioritized folder, try relative to root data dir
+             wallet_name = QDir(Intro::getDefaultDataDirectory()).relativeFilePath(path);
+        }
+        
+        if (wallet_name.startsWith("../")) wallet_name = path; // Absolute path if still outside
+
+        UniValue params(UniValue::VARR);
+        params.push_back(wallet_name.toStdString());
+
+        try {
+            m_node.executeRpc("loadwallet", params, "");
+        } catch (const UniValue& e) {
+            QMessageBox::critical(this, tr("Open Wallet Failed"), QString::fromStdString(e["message"].get_str()));
+        } catch (const std::exception& e) {
+            QMessageBox::critical(this, tr("Open Wallet Failed"), QString::fromStdString(e.what()));
+        }
+    }
+}
+
+void BitcoinGUI::backupAllWallets()
+{
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Backup All Wallets"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (dir.isEmpty()) return;
+
+    int success_count = 0;
+    int fail_count = 0;
+    QString errors;
+
+    for (auto& wallet : m_node.getWallets()) {
+        QString name = QString::fromStdString(wallet->getWalletName());
+        if (name.isEmpty()) name = "default_wallet";
+        
+        // Remove characters that are illegal in filenames
+        name.remove(QRegExp("[\\\\/:*?\"<>|]"));
+        
+        QString filename = dir + "/" + name + "_backup.dat";
+        if (wallet->backupWallet(filename.toStdString())) {
+            success_count++;
+        } else {
+            fail_count++;
+            errors += name + " ";
+        }
+    }
+
+    if (fail_count == 0) {
+        QMessageBox::information(this, tr("Backup Successful"), tr("All %1 wallets backed up successfully to %2").arg(success_count).arg(dir));
+    } else {
+        QMessageBox::critical(this, tr("Backup Partially Failed"), tr("Successfully backed up %1 wallets, but failed for %2: %3").arg(success_count).arg(fail_count).arg(errors));
     }
 }

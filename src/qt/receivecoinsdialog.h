@@ -17,6 +17,7 @@
 
 class PlatformStyle;
 class WalletModel;
+class QComboBox;
 
 namespace Ui {
     class ReceiveCoinsDialog;

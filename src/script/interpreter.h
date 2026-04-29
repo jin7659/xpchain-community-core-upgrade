@@ -115,6 +115,22 @@ enum
     // Making OP_CODESEPARATOR and FindAndDelete fail any non-segwit scripts
     //
     SCRIPT_VERIFY_CONST_SCRIPTCODE = (1U << 16),
+
+    // Taproot (BIP 341)
+    //
+    SCRIPT_VERIFY_TAPROOT = (1U << 17),
+
+    // Making unknown Taproot leaf versions non-standard
+    //
+    SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION = (1U << 18),
+
+    // Making unknown OP_SUCCESS opcodes non-standard
+    //
+    SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS = (1U << 19),
+
+    // Making unknown public key versions in Tapscript non-standard
+    //
+    SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE = (1U << 20),
 };
 
 bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror);
@@ -122,16 +138,29 @@ bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned i
 struct PrecomputedTransactionData
 {
     uint256 hashPrevouts, hashSequence, hashOutputs;
+    uint256 hashSpentAmounts, hashSpentScripts;
+    uint256 m_taproot_hash_prevouts, m_taproot_hash_sequence, m_taproot_hash_outputs;
     bool ready = false;
+    bool m_taproot_ready = false;
+
+    PrecomputedTransactionData() = default;
 
     template <class T>
     explicit PrecomputedTransactionData(const T& tx);
+
+    template <class T>
+    void Init(const T& tx, std::vector<CTxOut>&& spent_outputs);
+
+    template <class T>
+    void InitTaproot(const T& tx, std::vector<CTxOut>&& spent_outputs);
 };
 
 enum class SigVersion
 {
     BASE = 0,
     WITNESS_V0 = 1,
+    TAPROOT = 2,
+    TAPSCRIPT = 3,
 };
 
 /** Signature hash sizes */

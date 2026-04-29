@@ -197,7 +197,7 @@ public:
             }
             parent->endRemoveRows();
 
-            for(uint32_t n = 0; n <= wtx.tx->vin.size(); n++)
+            for(uint32_t n = 0; n < wtx.tx->vin.size(); n++)
             {
                 if(wtx.txin_is_mine[n] == isminetype::ISMINE_SPENDABLE)
                 {

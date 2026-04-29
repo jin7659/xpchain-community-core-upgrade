@@ -24,6 +24,11 @@ WitnessV0ScriptHash::WitnessV0ScriptHash(const CScript& in)
     CSHA256().Write(in.data(), in.size()).Finalize(begin());
 }
 
+WitnessV1Taproot::WitnessV1Taproot(const XOnlyPubKey& xpk)
+{
+    memcpy(begin(), xpk.begin(), 32);
+}
+
 const char* GetTxnOutputType(txnouttype t)
 {
     switch (t)
@@ -36,6 +41,7 @@ const char* GetTxnOutputType(txnouttype t)
     case TX_NULL_DATA: return "nulldata";
     case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
     case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
+    case TX_WITNESS_V1_TAPROOT: return "witness_v1_taproot";
     case TX_WITNESS_UNKNOWN: return "witness_unknown";
     }
     return nullptr;
@@ -111,6 +117,11 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         }
         if (witnessversion == 0 && witnessprogram.size() == WITNESS_V0_SCRIPTHASH_SIZE) {
             typeRet = TX_WITNESS_V0_SCRIPTHASH;
+            vSolutionsRet.push_back(witnessprogram);
+            return true;
+        }
+        if (witnessversion == 1 && witnessprogram.size() == 32) {
+            typeRet = TX_WITNESS_V1_TAPROOT;
             vSolutionsRet.push_back(witnessprogram);
             return true;
         }
@@ -194,6 +205,11 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
         return true;
     } else if (whichType == TX_WITNESS_V0_SCRIPTHASH) {
         WitnessV0ScriptHash hash;
+        std::copy(vSolutions[0].begin(), vSolutions[0].end(), hash.begin());
+        addressRet = hash;
+        return true;
+    } else if (whichType == TX_WITNESS_V1_TAPROOT) {
+        WitnessV1Taproot hash;
         std::copy(vSolutions[0].begin(), vSolutions[0].end(), hash.begin());
         addressRet = hash;
         return true;
@@ -286,6 +302,13 @@ public:
     {
         script->clear();
         *script << OP_0 << ToByteVector(id);
+        return true;
+    }
+
+    bool operator()(const WitnessV1Taproot& id) const
+    {
+        script->clear();
+        *script << OP_1 << ToByteVector(id);
         return true;
     }
 

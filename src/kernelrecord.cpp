@@ -62,7 +62,7 @@ uint64_t KernelRecord::getCoinDay() const
     if( nWeight <  0)
         return 0;
     nWeight = min(nWeight, (int64_t)Params().GetConsensus().nStakeMaxAge);
-    uint64_t coinAge = (nValue * nWeight ) / (COIN * 86400);
+    uint64_t coinAge = (uint64_t)(((unsigned __int128)nValue * nWeight) / (COIN * 86400));
     return coinAge;
 }
 
@@ -82,7 +82,7 @@ double KernelRecord::getProbToMintStake(double difficulty, int timeOffset) const
     //uint64_t coinAge = max(nValue * dayWeight / COIN, (int64_t)0);
     //return target * coinAge / pow(static_cast<double>(2), 256);
     int64_t Weight = (min((GetAdjustedTime() - nTime) + timeOffset, (int64_t)(Params().GetConsensus().nStakeMinAge+Params().GetConsensus().nStakeMaxAge)) - Params().GetConsensus().nStakeMinAge);
-    uint64_t coinAge = max(nValue * Weight / (COIN * 86400), (int64_t)0);
+    uint64_t coinAge = (uint64_t)max((int64_t)(((unsigned __int128)nValue * Weight) / (COIN * 86400)), (int64_t)0);
     double probability = coinAge / (pow(static_cast<double>(2),32) * difficulty);
     return probability > 1 ? 1 : probability;
 }

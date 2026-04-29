@@ -17,6 +17,7 @@
 #include <qt/walletmodel.h>
 
 #include <QAction>
+#include <QComboBox>
 #include <QCursor>
 #include <QMessageBox>
 #include <QScrollBar>
@@ -63,6 +64,12 @@ ReceiveCoinsDialog::ReceiveCoinsDialog(const PlatformStyle *_platformStyle, QWid
     connect(copyMessageAction, SIGNAL(triggered()), this, SLOT(copyMessage()));
     connect(copyAmountAction, SIGNAL(triggered()), this, SLOT(copyAmount()));
 
+    // Address Type ComboBox
+    ui->addressType->addItem(tr("Base58 (Legacy)"), (int)OutputType::LEGACY);
+    ui->addressType->addItem(tr("Base58 (P2SH-SegWit)"), (int)OutputType::P2SH_SEGWIT);
+    ui->addressType->addItem(tr("Bech32 (SegWit)"), (int)OutputType::BECH32);
+    ui->addressType->addItem(tr("Bech32m (Taproot)"), (int)OutputType::BECH32M);
+
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clear()));
 }
 
@@ -94,10 +101,14 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         // Last 2 columns are set by the columnResizingFixer, when the table geometry is ready.
         columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(tableView, AMOUNT_MINIMUM_COLUMN_WIDTH, DATE_COLUMN_WIDTH, this);
 
-        if (model->wallet().getDefaultAddressType() == OutputType::BECH32) {
-            ui->useBech32->setCheckState(Qt::Checked);
+        if (model->wallet().getDefaultAddressType() == OutputType::BECH32M) {
+            ui->addressType->setCurrentIndex(3);
+        } else if (model->wallet().getDefaultAddressType() == OutputType::BECH32) {
+            ui->addressType->setCurrentIndex(2);
+        } else if (model->wallet().getDefaultAddressType() == OutputType::P2SH_SEGWIT) {
+            ui->addressType->setCurrentIndex(1);
         } else {
-            ui->useBech32->setCheckState(Qt::Unchecked);
+            ui->addressType->setCurrentIndex(0);
         }
 
         // eventually disable the main receive button if private key operations are disabled
@@ -112,9 +123,20 @@ ReceiveCoinsDialog::~ReceiveCoinsDialog()
 
 void ReceiveCoinsDialog::clear()
 {
-    ui->reqAmount->clear();
     ui->reqLabel->setText("");
     ui->reqMessage->setText("");
+    // Default to wallet's default address type
+    if (model) {
+        if (model->wallet().getDefaultAddressType() == OutputType::BECH32M) {
+            ui->addressType->setCurrentIndex(3);
+        } else if (model->wallet().getDefaultAddressType() == OutputType::BECH32) {
+            ui->addressType->setCurrentIndex(2);
+        } else if (model->wallet().getDefaultAddressType() == OutputType::P2SH_SEGWIT) {
+            ui->addressType->setCurrentIndex(1);
+        } else {
+            ui->addressType->setCurrentIndex(0);
+        }
+    }
     updateDisplayUnit();
 }
 
@@ -144,15 +166,7 @@ void ReceiveCoinsDialog::on_receiveButton_clicked()
     QString address;
     QString label = ui->reqLabel->text();
     /* Generate new receiving address */
-    OutputType address_type;
-    if (ui->useBech32->isChecked()) {
-        address_type = OutputType::BECH32;
-    } else {
-        address_type = model->wallet().getDefaultAddressType();
-        if (address_type == OutputType::BECH32) {
-            address_type = OutputType::P2SH_SEGWIT;
-        }
-    }
+    OutputType address_type = (OutputType)ui->addressType->currentData().toInt();
     address = model->getAddressTableModel()->addRow(AddressTableModel::Receive, label, "", address_type);
     SendCoinsRecipient info(address, label,
         ui->reqAmount->value(), ui->reqMessage->text());

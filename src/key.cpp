@@ -12,6 +12,8 @@
 
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>
+#include <secp256k1_schnorrsig.h>
+#include <secp256k1_extrakeys.h>
 
 static secp256k1_context* secp256k1_context_sign = nullptr;
 
@@ -224,6 +226,21 @@ bool CKey::Sign(const uint256 &hash, std::vector<unsigned char>& vchSig, bool gr
     return true;
 }
 
+bool CKey::SignSchnorr(const uint256& hash, std::vector<unsigned char>& vchSig, const uint256* merkle_root, const uint256& aux) const
+{
+    if (!fValid) return false;
+    vchSig.resize(64);
+    secp256k1_keypair keypair;
+    if (!secp256k1_keypair_create(secp256k1_context_sign, &keypair, begin())) return false;
+    if (merkle_root) {
+        secp256k1_xonly_pubkey internal_pubkey;
+        if (!secp256k1_keypair_xonly_pub(secp256k1_context_sign, &internal_pubkey, nullptr, &keypair)) return false;
+        if (!secp256k1_keypair_xonly_tweak_add(secp256k1_context_sign, &keypair, merkle_root->begin())) return false;
+    }
+    bool ret = secp256k1_schnorrsig_sign32(secp256k1_context_sign, vchSig.data(), hash.begin(), &keypair, aux.IsNull() ? nullptr : aux.begin());
+    return ret;
+}
+
 bool CKey::VerifyPubKey(const CPubKey& pubkey) const {
     if (pubkey.IsCompressed() != fCompressed) {
         return false;
@@ -279,7 +296,7 @@ bool CKey::Derive(CKey& keyChild, ChainCode &ccChild, unsigned int nChild, const
     }
     memcpy(ccChild.begin(), vout.data()+32, 32);
     memcpy((unsigned char*)keyChild.begin(), begin(), 32);
-    bool ret = secp256k1_ec_privkey_tweak_add(secp256k1_context_sign, (unsigned char*)keyChild.begin(), vout.data());
+    bool ret = secp256k1_ec_seckey_tweak_add(secp256k1_context_sign, (unsigned char*)keyChild.begin(), vout.data());
     keyChild.fCompressed = true;
     keyChild.fValid = ret;
     return ret;

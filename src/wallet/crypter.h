@@ -145,6 +145,11 @@ public:
     bool IsLocked() const;
     bool Lock();
 
+    /** Returns the master encryption key (empty if not encrypted or locked) */
+    const CKeyingMaterial& GetMasterKey() const EXCLUSIVE_LOCKS_REQUIRED(cs_KeyStore) {
+        return vMasterKey;
+    }
+
     virtual bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey) override;
     bool HaveKey(const CKeyID &address) const override;
@@ -158,5 +163,17 @@ public:
      */
     boost::signals2::signal<void (CCryptoKeyStore* wallet)> NotifyStatusChanged;
 };
+
+// ─── Encryption utility functions ─────────────────────────────────────────────
+// Exposed for use by ScriptPubKeyMan and other wallet subsystems.
+
+bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial& vchPlaintext,
+                   const uint256& nIV, std::vector<unsigned char>& vchCiphertext);
+
+bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCiphertext,
+                   const uint256& nIV, CKeyingMaterial& vchPlaintext);
+
+bool DecryptKey(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCryptedSecret,
+                const CPubKey& vchPubKey, CKey& key);
 
 #endif // BITCOIN_WALLET_CRYPTER_H

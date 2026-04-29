@@ -43,8 +43,8 @@ class CWalletTx;
 class uint160;
 class uint256;
 
-/** Backend-agnostic database type. */
-using WalletDatabase = BerkeleyDatabase;
+class WalletDatabase;
+class DatabaseBatch;
 
 /** Error statuses for the wallet database */
 enum class DBErrors
@@ -91,16 +91,22 @@ public:
     }
 };
 
+// KeyOriginInfo is defined in script/sign.h; include it here for WalletBatch and CKeyMetadata
+#include <script/sign.h>
+
 class CKeyMetadata
 {
 public:
     static const int VERSION_BASIC=1;
     static const int VERSION_WITH_HDDATA=10;
-    static const int CURRENT_VERSION=VERSION_WITH_HDDATA;
+    static const int VERSION_WITH_KEY_ORIGIN=12; //!< Extended with BIP32 key origin info
+    static const int CURRENT_VERSION=VERSION_WITH_HDDATA; // Keep old version for DB compat
     int nVersion;
     int64_t nCreateTime; // 0 means unknown
     std::string hdKeypath; //optional HD/bip32 keypath
     CKeyID hd_seed_id; //id of the HD seed used to derive this key
+    KeyOriginInfo key_origin; //!< Key origin info (BIP-174 fingerprint + derivation path)
+    bool has_key_origin = false; //!< Whether key_origin is valid
 
     CKeyMetadata()
     {
@@ -123,6 +129,8 @@ public:
             READWRITE(hdKeypath);
             READWRITE(hd_seed_id);
         }
+        // Note: key_origin is NOT serialized to DB to maintain backward compat;
+        // it is only an in-memory enhancement for the ScriptPubKeyMan framework.
     }
 
     void SetNull()
@@ -131,6 +139,7 @@ public:
         nCreateTime = 0;
         hdKeypath.clear();
         hd_seed_id.SetNull();
+        has_key_origin = false;
     }
 };
 
@@ -143,9 +152,28 @@ class WalletBatch
 {
 private:
     template <typename K, typename T>
+    bool Read(const K& key, T& value)
+    {
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        ssKey << key;
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        if (!m_batch->ReadKey(std::move(ssKey), ssValue)) return false;
+        try {
+            ssValue >> value;
+        } catch (const std::exception&) {
+            return false;
+        }
+        return true;
+    }
+
+    template <typename K, typename T>
     bool WriteIC(const K& key, const T& value, bool fOverwrite = true)
     {
-        if (!m_batch.Write(key, value, fOverwrite)) {
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        ssKey << key;
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        ssValue << value;
+        if (!m_batch->WriteKey(std::move(ssKey), std::move(ssValue), fOverwrite)) {
             return false;
         }
         m_database.IncrementUpdateCounter();
@@ -155,7 +183,9 @@ private:
     template <typename K>
     bool EraseIC(const K& key)
     {
-        if (!m_batch.Erase(key)) {
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        ssKey << key;
+        if (!m_batch->EraseKey(std::move(ssKey))) {
             return false;
         }
         m_database.IncrementUpdateCounter();
@@ -163,11 +193,17 @@ private:
     }
 
 public:
-    explicit WalletBatch(WalletDatabase& database, const char* pszMode = "r+", bool _fFlushOnClose = true) :
-        m_batch(database, pszMode, _fFlushOnClose),
-        m_database(database)
+    bool ReadVersion(int& nVersion)
     {
+        nVersion = 0;
+        return Read(std::string("version"), nVersion);
     }
+    bool WriteVersion(int nVersion)
+    {
+        return WriteIC(std::string("version"), nVersion);
+    }
+
+    explicit WalletBatch(WalletDatabase& database, const char* pszMode = "r+", bool _fFlushOnClose = true);
     WalletBatch(const WalletBatch&) = delete;
     WalletBatch& operator=(const WalletBatch&) = delete;
 
@@ -235,6 +271,9 @@ public:
     //! write the hdchain model (external chain child index counter)
     bool WriteHDChain(const CHDChain& chain);
 
+    //! write key metadata (used by ScriptPubKeyMan)
+    bool WriteKeyMetadata(const CKeyMetadata& meta, const CPubKey& pubkey, bool overwrite = true);
+
     bool WriteWalletFlags(const uint64_t flags);
     //! Begin a new transaction
     bool TxnBegin();
@@ -242,17 +281,13 @@ public:
     bool TxnCommit();
     //! Abort current transaction
     bool TxnAbort();
-    //! Read wallet version
-    bool ReadVersion(int& nVersion);
-    //! Write wallet version
-    bool WriteVersion(int nVersion);
 
     // Write / erase / read list of percentages of staking reward distribution from(to) wallet database
     bool WriteRewardDistributionPcts(const std::vector<std::pair<std::string, std::uint8_t>>& pcts);
     bool EraseRewardDistributionPcts();
     bool ReadRewardDistributionPcts(std::vector<std::pair<std::string, std::uint8_t>>& pcts);
 private:
-    BerkeleyBatch m_batch;
+    std::unique_ptr<DatabaseBatch> m_batch;
     WalletDatabase& m_database;
 };
 

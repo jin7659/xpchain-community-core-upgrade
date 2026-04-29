@@ -45,7 +45,7 @@ public:
         std::vector<unsigned char> data = {0};
         data.reserve(33);
         ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, id.begin(), id.end());
-        return bech32::Encode(m_params.Bech32HRP(), data);
+        return bech32::Encode(Encoding::BECH32, m_params.Bech32HRP(), data);
     }
 
     std::string operator()(const WitnessV0ScriptHash& id) const
@@ -53,7 +53,15 @@ public:
         std::vector<unsigned char> data = {0};
         data.reserve(53);
         ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, id.begin(), id.end());
-        return bech32::Encode(m_params.Bech32HRP(), data);
+        return bech32::Encode(Encoding::BECH32, m_params.Bech32HRP(), data);
+    }
+
+    std::string operator()(const WitnessV1Taproot& id) const
+    {
+        std::vector<unsigned char> data = {1};
+        data.reserve(53);
+        ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, id.begin(), id.end());
+        return bech32::Encode(Encoding::BECH32M, m_params.Bech32HRP(), data);
     }
 
     std::string operator()(const WitnessUnknown& id) const
@@ -64,7 +72,7 @@ public:
         std::vector<unsigned char> data = {(unsigned char)id.version};
         data.reserve(1 + (id.length * 8 + 4) / 5);
         ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, id.program, id.program + id.length);
-        return bech32::Encode(m_params.Bech32HRP(), data);
+        return bech32::Encode(id.version == 0 ? Encoding::BECH32 : Encoding::BECH32M, m_params.Bech32HRP(), data);
     }
 
     std::string operator()(const CNoDestination& no) const { return {}; }
@@ -93,13 +101,13 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
     }
     data.clear();
     auto bech = bech32::Decode(str);
-    if (bech.second.size() > 0 && bech.first == params.Bech32HRP()) {
+    if (bech.data.size() > 0 && bech.hrp == params.Bech32HRP()) {
         // Bech32 decoding
-        int version = bech.second[0]; // The first 5 bit symbol is the witness version (0-16)
+        int version = bech.data[0]; // The first 5 bit symbol is the witness version (0-16)
         // The rest of the symbols are converted witness program bytes.
-        data.reserve(((bech.second.size() - 1) * 5) / 8);
-        if (ConvertBits<5, 8, false>([&](unsigned char c) { data.push_back(c); }, bech.second.begin() + 1, bech.second.end())) {
-            if (version == 0) {
+        data.reserve(((bech.data.size() - 1) * 5) / 8);
+        if (ConvertBits<5, 8, false>([&](unsigned char c) { data.push_back(c); }, bech.data.begin() + 1, bech.data.end())) {
+            if (version == 0 && bech.encoding == Encoding::BECH32) {
                 {
                     WitnessV0KeyHash keyid;
                     if (data.size() == keyid.size()) {
@@ -116,14 +124,23 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
                 }
                 return CNoDestination();
             }
-            if (version > 16 || data.size() < 2 || data.size() > 40) {
-                return CNoDestination();
+            if (version == 1 && bech.encoding == Encoding::BECH32M) {
+                WitnessV1Taproot tapid;
+                if (data.size() == tapid.size()) {
+                    std::copy(data.begin(), data.end(), tapid.begin());
+                    return tapid;
+                }
             }
-            WitnessUnknown unk;
-            unk.version = version;
-            std::copy(data.begin(), data.end(), unk.program);
-            unk.length = data.size();
-            return unk;
+            if (version > 0 && version <= 16 && bech.encoding == Encoding::BECH32M) {
+                if (data.size() < 2 || data.size() > 40) {
+                    return CNoDestination();
+                }
+                WitnessUnknown unk;
+                unk.version = version;
+                std::copy(data.begin(), data.end(), unk.program);
+                unk.length = data.size();
+                return unk;
+            }
         }
     }
     return CNoDestination();

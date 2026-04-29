@@ -751,10 +751,6 @@ const fs::path &GetBlocksDir(bool fNetSpecific)
 
     if (gArgs.IsArgSet("-blocksdir")) {
         path = fs::system_complete(gArgs.GetArg("-blocksdir", ""));
-        if (!fs::is_directory(path)) {
-            path = "";
-            return path;
-        }
     } else {
         path = GetDataDir(false);
     }
@@ -762,7 +758,9 @@ const fs::path &GetBlocksDir(bool fNetSpecific)
         path /= BaseParams().DataDir();
 
     path /= "blocks";
-    fs::create_directories(path);
+    if (!path.empty()) {
+        TryCreateDirectories(path);
+    }
     return path;
 }
 
@@ -780,19 +778,15 @@ const fs::path &GetDataDir(bool fNetSpecific)
 
     if (gArgs.IsArgSet("-datadir")) {
         path = fs::system_complete(gArgs.GetArg("-datadir", ""));
-        if (!fs::is_directory(path)) {
-            path = "";
-            return path;
-        }
     } else {
         path = GetDefaultDataDir();
     }
     if (fNetSpecific)
         path /= BaseParams().DataDir();
 
-    if (fs::create_directories(path)) {
+    if (!path.empty() && TryCreateDirectories(path)) {
         // This is the first run, create wallets subdirectory too
-        fs::create_directories(path / "wallets");
+        TryCreateDirectories(path / "wallets");
     }
 
     return path;
@@ -998,15 +992,30 @@ bool RenameOver(fs::path src, fs::path dest)
  */
 bool TryCreateDirectories(const fs::path& p)
 {
+    if (p.empty()) return false;
     try
     {
-        return fs::create_directories(p);
-    } catch (const fs::filesystem_error&) {
-        if (!fs::exists(p) || !fs::is_directory(p))
-            throw;
+        // On some systems, creating directories with trailing slashes can cause issues
+        fs::path pathClean = p;
+        if (pathClean.has_filename() && pathClean.filename() == ".") {
+            pathClean = pathClean.parent_path();
+        }
+        
+        return fs::create_directories(pathClean);
+    } catch (const fs::filesystem_error& e) {
+        if (!fs::exists(p) || !fs::is_directory(p)) {
+            // Log to stderr instead of LogPrintf to avoid potential recursion/re-entry
+            fprintf(stderr, "TryCreateDirectories: Warning: failed to create %s: %s\n", p.string().c_str(), e.what());
+            return false;
+        }
+    } catch (const std::exception& e) {
+        fprintf(stderr, "TryCreateDirectories: Warning: standard exception for %s: %s\n", p.string().c_str(), e.what());
+        return false;
+    } catch (...) {
+        fprintf(stderr, "TryCreateDirectories: Warning: unknown exception for %s\n", p.string().c_str());
+        return false;
     }
 
-    // create_directories didn't create the directory, it had to have existed already
     return false;
 }
 

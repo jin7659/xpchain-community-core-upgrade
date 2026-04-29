@@ -7,6 +7,8 @@
 
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>
+#include <secp256k1_schnorrsig.h>
+#include <secp256k1_extrakeys.h>
 
 namespace
 {
@@ -298,5 +300,35 @@ ECCVerifyHandle::~ECCVerifyHandle()
         assert(secp256k1_context_verify != nullptr);
         secp256k1_context_destroy(secp256k1_context_verify);
         secp256k1_context_verify = nullptr;
+    }
+}
+
+CPubKey XOnlyPubKey::GetCorrespondingPubKey() const
+{
+    unsigned char vch[33];
+    vch[0] = 0x02;
+    memcpy(vch + 1, m_keydata.begin(), 32);
+    CPubKey pubkey(vch, vch + 33);
+    if (!pubkey.IsFullyValid()) {
+        vch[0] = 0x03;
+        pubkey.Set(vch, vch + 33);
+    }
+    return pubkey;
+}
+
+bool XOnlyPubKey::VerifySchnorr(const uint256& hash, const std::vector<unsigned char>& sig) const
+{
+    if (!IsValid() || sig.size() != 64) return false;
+    secp256k1_xonly_pubkey pk;
+    if (!secp256k1_xonly_pubkey_parse(secp256k1_context_verify, &pk, m_keydata.begin())) return false;
+    return secp256k1_schnorrsig_verify(secp256k1_context_verify, sig.data(), hash.begin(), 32, &pk);
+}
+
+XOnlyPubKey::XOnlyPubKey(const CPubKey& pubkey)
+{
+    if (pubkey.IsCompressed()) {
+        memcpy(m_keydata.begin(), pubkey.begin() + 1, 32);
+    } else {
+        m_keydata.SetNull();
     }
 }

@@ -17,6 +17,7 @@ static const bool DEFAULT_ACCEPT_DATACARRIER = true;
 
 class CKeyID;
 class CScript;
+class XOnlyPubKey;
 
 /** A reference to a CScript: the Hash160 of its serialization (see script.h) */
 class CScriptID : public uint160
@@ -64,6 +65,7 @@ enum txnouttype
     TX_NULL_DATA, //!< unspendable OP_RETURN script that carries data
     TX_WITNESS_V0_SCRIPTHASH,
     TX_WITNESS_V0_KEYHASH,
+    TX_WITNESS_V1_TAPROOT,
     TX_WITNESS_UNKNOWN, //!< Only for Witness versions not already defined above
 };
 
@@ -86,6 +88,14 @@ struct WitnessV0KeyHash : public uint160
     WitnessV0KeyHash() : uint160() {}
     explicit WitnessV0KeyHash(const uint160& hash) : uint160(hash) {}
     using uint160::uint160;
+};
+
+struct WitnessV1Taproot : public uint256
+{
+    WitnessV1Taproot() : uint256() {}
+    explicit WitnessV1Taproot(const uint256& hash) : uint256(hash) {}
+    explicit WitnessV1Taproot(const XOnlyPubKey& xpk);
+    using uint256::uint256;
 };
 
 //! CTxDestination subtype to encode any future Witness version
@@ -120,7 +130,7 @@ struct WitnessUnknown
  *  * WitnessUnknown: TX_WITNESS_UNKNOWN destination (P2W???)
  *  A CTxDestination is the internal data type encoded in a bitcoin address
  */
-typedef boost::variant<CNoDestination, CKeyID, CScriptID, WitnessV0ScriptHash, WitnessV0KeyHash, WitnessUnknown> CTxDestination;
+typedef boost::variant<CNoDestination, CKeyID, CScriptID, WitnessV0ScriptHash, WitnessV0KeyHash, WitnessV1Taproot, WitnessUnknown> CTxDestination;
 
 /** Check whether a CTxDestination is a CNoDestination. */
 bool IsValidDestination(const CTxDestination& dest);

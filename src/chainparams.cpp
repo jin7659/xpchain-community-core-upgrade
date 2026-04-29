@@ -80,6 +80,7 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 0;
         consensus.BIP66Height = 0;
+        consensus.TaprootHeight = 3000000;
         consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 60;
@@ -193,6 +194,7 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 0;
         consensus.BIP66Height = 0;
+        consensus.TaprootHeight = 0;
         consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 60;
@@ -320,6 +322,8 @@ public:
         consensus.vDeployments[Consensus::BLOCK_SIGNATURE_ADDITION].bit = 2;
         consensus.vDeployments[Consensus::BLOCK_SIGNATURE_ADDITION].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
         consensus.vDeployments[Consensus::BLOCK_SIGNATURE_ADDITION].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
+
+        consensus.TaprootHeight = 0; // Active from genesis on regtest
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");

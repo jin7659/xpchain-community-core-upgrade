@@ -19,8 +19,10 @@
 #include <util.h>
 #include <wallet/crypter.h>
 #include <wallet/coinselection.h>
+#include <wallet/walletutil.h>
 #include <wallet/walletdb.h>
 #include <wallet/rpcwallet.h>
+#include <wallet/scriptpubkeyman.h>
 
 #include <algorithm>
 #include <atomic>
@@ -40,7 +42,8 @@ std::vector<std::shared_ptr<CWallet>> GetWallets();
 std::shared_ptr<CWallet> GetWallet(const std::string& name);
 
 //! Default for -keypool
-static const unsigned int DEFAULT_KEYPOOL_SIZE = 1000;
+// Default keypool size: defined in walletutil.h
+// (static const unsigned int DEFAULT_KEYPOOL_SIZE = 1000;)
 //! -paytxfee default
 constexpr CAmount DEFAULT_PAY_TX_FEE = 0;
 //! -fallbackfee default
@@ -75,86 +78,17 @@ class CWalletTx;
 struct FeeCalculation;
 enum class FeeEstimateMode;
 
-/** (client) version numbers for particular wallet features */
-enum WalletFeature
-{
-    FEATURE_BASE = 10500, // the earliest version new wallets supports (only useful for getwalletinfo's clientversion output)
+// WalletFeature enum, WalletFlags, DEFAULT_KEYPOOL_SIZE, and CKeyPool are
+// now defined in wallet/walletutil.h (included above).
 
-    FEATURE_WALLETCRYPT = 40000, // wallet encryption
-    FEATURE_COMPRPUBKEY = 60000, // compressed public keys
-
-    FEATURE_HD = 130000, // Hierarchical key derivation after BIP32 (HD Wallet)
-
-    FEATURE_HD_SPLIT = 139900, // Wallet with HD chain split (change outputs will use m/0'/1'/k)
-
-    FEATURE_NO_DEFAULT_KEY = 159900, // Wallet without a default key written
-
-    FEATURE_PRE_SPLIT_KEYPOOL = 169900, // Upgraded to HD SPLIT and can have a pre-split keypool
-
-    FEATURE_LATEST = FEATURE_PRE_SPLIT_KEYPOOL
-};
+// (CKeyPool is now defined in walletutil.h above)
 
 //! Default for -addresstype
-constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32};
+constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32M};
 
 //! Default for -changetype
 constexpr OutputType DEFAULT_CHANGE_TYPE{OutputType::CHANGE_AUTO};
 
-enum WalletFlags : uint64_t {
-    // wallet flags in the upper section (> 1 << 31) will lead to not opening the wallet if flag is unknown
-    // unknown wallet flags in the lower section <= (1 << 31) will be tolerated
-
-    // will enforce the rule that the wallet can't contain any private keys (only watch-only/pubkeys)
-    WALLET_FLAG_DISABLE_PRIVATE_KEYS = (1ULL << 32),
-};
-
-static constexpr uint64_t g_known_wallet_flags = WALLET_FLAG_DISABLE_PRIVATE_KEYS;
-
-/** A key pool entry */
-class CKeyPool
-{
-public:
-    int64_t nTime;
-    CPubKey vchPubKey;
-    bool fInternal; // for change outputs
-    bool m_pre_split; // For keys generated before keypool split upgrade
-
-    CKeyPool();
-    CKeyPool(const CPubKey& vchPubKeyIn, bool internalIn);
-
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
-        int nVersion = s.GetVersion();
-        if (!(s.GetType() & SER_GETHASH))
-            READWRITE(nVersion);
-        READWRITE(nTime);
-        READWRITE(vchPubKey);
-        if (ser_action.ForRead()) {
-            try {
-                READWRITE(fInternal);
-            }
-            catch (std::ios_base::failure&) {
-                /* flag as external address if we can't read the internal boolean
-                   (this will be the case for any wallet before the HD chain split version) */
-                fInternal = false;
-            }
-            try {
-                READWRITE(m_pre_split);
-            }
-            catch (std::ios_base::failure&) {
-                /* flag as postsplit address if we can't read the m_pre_split boolean
-                   (this will be the case for any wallet that upgrades to HD chain split)*/
-                m_pre_split = false;
-            }
-        }
-        else {
-            READWRITE(fInternal);
-            READWRITE(m_pre_split);
-        }
-    }
-};
 
 /** Address book data */
 class CAddressBookData
@@ -661,8 +595,11 @@ class WalletRescanReserver; //forward declarations for ScanForWalletTransactions
 /**
  * A CWallet is an extension of a keystore, which also maintains a set of transactions and balances,
  * and provides the ability to create new transactions.
+ *
+ * CWallet also implements WalletStorage to allow ScriptPubKeyMan instances
+ * to interact with the wallet database and flags without a circular dependency.
  */
-class CWallet final : public CCryptoKeyStore, public CValidationInterface
+class CWallet final : public CCryptoKeyStore, public CValidationInterface, public WalletStorage
 {
 private:
     std::atomic<bool> fAbortRescan{false};
@@ -768,6 +705,9 @@ private:
     const CBlockIndex* m_last_block_processed = nullptr;
 
     std::map<COutPoint, std::tuple<CTransactionRef, CAmount>>m_coinstaketx;
+
+    /** ScriptPubKeyMan instances — manages all keys/scripts for this wallet, mapped by their unique IDs (uint256) */
+    std::map<uint256, std::unique_ptr<ScriptPubKeyMan>> m_spk_managers;
 public:
     /*
      * Main wallet lock.
@@ -782,6 +722,32 @@ public:
     {
         return *database;
     }
+
+    // ── WalletStorage interface implementation ────────────────────────────────
+    WalletDatabase& GetDatabase() const override { return *database; }
+    bool IsWalletFlagSet(uint64_t flag) const override { return (m_wallet_flags & flag) != 0; }
+    void UnsetBlankWalletFlag(WalletBatch& batch) override;
+    bool CanSupportFeature(int feature_version) const override EXCLUSIVE_LOCKS_REQUIRED(cs_wallet) { return nWalletMaxVersion >= feature_version; }
+    void SetMinVersion(int version, WalletBatch* batch = nullptr) override {
+        SetMinVersion(static_cast<WalletFeature>(version), batch, false);
+    }
+    const CKeyingMaterial& GetEncryptionKey() const override { LOCK(cs_KeyStore); return GetMasterKey(); }
+    bool HasEncryptionKeys() const override { return !mapMasterKeys.empty(); }
+    bool IsLocked() const override { return CCryptoKeyStore::IsLocked(); }
+
+    // ── ScriptPubKeyMan access ────────────────────────────────────────────────
+    /** Returns the LegacyScriptPubKeyMan, or nullptr if not initialized */
+    LegacyScriptPubKeyMan* GetLegacyScriptPubKeyMan() const;
+    /** Sets up a legacy ScriptPubKeyMan for the wallet */
+    LegacyScriptPubKeyMan* SetupLegacyScriptPubKeyMan();
+    /** Sets up a descriptor ScriptPubKeyMan for the wallet */
+    DescriptorScriptPubKeyMan* SetupDescriptorScriptPubKeyMan();
+
+    /** Returns all ScriptPubKeyMans */
+    std::vector<ScriptPubKeyMan*> GetScriptPubKeyMans() const;
+
+    /** Returns the ScriptPubKeyMan for a given output type and internal/external flag */
+    ScriptPubKeyMan* GetScriptPubKeyMan(const OutputType& type, bool internal) const;
 
     /**
      * Select a set of coins such that nValueRet >= nTargetValue and at least
@@ -1192,16 +1158,14 @@ public:
 
     /** set a single wallet flag */
     void SetWalletFlag(uint64_t flags);
-
-    /** check if a certain wallet flag is set */
-    bool IsWalletFlagSet(uint64_t flag);
+    // Note: IsWalletFlagSet(uint64_t) is provided via WalletStorage override above
 
     /** overwrite all flags by the given uint64_t
        returns false if unknown, non-tolerable flags are present */
     bool SetWalletFlags(uint64_t overwriteFlags, bool memOnly);
 
     /** Returns a bracketed wallet name for displaying in logs, will return [default wallet] if the wallet has no name */
-    const std::string GetDisplayName() const {
+    const std::string GetDisplayName() const override {
         std::string wallet_name = GetName().length() == 0 ? "default wallet" : GetName();
         return strprintf("[%s]", wallet_name);
     };

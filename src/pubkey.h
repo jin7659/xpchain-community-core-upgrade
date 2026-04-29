@@ -24,6 +24,14 @@ public:
     explicit CKeyID(const uint160& in) : uint160(in) {}
 };
 
+/** A reference to a CKey: the Hash160 of its serialized x-only public key */
+class CXOnlyKeyID : public uint160
+{
+public:
+    CXOnlyKeyID() : uint160() {}
+    explicit CXOnlyKeyID(const uint160& in) : uint160(in) {}
+};
+
 typedef uint256 ChainCode;
 
 /** An encapsulated public key. */
@@ -201,6 +209,69 @@ public:
 
     //! Derive BIP32 child pubkey.
     bool Derive(CPubKey& pubkeyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode& cc) const;
+};
+
+/** An encapsulated x-only public key of 32 bytes. */
+class XOnlyPubKey
+{
+private:
+    uint256 m_keydata;
+
+public:
+    /** Construct an empty/invalid x-only public key. */
+    XOnlyPubKey() { m_keydata.SetNull(); }
+
+    /** Construct an x-only public key from a 32-byte data. */
+    explicit XOnlyPubKey(const uint256& keydata) : m_keydata(keydata) {}
+
+    /** Construct an x-only public key from a CPubKey. */
+    explicit XOnlyPubKey(const CPubKey& pubkey);
+
+    /** Initialize an x-only public key using begin/end iterators to byte data. */
+    template <typename T>
+    XOnlyPubKey(const T pbegin, const T pend)
+    {
+        if (pend - pbegin != 32) {
+            m_keydata.SetNull();
+        } else {
+            memcpy(m_keydata.begin(), (unsigned char*)&pbegin[0], 32);
+        }
+    }
+
+    /** Construct an x-only public key from a byte vector. */
+    explicit XOnlyPubKey(const std::vector<unsigned char>& vch) : XOnlyPubKey(vch.begin(), vch.end()) {}
+
+    CPubKey GetCorrespondingPubKey() const;
+
+    bool IsValid() const { return !m_keydata.IsNull(); }
+
+    bool VerifySchnorr(const uint256& hash, const std::vector<unsigned char>& sig) const;
+
+    CXOnlyKeyID GetID() const
+    {
+        return CXOnlyKeyID(Hash160(m_keydata.begin(), m_keydata.end()));
+    }
+
+    const unsigned char* begin() const { return m_keydata.begin(); }
+    const unsigned char* end() const { return m_keydata.end(); }
+    const unsigned char* data() const { return m_keydata.begin(); }
+    unsigned int size() const { return 32; }
+
+    friend bool operator==(const XOnlyPubKey& a, const XOnlyPubKey& b) { return a.m_keydata == b.m_keydata; }
+    friend bool operator!=(const XOnlyPubKey& a, const XOnlyPubKey& b) { return a.m_keydata != b.m_keydata; }
+    friend bool operator<(const XOnlyPubKey& a, const XOnlyPubKey& b) { return a.m_keydata < b.m_keydata; }
+
+    /** Implement serialization, as if this was a 32-byte vector. */
+    template <typename Stream>
+    void Serialize(Stream& s) const
+    {
+        s.write((char*)m_keydata.begin(), 32);
+    }
+    template <typename Stream>
+    void Unserialize(Stream& s)
+    {
+        s.read((char*)m_keydata.begin(), 32);
+    }
 };
 
 struct CExtPubKey {

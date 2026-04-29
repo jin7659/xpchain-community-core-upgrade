@@ -2123,9 +2123,10 @@ UniValue scantxoutset(const JSONRPCRequest& request)
             }
 
             FlatSigningProvider provider;
-            auto desc = Parse(desc_str, provider);
+            std::string error;
+            auto desc = Parse(desc_str, provider, error);
             if (!desc) {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("Invalid descriptor '%s'", desc_str));
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("Invalid descriptor '%s': %s", desc_str, error));
             }
             if (!desc->IsRange()) range = 0;
             for (int i = 0; i <= range; ++i) {

@@ -102,6 +102,9 @@ private:
 
     QMenuBar* appMenuBar = nullptr;
     QToolBar* appToolBar = nullptr;
+    QAction *createWalletAction = nullptr;
+    QAction *openWalletAction = nullptr;
+    QAction *backupAllWalletsAction = nullptr;
     QAction* overviewAction = nullptr;
     QAction* historyAction = nullptr;
     QAction* quitAction = nullptr;
@@ -250,6 +253,12 @@ private Q_SLOTS:
     void showDebugWindow();
     /** Show debug window and set focus to the console */
     void showDebugWindowActivateConsole();
+    /** Create a new wallet */
+    void createWallet();
+    /** Open a wallet */
+    void openWallet();
+    /** Backup all wallets */
+    void backupAllWallets();
     /** Show help message dialog */
     void showHelpMessageClicked();
 #ifndef Q_OS_MAC

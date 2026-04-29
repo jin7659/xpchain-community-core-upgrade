@@ -953,9 +953,42 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                 }
                 break;
 
+                case OP_CHECKSIGADD:
+                {
+                    if (sigversion != SigVersion::TAPSCRIPT)
+                        return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
+
+                    // (sig num pubkey -- num+1/num)
+                    if (stack.size() < 3)
+                        return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
+
+                    valtype& vchSig    = stacktop(-3);
+                    CScriptNum n(stacktop(-2), fRequireMinimal);
+                    valtype& vchPubKey = stacktop(-1);
+
+                    CScript scriptCode(pbegincodehash, pend);
+
+                    if (!CheckSignatureEncoding(vchSig, flags, serror) || !CheckPubKeyEncoding(vchPubKey, flags, sigversion, serror)) {
+                        return false;
+                    }
+
+                    bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion);
+                    if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) && vchSig.size())
+                        return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
+
+                    popstack(stack);
+                    popstack(stack);
+                    popstack(stack);
+                    stack.push_back((n + (fSuccess ? 1 : 0)).getvch());
+                }
+                break;
+
                 case OP_CHECKMULTISIG:
                 case OP_CHECKMULTISIGVERIFY:
                 {
+                    if (sigversion == SigVersion::TAPSCRIPT)
+                        return set_error(serror, SCRIPT_ERR_TAPSCRIPT_CHECKMULTISIG);
+
                     // ([sig ...] num_of_signatures [pubkey ...] num_of_pubkeys -- bool)
 
                     int i = 1;
@@ -1183,33 +1216,57 @@ public:
 };
 
 template <class T>
-uint256 GetPrevoutHash(const T& txTo)
+uint256 GetPrevoutHash(const T& txTo, bool fSingleHash = false)
 {
-    CHashWriter ss(SER_GETHASH, 0);
-    for (const auto& txin : txTo.vin) {
-        ss << txin.prevout;
+    if (fSingleHash) {
+        CSHA256Writer ss(SER_GETHASH, 0);
+        for (const auto& txin : txTo.vin) {
+            ss << txin.prevout;
+        }
+        return ss.GetHash();
+    } else {
+        CHashWriter ss(SER_GETHASH, 0);
+        for (const auto& txin : txTo.vin) {
+            ss << txin.prevout;
+        }
+        return ss.GetHash();
     }
-    return ss.GetHash();
 }
 
 template <class T>
-uint256 GetSequenceHash(const T& txTo)
+uint256 GetSequenceHash(const T& txTo, bool fSingleHash = false)
 {
-    CHashWriter ss(SER_GETHASH, 0);
-    for (const auto& txin : txTo.vin) {
-        ss << txin.nSequence;
+    if (fSingleHash) {
+        CSHA256Writer ss(SER_GETHASH, 0);
+        for (const auto& txin : txTo.vin) {
+            ss << txin.nSequence;
+        }
+        return ss.GetHash();
+    } else {
+        CHashWriter ss(SER_GETHASH, 0);
+        for (const auto& txin : txTo.vin) {
+            ss << txin.nSequence;
+        }
+        return ss.GetHash();
     }
-    return ss.GetHash();
 }
 
 template <class T>
-uint256 GetOutputsHash(const T& txTo)
+uint256 GetOutputsHash(const T& txTo, bool fSingleHash = false)
 {
-    CHashWriter ss(SER_GETHASH, 0);
-    for (const auto& txout : txTo.vout) {
-        ss << txout;
+    if (fSingleHash) {
+        CSHA256Writer ss(SER_GETHASH, 0);
+        for (const auto& txout : txTo.vout) {
+            ss << txout;
+        }
+        return ss.GetHash();
+    } else {
+        CHashWriter ss(SER_GETHASH, 0);
+        for (const auto& txout : txTo.vout) {
+            ss << txout;
+        }
+        return ss.GetHash();
     }
-    return ss.GetHash();
 }
 
 } // namespace
@@ -1224,16 +1281,130 @@ PrecomputedTransactionData::PrecomputedTransactionData(const T& txTo)
         hashOutputs = GetOutputsHash(txTo);
         ready = true;
     }
+    m_taproot_ready = false; // Need separate Init for Taproot
+}
+
+template <class T>
+void PrecomputedTransactionData::Init(const T& tx, std::vector<CTxOut>&& spent_outputs)
+{
+    ready = true;
+    hashPrevouts = GetPrevoutHash(tx);
+    hashSequence = GetSequenceHash(tx);
+    hashOutputs = GetOutputsHash(tx);
+    InitTaproot(tx, std::move(spent_outputs));
+}
+
+template <class T>
+void PrecomputedTransactionData::InitTaproot(const T& tx, std::vector<CTxOut>&& spent_outputs)
+{
+    if (spent_outputs.size() != tx.vin.size()) {
+        m_taproot_ready = false;
+        return;
+    }
+    
+    CSHA256Writer ss_amounts(SER_GETHASH, 0);
+    CSHA256Writer ss_scripts(SER_GETHASH, 0);
+    for (const auto& out : spent_outputs) {
+        ss_amounts << out.nValue;
+        ss_scripts << out.scriptPubKey;
+    }
+    hashSpentAmounts = ss_amounts.GetHash();
+    hashSpentScripts = ss_scripts.GetHash();
+
+    CSHA256Writer ss_prevouts(SER_GETHASH, 0);
+    for (const auto& input : tx.vin) {
+        ss_prevouts << input.prevout;
+    }
+    m_taproot_hash_prevouts = ss_prevouts.GetHash();
+
+    CSHA256Writer ss_sequence(SER_GETHASH, 0);
+    for (const auto& input : tx.vin) {
+        ss_sequence << input.nSequence;
+    }
+    m_taproot_hash_sequence = ss_sequence.GetHash();
+
+    CSHA256Writer ss_outputs(SER_GETHASH, 0);
+    for (const auto& output : tx.vout) {
+        ss_outputs << output;
+    }
+    m_taproot_hash_outputs = ss_outputs.GetHash();
+
+    m_taproot_ready = true;
 }
 
 // explicit instantiation
 template PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo);
 template PrecomputedTransactionData::PrecomputedTransactionData(const CMutableTransaction& txTo);
+template void PrecomputedTransactionData::Init(const CTransaction& tx, std::vector<CTxOut>&& spent_outputs);
+template void PrecomputedTransactionData::Init(const CMutableTransaction& tx, std::vector<CTxOut>&& spent_outputs);
+template void PrecomputedTransactionData::InitTaproot(const CTransaction& tx, std::vector<CTxOut>&& spent_outputs);
+template void PrecomputedTransactionData::InitTaproot(const CMutableTransaction& tx, std::vector<CTxOut>&& spent_outputs);
+
+template <size_t N>
+static uint256 TaggedHash(const char (&tag)[N], const unsigned char* data, size_t size) {
+    CHashWriter ss(SER_GETHASH, 0);
+    uint256 taghash;
+    CSHA256().Write((const unsigned char*)tag, N - 1).Finalize(taghash.begin());
+    ss << taghash << taghash;
+    ss.write((const char*)data, size);
+    return ss.GetHash();
+}
 
 template <class T>
 uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache)
 {
     assert(nIn < txTo.vin.size());
+
+    if (sigversion == SigVersion::TAPROOT || sigversion == SigVersion::TAPSCRIPT) {
+        CSHA256Writer ss(SER_GETHASH, 0);
+        // Tagged hash: TapSighash
+        uint256 taghash;
+        CSHA256().Write((const unsigned char*)"TapSighash", 10).Finalize(taghash.begin());
+        ss << taghash << taghash;
+
+        ss.write("\0", 1); // epoch
+        ss.write((const char*)&nHashType, 1);
+        
+        ss << txTo.nVersion;
+        ss << txTo.nLockTime;
+
+        if (!(nHashType & SIGHASH_ANYONECANPAY)) {
+            ss << (cache ? cache->m_taproot_hash_prevouts : GetPrevoutHash(txTo, true));
+            ss << (cache ? cache->hashSpentAmounts : uint256());
+            ss << (cache ? cache->hashSpentScripts : uint256());
+            ss << (cache ? cache->m_taproot_hash_sequence : GetSequenceHash(txTo, true));
+        }
+
+        if (!((nHashType & 0x03) == SIGHASH_NONE || (nHashType & 0x03) == SIGHASH_SINGLE)) {
+            ss << (cache ? cache->m_taproot_hash_outputs : GetOutputsHash(txTo, true));
+        }
+
+        // spend_type = (ext_flag << 1) + annex_present
+        // For KeyPath, ext_flag is 0. No annex support for now.
+        unsigned char spend_type = (sigversion == SigVersion::TAPSCRIPT ? 1 : 0) << 1;
+        ss.write((const char*)&spend_type, 1);
+
+        if (nHashType & SIGHASH_ANYONECANPAY) {
+            ss << txTo.vin[nIn].prevout;
+            ss << amount;
+            ss << scriptCode;
+            ss << txTo.vin[nIn].nSequence;
+        } else {
+            ss << (uint32_t)nIn;
+        }
+
+        if ((nHashType & 0x03) == SIGHASH_SINGLE) {
+            if (nIn < txTo.vout.size()) {
+                CHashWriter ss_out(SER_GETHASH, 0);
+                ss_out << txTo.vout[nIn];
+                ss << ss_out.GetHash();
+            } else {
+                ss << uint256();
+            }
+        }
+
+        return ss.GetHash();
+    }
 
     if (sigversion == SigVersion::WITNESS_V0) {
         uint256 hashPrevouts;
@@ -1309,6 +1480,27 @@ bool GenericTransactionSignatureChecker<T>::VerifySignature(const std::vector<un
 template <class T>
 bool GenericTransactionSignatureChecker<T>::CheckSig(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
 {
+    if (sigversion == SigVersion::TAPROOT || sigversion == SigVersion::TAPSCRIPT) {
+        if (vchSigIn.empty()) return false;
+        
+        std::vector<unsigned char> vchSig(vchSigIn);
+        int nHashType = 0; // SIGHASH_DEFAULT
+        if (vchSig.size() == 65) {
+            nHashType = vchSig.back();
+            vchSig.pop_back();
+            if (nHashType == 0) return false; // BIP341: SIGHASH_DEFAULT(0x00) is only allowed for 64-byte sigs
+        } else if (vchSig.size() != 64) {
+            return false;
+        }
+        
+        // nHashType 0x00 is allowed and means SIGHASH_ALL in BIP341
+        // But 65th byte cannot be 0x00.
+        
+        uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata);
+        XOnlyPubKey xpubkey(vchPubKey);
+        return xpubkey.VerifySchnorr(sighash, vchSig);
+    }
+
     CPubKey pubkey(vchPubKey);
     if (!pubkey.IsValid())
         return false;
@@ -1444,6 +1636,27 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
         } else {
             return set_error(serror, SCRIPT_ERR_WITNESS_PROGRAM_WRONG_LENGTH);
         }
+    } else if (witversion == 1 && program.size() == 32 && (flags & SCRIPT_VERIFY_TAPROOT)) {
+        if (witness.stack.size() == 0) {
+            return set_error(serror, SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY);
+        }
+        if (witness.stack.size() == 1) {
+            // Key path spending
+            if (witness.stack[0].size() == 0) return set_error(serror, SCRIPT_ERR_SCHNORR_SIG_SIZE);
+            // In Taproot key path, scriptCode is empty.
+            if (!checker.CheckSig(witness.stack[0], program, CScript(), SigVersion::TAPROOT)) {
+                return set_error(serror, SCRIPT_ERR_SCHNORR_SIG_PROVERR);
+            }
+            return true;
+        }
+        // Script path spending - Control Block validation
+        // The last item is the Control Block
+        const std::vector<unsigned char>& control_block = witness.stack.back();
+        if (control_block.size() < 33 || (control_block.size() - 33) % 32 != 0) {
+            return set_error(serror, SCRIPT_ERR_TAPROOT_WRONG_CONTROL_BLOCK);
+        }
+        // For now, only Key Path is fully supported. Script path requires more work.
+        return set_error(serror, SCRIPT_ERR_TAPROOT_WRONG_CONTROL_BLOCK);
     } else if (flags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM) {
         return set_error(serror, SCRIPT_ERR_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM);
     } else {

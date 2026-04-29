@@ -138,6 +138,28 @@ IsMineResult IsMineInner(const CKeyStore& keystore, const CScript& scriptPubKey,
         break;
     }
 
+    case TX_WITNESS_V1_TAPROOT:
+    {
+        if (sigversion != IsMineSigVersion::TOP) {
+            return IsMineResult::INVALID;
+        }
+        // Construct the 33-byte compressed pubkey (X-only + parity bit)
+        // Try both parity 0x02 and 0x03
+        unsigned char vch[33];
+        memcpy(vch + 1, vSolutions[0].data(), 32);
+        
+        vch[0] = 0x02;
+        if (keystore.HaveKey(CPubKey(vch, vch + 33).GetID())) {
+            ret = std::max(ret, IsMineResult::SPENDABLE);
+        } else {
+            vch[0] = 0x03;
+            if (keystore.HaveKey(CPubKey(vch, vch + 33).GetID())) {
+                ret = std::max(ret, IsMineResult::SPENDABLE);
+            }
+        }
+        break;
+    }
+
     case TX_MULTISIG:
     {
         // Never treat bare multisig outputs as ours (they can still be made watchonly-though)

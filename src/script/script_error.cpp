@@ -93,6 +93,30 @@ const char* ScriptErrorString(const ScriptError serror)
             return "Using OP_CODESEPARATOR in non-witness script";
         case SCRIPT_ERR_SIG_FINDANDDELETE:
             return "Signature is found in scriptCode";
+        case SCRIPT_ERR_SCHNORR_SIG_SIZE:
+            return "Invalid Schnorr signature size";
+        case SCRIPT_ERR_SCHNORR_SIG_HASHTYPE:
+            return "Invalid Schnorr signature hash type";
+        case SCRIPT_ERR_SCHNORR_SIG_PROVERR:
+            return "Schnorr signature verification failed";
+        case SCRIPT_ERR_SCHNORR_SIG:
+            return "Invalid Schnorr signature";
+        case SCRIPT_ERR_TAPROOT_WRONG_CONTROL_BLOCK:
+            return "Invalid Taproot control block";
+        case SCRIPT_ERR_TAPSCRIPT_VALIDATION_WEIGHT:
+            return "Too much signature validation relative to witness weight";
+        case SCRIPT_ERR_TAPSCRIPT_CHECKMULTISIG:
+            return "OP_CHECKMULTISIG(VERIFY) is not allowed in tapscript";
+        case SCRIPT_ERR_TAPSCRIPT_MINIMALIF:
+            return "OP_IF/NOTIF argument must be minimal in tapscript";
+        case SCRIPT_ERR_OP_SUCCESS:
+            return "OP_SUCCESSx reserved for soft-fork upgrades";
+        case SCRIPT_ERR_DISCOURAGE_OP_SUCCESS:
+            return "OP_SUCCESSx reserved for soft-fork upgrades";
+        case SCRIPT_ERR_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION:
+            return "Taproot version reserved for soft-fork upgrades";
+        case SCRIPT_ERR_DISCOURAGE_UPGRADABLE_PUBKEYTYPE:
+            return "Public key version reserved for soft-fork upgrades";
         case SCRIPT_ERR_UNKNOWN_ERROR:
         case SCRIPT_ERR_ERROR_COUNT:
         default: break;

@@ -22,6 +22,7 @@ enum DeploymentPos
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
 
     DEPLOYMENT_CHECK_DUP_TXIN,
+    DEPLOYMENT_TAPROOT,
     MAX_VERSION_BITS_DEPLOYMENTS
 };
 
@@ -61,6 +62,8 @@ struct Params {
     int BIP65Height;
     /** Block height at which BIP66 becomes active */
     int BIP66Height;
+    /** Block height at which Taproot (BIP341, BIP342) becomes active */
+    int TaprootHeight;
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.

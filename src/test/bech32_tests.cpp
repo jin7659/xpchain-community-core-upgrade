@@ -35,8 +35,8 @@ BOOST_AUTO_TEST_CASE(bip173_testvectors_valid)
     };
     for (const std::string& str : CASES) {
         auto ret = bech32::Decode(str);
-        BOOST_CHECK(!ret.first.empty());
-        std::string recode = bech32::Encode(ret.first, ret.second);
+        BOOST_CHECK(ret.encoding != Encoding::INVALID);
+        std::string recode = bech32::Encode(ret.encoding, ret.hrp, ret.data);
         BOOST_CHECK(!recode.empty());
         BOOST_CHECK(CaseInsensitiveEqual(str, recode));
     }
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(bip173_testvectors_invalid)
     };
     for (const std::string& str : CASES) {
         auto ret = bech32::Decode(str);
-        BOOST_CHECK(ret.first.empty());
+        BOOST_CHECK(ret.encoding == Encoding::INVALID);
     }
 }
 

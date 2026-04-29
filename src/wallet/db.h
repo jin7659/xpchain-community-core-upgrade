@@ -25,6 +25,61 @@
 static const unsigned int DEFAULT_WALLET_DBLOGSIZE = 100;
 static const bool DEFAULT_WALLET_PRIVDB = true;
 
+/** 데이터베이스 레코드 탐색을 위한 추상 커서 */
+class DatabaseCursor
+{
+public:
+    virtual ~DatabaseCursor() {}
+    virtual int Read(CDataStream& ssKey, CDataStream& ssValue) = 0;
+};
+
+/** 지갑 데이터를 읽고 쓰기 위한 트랜잭션/배치 추상 인터페이스 */
+class DatabaseBatch
+{
+public:
+    virtual ~DatabaseBatch() {}
+
+    virtual void Flush() = 0;
+    virtual void Close() = 0;
+
+    virtual bool ReadKey(CDataStream&& key, CDataStream& value) = 0;
+    virtual bool WriteKey(CDataStream&& key, CDataStream&& value, bool overwrite = true) = 0;
+    virtual bool EraseKey(CDataStream&& key) = 0;
+    virtual bool HasKey(CDataStream&& key) = 0;
+
+    /** 커서 생성 및 데이터 탐색 */
+    virtual std::unique_ptr<DatabaseCursor> GetCursor() = 0;
+
+    /** 트랜잭션 관리 */
+    virtual bool TxnBegin() = 0;
+    virtual bool TxnCommit() = 0;
+    virtual bool TxnAbort() = 0;
+};
+
+/** 지갑 데이터베이스 엔진(BDB, SQLite)을 위한 추상 인터페이스 */
+class WalletDatabase
+{
+public:
+    virtual ~WalletDatabase() {}
+
+    virtual void Open() = 0;
+    virtual void Close() = 0;
+    virtual void Flush() = 0;
+    virtual bool Backup(const std::string& strDest) const = 0;
+    virtual bool Rewrite(const char* pszSkip = nullptr) = 0;
+    virtual bool PeriodicFlush() = 0;
+    virtual void IncrementUpdateCounter() = 0;
+
+    virtual std::string Filename() = 0;
+    virtual std::string Format() = 0;
+    virtual std::unique_ptr<DatabaseBatch> MakeBatch(bool flush_on_close = true) = 0;
+    
+    std::atomic<unsigned int> nUpdateCounter{0};
+    unsigned int nLastSeen{0};
+    unsigned int nLastFlushed{0};
+    int64_t nLastWalletUpdate{0};
+};
+
 class BerkeleyEnvironment
 {
 private:
@@ -92,18 +147,17 @@ BerkeleyEnvironment* GetWalletEnv(const fs::path& wallet_path, std::string& data
 /** An instance of this class represents one database.
  * For BerkeleyDB this is just a (env, strFile) tuple.
  **/
-class BerkeleyDatabase
+class BerkeleyDatabase : public WalletDatabase
 {
     friend class BerkeleyBatch;
 public:
     /** Create dummy DB handle */
-    BerkeleyDatabase() : nUpdateCounter(0), nLastSeen(0), nLastFlushed(0), nLastWalletUpdate(0), env(nullptr)
+    BerkeleyDatabase() : env(nullptr)
     {
     }
 
     /** Create DB handle to real database */
-    BerkeleyDatabase(const fs::path& wallet_path, bool mock = false) :
-        nUpdateCounter(0), nLastSeen(0), nLastFlushed(0), nLastWalletUpdate(0)
+    BerkeleyDatabase(const fs::path& wallet_path, bool mock = false)
     {
         env = GetWalletEnv(wallet_path, strFile);
         if (mock) {
@@ -131,24 +185,18 @@ public:
         return MakeUnique<BerkeleyDatabase>("", true /* mock */);
     }
 
-    /** Rewrite the entire database on disk, with the exception of key pszSkip if non-zero
-     */
-    bool Rewrite(const char* pszSkip=nullptr);
+    void Open() override;
+    void Close() override;
+    void Flush() override;
+    bool Backup(const std::string& strDest) const override;
+    bool Rewrite(const char* pszSkip = nullptr) override;
+    bool PeriodicFlush() override;
+    void IncrementUpdateCounter() override;
 
-    /** Back up the entire database to a file.
-     */
-    bool Backup(const std::string& strDest);
+    std::string Filename() override { return strFile; }
+    std::string Format() override { return "berkeley"; }
+    std::unique_ptr<DatabaseBatch> MakeBatch(bool flush_on_close = true) override;
 
-    /** Make sure all changes are flushed to disk.
-     */
-    void Flush(bool shutdown);
-
-    void IncrementUpdateCounter();
-
-    std::atomic<unsigned int> nUpdateCounter;
-    unsigned int nLastSeen;
-    unsigned int nLastFlushed;
-    int64_t nLastWalletUpdate;
 
 private:
     /** BerkeleyDB specific */
@@ -159,12 +207,12 @@ private:
      * Only to be used at a low level, application should ideally not care
      * about this.
      */
-    bool IsDummy() { return env == nullptr; }
+    bool IsDummy() const { return env == nullptr; }
 };
 
 
 /** RAII class that provides access to a Berkeley database */
-class BerkeleyBatch
+class BerkeleyBatch : public DatabaseBatch
 {
 protected:
     Db* pdb;
@@ -181,8 +229,15 @@ public:
     BerkeleyBatch(const BerkeleyBatch&) = delete;
     BerkeleyBatch& operator=(const BerkeleyBatch&) = delete;
 
-    void Flush();
-    void Close();
+    void Flush() override;
+    void Close() override;
+
+    bool ReadKey(CDataStream&& key, CDataStream& value) override;
+    bool WriteKey(CDataStream&& key, CDataStream&& value, bool overwrite = true) override;
+    bool EraseKey(CDataStream&& key) override;
+    bool HasKey(CDataStream&& key) override;
+    std::unique_ptr<DatabaseCursor> GetCursor() override;
+
     static bool Recover(const fs::path& file_path, void *callbackDataIn, bool (*recoverKVcallback)(void* callbackData, CDataStream ssKey, CDataStream ssValue), std::string& out_backup_filename);
 
     /* flush the wallet passively (TRY_LOCK)
@@ -193,161 +248,9 @@ public:
     /* verifies the database file */
     static bool VerifyDatabaseFile(const fs::path& file_path, std::string& warningStr, std::string& errorStr, BerkeleyEnvironment::recoverFunc_type recoverFunc);
 
-public:
-    template <typename K, typename T>
-    bool Read(const K& key, T& value)
-    {
-        if (!pdb)
-            return false;
-
-        // Key
-        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-        ssKey.reserve(1000);
-        ssKey << key;
-        Dbt datKey(ssKey.data(), ssKey.size());
-
-        // Read
-        Dbt datValue;
-        datValue.set_flags(DB_DBT_MALLOC);
-        int ret = pdb->get(activeTxn, &datKey, &datValue, 0);
-        memory_cleanse(datKey.get_data(), datKey.get_size());
-        bool success = false;
-        if (datValue.get_data() != nullptr) {
-            // Unserialize value
-            try {
-                CDataStream ssValue((char*)datValue.get_data(), (char*)datValue.get_data() + datValue.get_size(), SER_DISK, CLIENT_VERSION);
-                ssValue >> value;
-                success = true;
-            } catch (const std::exception&) {
-                // In this case success remains 'false'
-            }
-
-            // Clear and free memory
-            memory_cleanse(datValue.get_data(), datValue.get_size());
-            free(datValue.get_data());
-        }
-        return ret == 0 && success;
-    }
-
-    template <typename K, typename T>
-    bool Write(const K& key, const T& value, bool fOverwrite = true)
-    {
-        if (!pdb)
-            return true;
-        if (fReadOnly)
-            assert(!"Write called on database in read-only mode");
-
-        // Key
-        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-        ssKey.reserve(1000);
-        ssKey << key;
-        Dbt datKey(ssKey.data(), ssKey.size());
-
-        // Value
-        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
-        ssValue.reserve(10000);
-        ssValue << value;
-        Dbt datValue(ssValue.data(), ssValue.size());
-
-        // Write
-        int ret = pdb->put(activeTxn, &datKey, &datValue, (fOverwrite ? 0 : DB_NOOVERWRITE));
-
-        // Clear memory in case it was a private key
-        memory_cleanse(datKey.get_data(), datKey.get_size());
-        memory_cleanse(datValue.get_data(), datValue.get_size());
-        return (ret == 0);
-    }
-
-    template <typename K>
-    bool Erase(const K& key)
-    {
-        if (!pdb)
-            return false;
-        if (fReadOnly)
-            assert(!"Erase called on database in read-only mode");
-
-        // Key
-        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-        ssKey.reserve(1000);
-        ssKey << key;
-        Dbt datKey(ssKey.data(), ssKey.size());
-
-        // Erase
-        int ret = pdb->del(activeTxn, &datKey, 0);
-
-        // Clear memory
-        memory_cleanse(datKey.get_data(), datKey.get_size());
-        return (ret == 0 || ret == DB_NOTFOUND);
-    }
-
-    template <typename K>
-    bool Exists(const K& key)
-    {
-        if (!pdb)
-            return false;
-
-        // Key
-        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-        ssKey.reserve(1000);
-        ssKey << key;
-        Dbt datKey(ssKey.data(), ssKey.size());
-
-        // Exists
-        int ret = pdb->exists(activeTxn, &datKey, 0);
-
-        // Clear memory
-        memory_cleanse(datKey.get_data(), datKey.get_size());
-        return (ret == 0);
-    }
-
-    Dbc* GetCursor()
-    {
-        if (!pdb)
-            return nullptr;
-        Dbc* pcursor = nullptr;
-        int ret = pdb->cursor(nullptr, &pcursor, 0);
-        if (ret != 0)
-            return nullptr;
-        return pcursor;
-    }
-
-    int ReadAtCursor(Dbc* pcursor, CDataStream& ssKey, CDataStream& ssValue, bool setRange = false)
-    {
-        // Read at cursor
-        Dbt datKey;
-        unsigned int fFlags = DB_NEXT;
-        if (setRange) {
-            datKey.set_data(ssKey.data());
-            datKey.set_size(ssKey.size());
-            fFlags = DB_SET_RANGE;
-        }
-        Dbt datValue;
-        datKey.set_flags(DB_DBT_MALLOC);
-        datValue.set_flags(DB_DBT_MALLOC);
-        int ret = pcursor->get(&datKey, &datValue, fFlags);
-        if (ret != 0)
-            return ret;
-        else if (datKey.get_data() == nullptr || datValue.get_data() == nullptr)
-            return 99999;
-
-        // Convert to streams
-        ssKey.SetType(SER_DISK);
-        ssKey.clear();
-        ssKey.write((char*)datKey.get_data(), datKey.get_size());
-        ssValue.SetType(SER_DISK);
-        ssValue.clear();
-        ssValue.write((char*)datValue.get_data(), datValue.get_size());
-
-        // Clear and free memory
-        memory_cleanse(datKey.get_data(), datKey.get_size());
-        memory_cleanse(datValue.get_data(), datValue.get_size());
-        free(datKey.get_data());
-        free(datValue.get_data());
-        return 0;
-    }
 
 public:
-    bool TxnBegin()
+    bool TxnBegin() override
     {
         if (!pdb || activeTxn)
             return false;
@@ -358,7 +261,7 @@ public:
         return true;
     }
 
-    bool TxnCommit()
+    bool TxnCommit() override
     {
         if (!pdb || !activeTxn)
             return false;
@@ -367,7 +270,7 @@ public:
         return (ret == 0);
     }
 
-    bool TxnAbort()
+    bool TxnAbort() override
     {
         if (!pdb || !activeTxn)
             return false;
@@ -376,18 +279,21 @@ public:
         return (ret == 0);
     }
 
-    bool ReadVersion(int& nVersion)
-    {
-        nVersion = 0;
-        return Read(std::string("version"), nVersion);
-    }
-
-    bool WriteVersion(int nVersion)
-    {
-        return Write(std::string("version"), nVersion);
-    }
-
     bool static Rewrite(BerkeleyDatabase& database, const char* pszSkip = nullptr);
+};
+
+/** 지갑 경로와 플래그에 따라 적절한 데이터베이스 엔진을 생성하는 팩토리 함수 */
+std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint64_t wallet_creation_flags = 0);
+
+/** BerkeleyDB 커서 구현체 */
+class BerkeleyCursor : public DatabaseCursor
+{
+private:
+    Dbc* m_cursor;
+public:
+    BerkeleyCursor(Dbc* cursor) : m_cursor(cursor) {}
+    ~BerkeleyCursor() { if (m_cursor) m_cursor->close(); }
+    int Read(CDataStream& ssKey, CDataStream& ssValue) override;
 };
 
 #endif // BITCOIN_WALLET_DB_H

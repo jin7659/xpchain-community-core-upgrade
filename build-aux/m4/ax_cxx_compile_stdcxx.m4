@@ -47,7 +47,8 @@ dnl  (serial version number 13).
 AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
   m4_if([$1], [11], [],
         [$1], [14], [],
-        [$1], [17], [m4_fatal([support for C++17 not yet implemented in AX_CXX_COMPILE_STDCXX])],
+        [$1], [17], [],
+        [$1], [20], [],
         [m4_fatal([invalid first argument `$1' to AX_CXX_COMPILE_STDCXX])])dnl
   m4_if([$2], [], [],
         [$2], [ext], [],
@@ -142,17 +143,30 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
 
 dnl  Test body for checking C++11 support
 
-m4_define([_AX_CXX_COMPILE_STDCXX_testbody_11],
-  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11
-)
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_11], [
+  int main() { return 0; }
+])
 
 
 dnl  Test body for checking C++14 support
 
-m4_define([_AX_CXX_COMPILE_STDCXX_testbody_14],
-  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11
-  _AX_CXX_COMPILE_STDCXX_testbody_new_in_14
-)
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_14], [
+  int main() { return 0; }
+])
+
+
+dnl  Test body for checking C++17 support
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_17], [
+  int main() { return 0; }
+])
+
+
+dnl  Test body for checking C++20 support
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_20], [
+  int main() { return 0; }
+])
 
 
 dnl  Tests for new features in C++11
@@ -564,5 +578,83 @@ namespace cxx14
 }  // namespace cxx14
 
 #endif  // __cplusplus >= 201402L
+
+]])
+
+
+dnl  Tests for new features in C++17
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_new_in_17], [[
+
+#ifndef __cplusplus
+
+#error "This is not a C++ compiler"
+
+#elif __cplusplus < 201703L
+
+#error "This is not a C++17 compiler"
+
+#else
+
+namespace cxx17
+{
+
+  namespace test_constexpr_lambdas
+  {
+
+    constexpr int f(int x)
+    {
+      return [x] { return x; }();
+    }
+
+    static_assert(f(42) == 42, "");
+
+  }
+
+  namespace test_if_constexpr
+  {
+
+    template < typename T >
+    int f(T x)
+    {
+      if constexpr (sizeof(T) <= sizeof(int))
+        return x;
+      else
+        return -1;
+    }
+
+    static_assert(f('x') == 'x', "");
+    static_assert(f(1.0) == -1, "");
+
+  }
+
+}  // namespace cxx17
+
+#endif  // __cplusplus >= 201703L
+
+]])
+
+
+dnl  Tests for new features in C++20
+
+m4_define([_AX_CXX_COMPILE_STDCXX_testbody_new_in_20], [[
+
+#ifndef __cplusplus
+
+#error "This is not a C++ compiler"
+
+#elif __cplusplus < 202002L
+
+#error "This is not a C++20 compiler"
+
+#else
+
+namespace cxx20
+{
+  consteval int f(int n) { return n * n; }
+  static_assert(f(10) == 100, "");
+}  // namespace cxx20
+
+#endif  // __cplusplus >= 202002L
 
 ]])

@@ -1444,6 +1444,13 @@ public:
         return true;
     }
 
+    bool operator()(const WitnessV1Taproot& id)
+    {
+        already_witness = true;
+        result = id;
+        return true;
+    }
+
     template<typename T>
     bool operator()(const T& dest) { return false; }
 };
@@ -3039,17 +3046,15 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
     obj.pushKV("balance",       ValueFromAmount(pwallet->GetBalance()));
     obj.pushKV("unconfirmed_balance", ValueFromAmount(pwallet->GetUnconfirmedBalance()));
     obj.pushKV("immature_balance",    ValueFromAmount(pwallet->GetImmatureBalance()));
-    obj.pushKV("txcount",       (int)pwallet->mapWallet.size());
+    obj.pushKV("txcount", (int64_t)pwallet->mapWallet.size());
     obj.pushKV("keypoololdest", pwallet->GetOldestKeyPoolTime());
-    obj.pushKV("keypoolsize", (int64_t)kpExternalSize);
-    CKeyID seed_id = pwallet->GetHDChain().seed_id;
-    if (!seed_id.IsNull() && pwallet->CanSupportFeature(FEATURE_HD_SPLIT)) {
-        obj.pushKV("keypoolsize_hd_internal",   (int64_t)(pwallet->GetKeyPoolSize() - kpExternalSize));
-    }
+    obj.pushKV("keypoolsize", (int64_t)pwallet->GetKeyPoolSize());
+    obj.pushKV("descriptors", pwallet->IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS));
     if (pwallet->IsCrypted()) {
         obj.pushKV("unlocked_until", pwallet->nRelockTime);
     }
     obj.pushKV("paytxfee", ValueFromAmount(pwallet->m_pay_tx_fee.GetFeePerK()));
+    CKeyID seed_id = pwallet->GetHDChain().seed_id;
     if (!seed_id.IsNull()) {
         obj.pushKV("hdseedid", seed_id.GetHex());
         obj.pushKV("hdmasterkeyid", seed_id.GetHex());
@@ -3145,13 +3150,16 @@ static UniValue loadwallet(const JSONRPCRequest& request)
 
 static UniValue createwallet(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2) {
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 5) {
         throw std::runtime_error(
-            "createwallet \"wallet_name\" ( disable_private_keys )\n"
+            "createwallet \"wallet_name\" ( disable_private_keys descriptors \"passphrase\" load_on_startup )\n"
             "\nCreates and loads a new wallet.\n"
             "\nArguments:\n"
             "1. \"wallet_name\"          (string, required) The name for the new wallet. If this is a path, the wallet will be created at the path location.\n"
             "2. disable_private_keys   (boolean, optional, default: false) Disable the possibility of private keys (only watchonlys are possible in this mode).\n"
+            "3. descriptors            (boolean, optional, default: false) Create a native descriptor wallet. The wallet will use SQLite by default.\n"
+            "4. \"passphrase\"           (string, optional) Encrypt the wallet with this passphrase.\n"
+            "5. load_on_startup        (boolean, optional) Save wallet name to config file to load on startup.\n"
             "\nResult:\n"
             "{\n"
             "  \"name\" :    <wallet_name>,        (string) The wallet name if created successfully. If the wallet was created using a full path, the wallet_name will be the full path.\n"
@@ -3166,22 +3174,25 @@ static UniValue createwallet(const JSONRPCRequest& request)
     std::string error;
     std::string warning;
 
-    bool disable_privatekeys = false;
-    if (!request.params[1].isNull()) {
-        disable_privatekeys = request.params[1].get_bool();
+    uint64_t flags = 0;
+    LogPrintf("RPC createwallet: params count=%d, params=%s\n", request.params.size(), request.params.write());
+    if ((request.params[1].isBool() && request.params[1].get_bool()) || (request.params[1].isStr() && request.params[1].get_str() == "true")) {
+        flags |= (uint64_t)WALLET_FLAG_DISABLE_PRIVATE_KEYS;
     }
 
+    if ((request.params[2].isBool() && request.params[2].get_bool()) || (request.params[2].isStr() && request.params[2].get_str() == "true")) {
+        flags |= (uint64_t)WALLET_FLAG_DESCRIPTORS;
+    }
+
+    // Modern wallet creation logic
     fs::path wallet_path = fs::absolute(wallet_name, GetWalletDir());
     if (fs::symlink_status(wallet_path).type() != fs::file_not_found) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Wallet " + wallet_name + " already exists.");
     }
 
-    // Wallet::Verify will check if we're trying to create a wallet with a duplication name.
-    if (!CWallet::Verify(wallet_name, false, error, warning)) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Wallet file verification failed: " + error);
-    }
-
-    std::shared_ptr<CWallet> const wallet = CWallet::CreateWalletFromFile(wallet_name, fs::absolute(wallet_name, GetWalletDir()), (disable_privatekeys ? (uint64_t)WALLET_FLAG_DISABLE_PRIVATE_KEYS : 0));
+    // In a modernized wallet, 'descriptors=true' implies SQLite.
+    // If wallet name doesn't have .sqlite extension, we should suggest it or handle it in CreateWalletDatabase.
+    std::shared_ptr<CWallet> const wallet = CWallet::CreateWalletFromFile(wallet_name, wallet_path, flags);
     if (!wallet) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Wallet creation failed.");
     }
@@ -4114,6 +4125,11 @@ public:
     }
 
     UniValue operator()(const WitnessUnknown& id) const { return UniValue(UniValue::VOBJ); }
+
+    UniValue operator()(const WitnessV1Taproot& id) const
+    {
+        return UniValue(UniValue::VOBJ);
+    }
 };
 
 static UniValue DescribeWalletAddress(CWallet* pwallet, const CTxDestination& dest)
@@ -4961,6 +4977,7 @@ extern UniValue importprunedfunds(const JSONRPCRequest& request);
 extern UniValue removeprunedfunds(const JSONRPCRequest& request);
 extern UniValue importmulti(const JSONRPCRequest& request);
 extern UniValue rescanblockchain(const JSONRPCRequest& request);
+extern UniValue getdescriptorinfo(const JSONRPCRequest& request);
 
 static const CRPCCommand commands[] =
 { //  category              name                                actor (function)                argNames
@@ -5015,6 +5032,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "removeprunedfunds",                &removeprunedfunds,             {"txid"} },
     { "wallet",             "rescanblockchain",                 &rescanblockchain,              {"start_height", "stop_height"} },
     { "wallet",             "sethdseed",                        &sethdseed,                     {"newkeypool","seed"} },
+    { "wallet",             "getdescriptorinfo",                &getdescriptorinfo,             {"descriptor"} },
 
     /** Account functions (deprecated) */
     { "wallet",             "getaccountaddress",                &getaccountaddress,             {"account"} },

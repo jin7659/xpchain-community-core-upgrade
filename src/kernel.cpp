@@ -61,8 +61,28 @@ bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& h
     }
 
     // Verify signature
-    PrecomputedTransactionData txdata(*tx);
-    if (!CScriptCheck(txTmp->vout[tx->vin[0].prevout.n], *tx, 0, 0, true, &txdata)()) {
+    unsigned int nFlags = SCRIPT_VERIFY_NONE;
+    if (chainActive.Height() + 1 >= Params().GetConsensus().TaprootHeight) {
+        nFlags |= SCRIPT_VERIFY_TAPROOT;
+    }
+
+    std::vector<CTxOut> spent_outputs;
+    for (const auto& txin : tx->vin) {
+        CTransactionRef txPrev;
+        uint256 hashBlock;
+        if (GetTransaction(txin.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true)) {
+            spent_outputs.push_back(txPrev->vout[txin.prevout.n]);
+        }
+    }
+
+    PrecomputedTransactionData txdata;
+    if (spent_outputs.size() == tx->vin.size()) {
+        txdata.Init(*tx, std::move(spent_outputs));
+    } else {
+        txdata = PrecomputedTransactionData(*tx);
+    }
+
+    if (!CScriptCheck(txTmp->vout[tx->vin[0].prevout.n], *tx, 0, nFlags, true, &txdata)()) {
         return error("%s: VerifySignature failed on coinstake %s\n", __func__, tx->GetHash().ToString());
     }
     // Get transaction index for the previous transaction

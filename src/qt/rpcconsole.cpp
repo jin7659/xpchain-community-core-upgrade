@@ -29,6 +29,10 @@
 #include <wallet/wallet.h>
 #endif
 
+#ifdef USE_SQLITE
+#include <sqlite3.h>
+#endif
+
 #include <QDesktopWidget>
 #include <QKeyEvent>
 #include <QMenu>
@@ -489,6 +493,13 @@ RPCConsole::RPCConsole(interfaces::Node& node, const PlatformStyle *_platformSty
 #else
     ui->label_berkeleyDBVersion->hide();
     ui->berkeleyDBVersion->hide();
+#endif
+
+#ifdef USE_SQLITE
+    ui->sqliteVersion->setText(sqlite3_libversion());
+#else
+    ui->label_sqliteVersion->hide();
+    ui->sqliteVersion->hide();
 #endif
     // Register RPC timer interface
     rpcTimerInterface = new QtRPCTimerInterface();

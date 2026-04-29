@@ -527,6 +527,7 @@ void BitcoinApplication::shutdownResult()
 void BitcoinApplication::handleRunawayException(const QString &message)
 {
     QMessageBox::critical(0, "Runaway exception", BitcoinGUI::tr("A fatal error occurred. XPChain can no longer continue safely and will quit.") + QString("\n\n") + message);
+    m_node.appShutdown();
     ::exit(EXIT_FAILURE);
 }
 

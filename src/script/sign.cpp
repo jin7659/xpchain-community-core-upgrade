@@ -3,7 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <logging.h>
 #include <script/sign.h>
+#include <utilstrencodings.h>
 
 #include <key.h>
 #include <policy/policy.h>
@@ -13,7 +15,8 @@
 
 typedef std::vector<unsigned char> valtype;
 
-MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMutableTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, int nHashTypeIn) : txTo(txToIn), nIn(nInIn), nHashType(nHashTypeIn), amount(amountIn), checker(txTo, nIn, amountIn) {}
+MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMutableTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, int nHashTypeIn) : txTo(txToIn), nIn(nInIn), nHashType(nHashTypeIn), amount(amountIn), m_txdata(nullptr), checker(txTo, nIn, amountIn) {}
+MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMutableTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData* txdataIn, int nHashTypeIn) : txTo(txToIn), nIn(nInIn), nHashType(nHashTypeIn), amount(amountIn), m_txdata(txdataIn), checker(txTo, nIn, amountIn, *txdataIn) {}
 
 bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, SigVersion sigversion) const
 {
@@ -25,7 +28,41 @@ bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provid
     if (sigversion == SigVersion::WITNESS_V0 && !key.IsCompressed())
         return false;
 
-    uint256 hash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion);
+    if (sigversion == SigVersion::TAPROOT || sigversion == SigVersion::TAPSCRIPT) {
+        int effectiveHashType = nHashType;
+        if (effectiveHashType == SIGHASH_ALL) effectiveHashType = 0; // SIGHASH_DEFAULT
+        uint256 hash = SignatureHash(scriptCode, *txTo, nIn, effectiveHashType, amount, sigversion, m_txdata);
+        
+        // --- Taproot Tweak Fallback for Legacy Wallets ---
+        CPubKey found_pk = key.GetPubKey();
+        XOnlyPubKey xpk_found(found_pk);
+        std::vector<unsigned char> script_pk_vec(scriptCode.begin() + 2, scriptCode.begin() + 34);
+        XOnlyPubKey xpk_script(script_pk_vec);
+        
+        if (xpk_found == xpk_script) {
+            if (!key.SignSchnorr(hash, vchSig, nullptr)) return false;
+        } else {
+            unsigned char tag_hash[32];
+            CSHA256().Write((const unsigned char*)"TapTweak", 8).Finalize(tag_hash);
+            
+            unsigned char tweak_hash[32];
+            CSHA256()
+                .Write(tag_hash, 32)
+                .Write(tag_hash, 32)
+                .Write(xpk_found.begin(), 32)
+                .Finalize(tweak_hash);
+                
+            uint256 tweak(std::vector<unsigned char>(tweak_hash, tweak_hash + 32));
+            if (!key.SignSchnorr(hash, vchSig, &tweak)) return false;
+        }
+
+        if (nHashType != SIGHASH_ALL) {
+            vchSig.push_back((unsigned char)nHashType);
+        }
+        return true;
+    }
+
+    uint256 hash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, (sigversion != SigVersion::BASE) ? m_txdata : nullptr);
     if (!key.Sign(hash, vchSig))
         return false;
     vchSig.push_back((unsigned char)nHashType);
@@ -157,6 +194,26 @@ static bool SignStep(const SigningProvider& provider, const BaseSignatureCreator
         }
         return false;
 
+    case TX_WITNESS_V1_TAPROOT: {
+        LogPrintf("SignStep: Detected TX_WITNESS_V1_TAPROOT\n");
+        XOnlyPubKey xpk(vSolutions[0]);
+        CPubKey pk = xpk.GetCorrespondingPubKey();
+        if (!CreateSig(creator, sigdata, provider, sig, pk.GetID(), scriptPubKey, SigVersion::TAPROOT)) {
+            LogPrintf("SignStep: CreateSig failed for Taproot (internal key %s)\n", pk.GetID().GetHex());
+            // Attempt to find the key using the odd parity CPubKey
+            std::vector<unsigned char> odd_data;
+            odd_data.push_back(0x03);
+            odd_data.insert(odd_data.end(), xpk.begin(), xpk.end());
+            CPubKey pk_odd(odd_data.begin(), odd_data.end());
+            if (!CreateSig(creator, sigdata, provider, sig, pk_odd.GetID(), scriptPubKey, SigVersion::TAPROOT)) {
+                LogPrintf("SignStep: CreateSig failed for Taproot (odd parity key %s)\n", pk_odd.GetID().GetHex());
+                return false;
+            }
+        }
+        ret.push_back(std::move(sig));
+        return true;
+    }
+
     default:
         return false;
     }
@@ -179,6 +236,7 @@ static CScript PushAll(const std::vector<valtype>& values)
 
 bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreator& creator, const CScript& fromPubKey, SignatureData& sigdata)
 {
+    LogPrintf("ProduceSignature: Entering for script %s\n", HexStr(fromPubKey));
     if (sigdata.complete) return true;
 
     std::vector<valtype> result;
@@ -216,6 +274,10 @@ bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreato
         txnouttype subType;
         solved = solved && SignStep(provider, creator, witnessscript, result, subType, SigVersion::WITNESS_V0, sigdata) && subType != TX_SCRIPTHASH && subType != TX_WITNESS_V0_SCRIPTHASH && subType != TX_WITNESS_V0_KEYHASH;
         result.push_back(std::vector<unsigned char>(witnessscript.begin(), witnessscript.end()));
+        sigdata.scriptWitness.stack = result;
+        sigdata.witness = true;
+        result.clear();
+    } else if (solved && whichType == TX_WITNESS_V1_TAPROOT) {
         sigdata.scriptWitness.stack = result;
         sigdata.witness = true;
         result.clear();
@@ -441,6 +503,12 @@ public:
     const BaseSignatureChecker& Checker() const override { return DUMMY_CHECKER; }
     bool CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const override
     {
+        if (sigversion == SigVersion::TAPROOT || sigversion == SigVersion::TAPSCRIPT) {
+            // Taproot signatures are always 64 bytes (Schnorr)
+            vchSig.assign(64, '\000');
+            return true;
+        }
+
         // Create a dummy signature that is a valid DER-encoding
         vchSig.assign(m_r_len + m_s_len + 7, '\000');
         vchSig[0] = 0x30;

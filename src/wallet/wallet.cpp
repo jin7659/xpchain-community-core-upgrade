@@ -477,8 +477,14 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
 
 void CWallet::ChainStateFlushed(const CBlockLocator& loc)
 {
-    WalletBatch batch(*database);
-    batch.WriteBestBlock(loc);
+    try {
+        WalletBatch batch(*database);
+        batch.WriteBestBlock(loc);
+    } catch (const std::exception& e) {
+        WalletLogPrintf("CWallet::ChainStateFlushed: Warning: Failed to save best block during shutdown: %s\n", e.what());
+    } catch (...) {
+        WalletLogPrintf("CWallet::ChainStateFlushed: Warning: Unknown error saving best block during shutdown\n");
+    }
 }
 
 void CWallet::SetMinVersion(enum WalletFeature nVersion, WalletBatch* batch_in, bool fExplicit)
@@ -549,7 +555,7 @@ bool CWallet::HasWalletSpend(const uint256& txid) const
 
 void CWallet::Flush(bool shutdown)
 {
-    database->Flush(shutdown);
+    database->Flush();
 }
 
 void CWallet::SyncMetaData(std::pair<TxSpends::iterator, TxSpends::iterator> range)
@@ -1517,24 +1523,30 @@ void CWallet::SetWalletFlag(uint64_t flags)
         throw std::runtime_error(std::string(__func__) + ": writing wallet flags failed");
 }
 
-bool CWallet::IsWalletFlagSet(uint64_t flag)
-{
-    return (m_wallet_flags & flag);
-}
+// Note: IsWalletFlagSet is inlined as a WalletStorage override in wallet.h
 
 bool CWallet::SetWalletFlags(uint64_t overwriteFlags, bool memonly)
 {
     LOCK(cs_wallet);
-    m_wallet_flags = overwriteFlags;
+    LogPrintf("CWallet::SetWalletFlags: overwriteFlags=%016x, known=%016x\n", overwriteFlags, g_known_wallet_flags);
     if (((overwriteFlags & g_known_wallet_flags) >> 32) ^ (overwriteFlags >> 32)) {
-        // contains unknown non-tolerable wallet flags
+        LogPrintf("CWallet::SetWalletFlags: FAILED due to unknown non-tolerable flags: unknown_bits=%08x\n", (overwriteFlags ^ (overwriteFlags & g_known_wallet_flags)) >> 32);
         return false;
     }
+    m_wallet_flags = overwriteFlags;
     if (!memonly && !WalletBatch(*database).WriteWalletFlags(m_wallet_flags)) {
         throw std::runtime_error(std::string(__func__) + ": writing wallet flags failed");
     }
 
     return true;
+}
+
+void CWallet::UnsetBlankWalletFlag(WalletBatch& batch)
+{
+    // Remove the WALLET_FLAG_BLANK_WALLET flag (bit 33) from the wallet flags
+    m_wallet_flags &= ~WALLET_FLAG_BLANK_WALLET;
+    if (!batch.WriteWalletFlags(m_wallet_flags))
+        throw std::runtime_error(std::string(__func__) + ": writing wallet flags failed");
 }
 
 int64_t CWalletTx::GetTxTime() const
@@ -2561,6 +2573,18 @@ bool CWallet::SignTransaction(CMutableTransaction &tx)
 {
     AssertLockHeld(cs_wallet); // mapWallet
 
+    std::vector<CTxOut> spent_outputs;
+    for (const auto& input : tx.vin) {
+        std::map<uint256, CWalletTx>::const_iterator mi = mapWallet.find(input.prevout.hash);
+        if(mi == mapWallet.end() || input.prevout.n >= mi->second.tx->vout.size()) {
+            return false;
+        }
+        spent_outputs.push_back(mi->second.tx->vout[input.prevout.n]);
+    }
+
+    PrecomputedTransactionData txdata(tx);
+    txdata.InitTaproot(tx, std::move(spent_outputs));
+
     // sign the new tx
     int nIn = 0;
     for (auto& input : tx.vin) {
@@ -2571,7 +2595,7 @@ bool CWallet::SignTransaction(CMutableTransaction &tx)
         const CScript& scriptPubKey = mi->second.tx->vout[input.prevout.n].scriptPubKey;
         const CAmount& amount = mi->second.tx->vout[input.prevout.n].nValue;
         SignatureData sigdata;
-        if (!ProduceSignature(*this, MutableTransactionSignatureCreator(&tx, nIn, amount, SIGHASH_ALL), scriptPubKey, sigdata)) {
+        if (!ProduceSignature(*this, MutableTransactionSignatureCreator(&tx, nIn, amount, &txdata, SIGHASH_ALL), scriptPubKey, sigdata)) {
             return false;
         }
         UpdateInput(input, sigdata);
@@ -2665,6 +2689,7 @@ OutputType CWallet::TransactionChangeType(OutputType change_type, const std::vec
 bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CReserveKey& reservekey, CAmount& nFeeRet,
                          int& nChangePosInOut, std::string& strFailReason, const CCoinControl& coin_control, bool sign, bool fWriteLog)
 {
+    LogPrintf("CreateTransaction: Entering for %d recipients\n", vecSend.size());
     CAmount nValue = 0;
     int nChangePosRequest = nChangePosInOut;
     unsigned int nSubtractFeeFromAmount = 0;
@@ -2891,9 +2916,11 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransac
 
                 nBytes = CalculateMaximumSignedTxSize(txNew, this, coin_control.fAllowWatchOnly);
                 if (nBytes < 0) {
+                    LogPrintf("CreateTransaction: CalculateMaximumSignedTxSize failed\n");
                     strFailReason = _("Signing transaction failed");
                     return false;
                 }
+                LogPrintf("CreateTransaction: Estimated size: %d bytes\n", nBytes);
 
                 nFeeNeeded = GetMinimumFee(*this, nBytes, coin_control, ::mempool, ::feeEstimator, &feeCalc);
                 if (feeCalc.reason == FeeReason::FALLBACK && !m_allow_fallback_fee) {
@@ -2997,13 +3024,20 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransac
 
         if (sign)
         {
+            std::vector<CTxOut> spent_outputs;
+            for (const auto& coin : selected_coins) {
+                spent_outputs.push_back(coin.txout);
+            }
+            PrecomputedTransactionData txdata(txNew);
+            txdata.InitTaproot(txNew, std::move(spent_outputs));
+
             int nIn = 0;
             for (const auto& coin : selected_coins)
             {
                 const CScript& scriptPubKey = coin.txout.scriptPubKey;
                 SignatureData sigdata;
 
-                if (!ProduceSignature(*this, MutableTransactionSignatureCreator(&txNew, nIn, coin.txout.nValue, SIGHASH_ALL), scriptPubKey, sigdata))
+                if (!ProduceSignature(*this, MutableTransactionSignatureCreator(&txNew, nIn, coin.txout.nValue, &txdata, SIGHASH_ALL), scriptPubKey, sigdata))
                 {
                     strFailReason = _("Signing transaction failed");
                     return false;
@@ -3963,13 +3997,58 @@ void CWallet::MarkPreSplitKeys()
     }
 }
 
+LegacyScriptPubKeyMan* CWallet::GetLegacyScriptPubKeyMan() const
+{
+    for (const auto& spkm_pair : m_spk_managers) {
+        if (auto legacy_spkm = dynamic_cast<LegacyScriptPubKeyMan*>(spkm_pair.second.get())) {
+            return legacy_spkm;
+        }
+    }
+    return nullptr;
+}
+
+LegacyScriptPubKeyMan* CWallet::SetupLegacyScriptPubKeyMan()
+{
+    auto spkm = std::make_unique<LegacyScriptPubKeyMan>(*this);
+    LegacyScriptPubKeyMan* legacy_spkm = spkm.get();
+    m_spk_managers[uint256()] = std::move(spkm); // Use a null hash for the default legacy manager
+    return legacy_spkm;
+}
+
+DescriptorScriptPubKeyMan* CWallet::SetupDescriptorScriptPubKeyMan()
+{
+    auto spkm = std::make_unique<DescriptorScriptPubKeyMan>(*this);
+    DescriptorScriptPubKeyMan* desc_spkm = spkm.get();
+    m_spk_managers[uint256S("1")] = std::move(spkm); // Placeholder ID for descriptors
+    desc_spkm->SetupGeneration();
+    return desc_spkm;
+}
+
+std::vector<ScriptPubKeyMan*> CWallet::GetScriptPubKeyMans() const
+{
+    std::vector<ScriptPubKeyMan*> spkms;
+    for (const auto& spkm_pair : m_spk_managers) {
+        spkms.push_back(spkm_pair.second.get());
+    }
+    return spkms;
+}
+
+ScriptPubKeyMan* CWallet::GetScriptPubKeyMan(const OutputType& type, bool internal) const
+{
+    if (IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS)) {
+        auto it = m_spk_managers.find(uint256S("1"));
+        if (it != m_spk_managers.end()) return it->second.get();
+    }
+    return GetLegacyScriptPubKeyMan();
+}
+
 bool CWallet::Verify(std::string wallet_file, bool salvage_wallet, std::string& error_string, std::string& warning_string)
 {
     // Do some checking on wallet path. It should be either a:
     //
     // 1. Path where a directory can be created.
     // 2. Path to an existing directory.
-    // 3. Path to a symlink to a directory.
+    // 3. Path to a .dat file.
     // 4. For backwards compatibility, the name of a data file in -walletdir.
     LOCK(cs_wallets);
     fs::path wallet_path = fs::absolute(wallet_file, GetWalletDir());
@@ -4004,7 +4083,7 @@ bool CWallet::Verify(std::string wallet_file, bool salvage_wallet, std::string& 
 
     if (salvage_wallet) {
         // Recover readable keypairs:
-        CWallet dummyWallet("dummy", WalletDatabase::CreateDummy());
+        CWallet dummyWallet("dummy", BerkeleyDatabase::CreateDummy());
         std::string backup_filename;
         if (!WalletBatch::Recover(wallet_path, (void *)&dummyWallet, WalletBatch::RecoverKeysOnlyFilter, backup_filename)) {
             return false;
@@ -4024,7 +4103,7 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
     if (gArgs.GetBoolArg("-zapwallettxes", false)) {
         uiInterface.InitMessage(_("Zapping all transactions from wallet..."));
 
-        std::unique_ptr<CWallet> tempWallet = MakeUnique<CWallet>(name, WalletDatabase::Create(path));
+        std::unique_ptr<CWallet> tempWallet = MakeUnique<CWallet>(name, CreateWalletDatabase(path, wallet_creation_flags));
         DBErrors nZapWalletRet = tempWallet->ZapWalletTx(vWtx);
         if (nZapWalletRet != DBErrors::LOAD_OK) {
             InitError(strprintf(_("Error loading %s: Wallet corrupted"), walletFile));
@@ -4038,7 +4117,20 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
     bool fFirstRun = true;
     // TODO: Can't use std::make_shared because we need a custom deleter but
     // should be possible to use std::allocate_shared.
-    std::shared_ptr<CWallet> walletInstance(new CWallet(name, WalletDatabase::Create(path)), ReleaseWallet);
+    std::shared_ptr<CWallet> walletInstance(new CWallet(name, CreateWalletDatabase(path, wallet_creation_flags)), ReleaseWallet);
+    if (wallet_creation_flags != 0) {
+        walletInstance->SetWalletFlags(wallet_creation_flags, true);
+    }
+
+    // Initialize the SPKM framework.
+    if (walletInstance->IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS)) {
+        // Modern v27+ Descriptor Wallet path
+        walletInstance->SetupDescriptorScriptPubKeyMan();
+    } else {
+        // Legacy wallet path
+        walletInstance->SetupLegacyScriptPubKeyMan();
+    }
+
     DBErrors nLoadWalletRet = walletInstance->LoadWallet(fFirstRun);
     if (nLoadWalletRet != DBErrors::LOAD_OK)
     {

@@ -287,6 +287,33 @@ public:
     }
 };
 
+/** A parsed tr(...) descriptor. */
+class TaprootDescriptor final : public Descriptor
+{
+    std::unique_ptr<PubkeyProvider> m_internal_key;
+public:
+    TaprootDescriptor(std::unique_ptr<PubkeyProvider> internal_key) : m_internal_key(std::move(internal_key)) {}
+
+    bool IsRange() const override { return m_internal_key->IsRange(); }
+    std::string ToString() const override { return "tr(" + m_internal_key->ToString() + ")"; }
+    bool ToPrivateString(const SigningProvider& arg, std::string& out) const override
+    {
+        std::string ret;
+        if (!m_internal_key->ToPrivateString(arg, ret)) return false;
+        out = "tr(" + std::move(ret) + ")";
+        return true;
+    }
+    bool Expand(int pos, const SigningProvider& arg, std::vector<CScript>& output_scripts, FlatSigningProvider& out) const override
+    {
+        CPubKey key;
+        if (!m_internal_key->GetPubKey(pos, arg, key)) return false;
+        XOnlyPubKey xonly(key);
+        output_scripts = std::vector<CScript>{GetScriptForDestination(WitnessV1Taproot(xonly))};
+        out.pubkeys.emplace(key.GetID(), std::move(key));
+        return true;
+    }
+};
+
 /** A parsed sh(S) or wsh(S) descriptor. */
 class ConvertorDescriptor : public Descriptor
 {
@@ -546,6 +573,11 @@ std::unique_ptr<Descriptor> ParseScript(Span<const char>& sp, ParseScriptContext
         if (!IsValidDestination(dest)) return nullptr;
         return MakeUnique<AddressDescriptor>(std::move(dest));
     }
+    if (ctx == ParseScriptContext::TOP && Func("tr", expr)) {
+        auto internal_key = ParsePubkey(expr, false, out);
+        if (!internal_key) return nullptr;
+        return MakeUnique<TaprootDescriptor>(std::move(internal_key));
+    }
     if (ctx == ParseScriptContext::TOP && Func("raw", expr)) {
         std::string str(expr.begin(), expr.end());
         if (!IsHex(str)) return nullptr;
@@ -557,10 +589,47 @@ std::unique_ptr<Descriptor> ParseScript(Span<const char>& sp, ParseScriptContext
 
 } // namespace
 
-std::unique_ptr<Descriptor> Parse(const std::string& descriptor, FlatSigningProvider& out)
+std::unique_ptr<Descriptor> Parse(const std::string& descriptor, FlatSigningProvider& out, std::string& error)
 {
     Span<const char> sp(descriptor.data(), descriptor.size());
     auto ret = ParseScript(sp, ParseScriptContext::TOP, out);
     if (sp.size() == 0 && ret) return ret;
+    error = "파싱 도중 오류가 발생했거나 유효하지 않은 데스크립터입니다.";
     return nullptr;
+}
+
+static uint64_t PolyMod(uint64_t c, int val)
+{
+    uint8_t c0 = c >> 35;
+    c = ((c & 0x7ffffffffULL) << 5) ^ val;
+    if (c0 & 1) c ^= 0xf5dee51989ULL;
+    if (c0 & 2) c ^= 0xa9fdca3312ULL;
+    if (c0 & 4) c ^= 0x1ba105ec35ULL;
+    if (c0 & 8) c ^= 0x3042c3180eULL;
+    if (c0 & 16) c ^= 0xc0304a098ULL;
+    return c;
+}
+
+std::string GetDescriptorChecksum(const std::string& descriptor)
+{
+    static const char* CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+    uint64_t c = 1;
+    int cls = 0;
+    int clscount = 0;
+    for (auto ch : descriptor) {
+        int pos = -1;
+        for (int i = 0; i < 32; ++i) {
+            if (CHARSET[i] == ch) pos = i;
+        }
+        if (pos == -1) return "";
+        c = PolyMod(c, pos);
+    }
+    for (int i = 0; i < 8; ++i) c = PolyMod(c, 0);
+    c ^= 1;
+
+    std::string ret = "#";
+    for (int i = 0; i < 8; ++i) {
+        ret += CHARSET[(c >> (5 * (7 - i))) & 31];
+    }
+    return ret;
 }

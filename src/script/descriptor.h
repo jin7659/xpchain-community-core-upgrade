@@ -93,10 +93,16 @@ struct Descriptor {
      * out: scripts and public keys necessary for solving the expanded scriptPubKeys will be put here (may be equal to provider).
      */
     virtual bool Expand(int pos, const SigningProvider& provider, std::vector<CScript>& output_scripts, FlatSigningProvider& out) const = 0;
+
+    /** 이 데스크립터가 충분한 정보(공개키 등)를 가지고 있어 해결(spend) 가능한지 여부 */
+    virtual bool IsSolvable() const { return true; }
 };
 
 /** Parse a descriptor string. Included private keys are put in out. Returns nullptr if parsing fails. */
-std::unique_ptr<Descriptor> Parse(const std::string& descriptor, FlatSigningProvider& out);
+std::unique_ptr<Descriptor> Parse(const std::string& descriptor, FlatSigningProvider& out, std::string& error);
+
+/** 데스크립터의 체크섬을 계산합니다. (BIP 173 style) */
+std::string GetDescriptorChecksum(const std::string& descriptor);
 
 #endif // BITCOIN_SCRIPT_DESCRIPTOR_H
 
