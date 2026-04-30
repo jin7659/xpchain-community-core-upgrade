@@ -1,0 +1,1532 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>files</key>
+	<dict>
+		<key>Resources/xpchain.icns</key>
+		<data>
+		FOkrQkQ3rT5ArjePypxblctVZ1c=
+		</data>
+	</dict>
+	<key>files2</key>
+	<dict>
+		<key>Frameworks/QtCore.framework</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			/jmhaGtK3sg2xajvyfJQF9W9JWo=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"fe39a1686b4adec836c5a8efc9f25017d5bd256a"</string>
+		</dict>
+		<key>Frameworks/QtDBus.framework</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			N2tqlC89Xtjb02aXG6Z7kv6BOfY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"376b6a942f3d5ed8dbd366971ba67b92fe8139f6"</string>
+		</dict>
+		<key>Frameworks/QtGui.framework</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			acBHUYsHOQX6C4jcHjQde/48UfI=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"69c047518b073905fa0b88dc1e341d7bfe3c51f2"</string>
+		</dict>
+		<key>Frameworks/QtNetwork.framework</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			SOWS9CbjbELar04ZXQb0rQ3lN5w=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"48e592f426e36c42daaf4e195d06f4ad0de5379c"</string>
+		</dict>
+		<key>Frameworks/QtPrintSupport.framework</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			6ts867aKQ9/mHRWRt9LQ4RsZfUY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"eadb3cebb68a43dfe61d1591b7d2d0e11b197d46"</string>
+		</dict>
+		<key>Frameworks/QtWidgets.framework</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			cr9eP2cgoHziCHoAJR2VXh2t78I=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"72bf5e3f6720a07ce2087a00251d955e1dadefc2"</string>
+		</dict>
+		<key>Frameworks/libabsl_base.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ScTWpa+H87H4uWWq9fqxueM94A8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"49c4d6a5af87f3b1f8b965aaf5fab1b9e33de00f"</string>
+		</dict>
+		<key>Frameworks/libabsl_borrowed_fixup_buffer.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			9wTF070KIoDTdOKYBUhfvkUNxMc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"f704c5d3bd0a2280d374e29805485fbe450dc4c7"</string>
+		</dict>
+		<key>Frameworks/libabsl_city.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			Ji7QrvcTGtVC34I8lCQ+QxgwItQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"262ed0aef7131ad542df823c94243e43183022d4"</string>
+		</dict>
+		<key>Frameworks/libabsl_civil_time.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			MBZWDWPaJpCAN7IFM2O6JIGxub8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"3016560d63da26908037b2053363ba2481b1b9bf"</string>
+		</dict>
+		<key>Frameworks/libabsl_cord.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			BgejaMjbfcbbDXhEF7+iwQwMSzc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"0607a368c8db7dc6db0d784417bfa2c10c0c4b37"</string>
+		</dict>
+		<key>Frameworks/libabsl_cord_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			cp2ufGkJ4ehcuGWM5WvbDIUBwTY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"729dae7c6909e1e85cb8658ce56bdb0c8501c136"</string>
+		</dict>
+		<key>Frameworks/libabsl_cordz_functions.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			f2HjGB93Dt/Ql/82LDyObUERwRw=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"7f61e3181f770edfd097ff362c3c8e6d4111c11c"</string>
+		</dict>
+		<key>Frameworks/libabsl_cordz_handle.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			GEf883oSaQmrZhmAjrt344SLRRQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"1847fcf37a126909ab6619808ebb77e3848b4514"</string>
+		</dict>
+		<key>Frameworks/libabsl_cordz_info.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			Qyy8LLJsbEAT8veQSt4HH9kGkVc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"432cbc2cb26c6c4013f2f7904ade071fd9069157"</string>
+		</dict>
+		<key>Frameworks/libabsl_crc32c.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			laraz242bi4K2w1mcDrCSthjPjY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"95aadacf6e366e2e0adb0d66703ac24ad8633e36"</string>
+		</dict>
+		<key>Frameworks/libabsl_crc_cord_state.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			67aqixOR3wqojBbc9URlUHIjlHs=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"ebb6aa8b1391df0aa88c16dcf54465507223947b"</string>
+		</dict>
+		<key>Frameworks/libabsl_crc_cpu_detect.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			M83YO/a8cNbs+VZxpqeMqgxEkQQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"33cdd83bf6bc70d6ecf95671a6a78caa0c449104"</string>
+		</dict>
+		<key>Frameworks/libabsl_crc_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			zWNbTHOU8spW4FXau6DfpphCoRk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"cd635b4c7394f2ca56e055dabba0dfa69842a119"</string>
+		</dict>
+		<key>Frameworks/libabsl_debugging_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			H/DJyBC5r0pQkolNkSfw92kFzUc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"1ff0c9c810b9af4a5092894d9127f0f76905cd47"</string>
+		</dict>
+		<key>Frameworks/libabsl_decode_rust_punycode.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			2sC3bEDarlmIA+vk2EZYnjHe7cA=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"dac0b76c40daae598803ebe4d846589e31deedc0"</string>
+		</dict>
+		<key>Frameworks/libabsl_demangle_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			FUPaQYHtpJ+qdg937gKMqYnjTUQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"1543da4181eda49faa760f77ee028ca989e34d44"</string>
+		</dict>
+		<key>Frameworks/libabsl_demangle_rust.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			fmxcXccPRP977GbaA647/tUfclk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"7e6c5c5dc70f44ff7bec66da03ae3bfed51f7259"</string>
+		</dict>
+		<key>Frameworks/libabsl_die_if_null.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			we4s7SDVwFjxQPJwBfBEWF+QSmM=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"c1ee2ced20d5c058f140f27005f044585f904a63"</string>
+		</dict>
+		<key>Frameworks/libabsl_examine_stack.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			IyaHvNG99U3qf93wIFp5QmFX2r0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"232687bcd1bdf54dea7fddf0205a79426157dabd"</string>
+		</dict>
+		<key>Frameworks/libabsl_exponential_biased.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			AILJjcHOvHdGH58a/6K1Q9hak7I=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"0082c98dc1cebc77461f9f1affa2b543d85a93b2"</string>
+		</dict>
+		<key>Frameworks/libabsl_flags_commandlineflag.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			3wgZSaJqI1HbNCcPFtxYAYuYiW8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"df081949a26a2351db34270f16dc58018b98896f"</string>
+		</dict>
+		<key>Frameworks/libabsl_flags_commandlineflag_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			wWMNCAFSfHpGdWEK7SPziX1YI9c=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"c1630d0801527c7a4675610aed23f3897d5823d7"</string>
+		</dict>
+		<key>Frameworks/libabsl_flags_config.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			y4xX5r0g6XgKKsiwupp5NSLt9lM=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"cb8c57e6bd20e9780a2ac8b0ba9a793522edf653"</string>
+		</dict>
+		<key>Frameworks/libabsl_flags_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ZXEEkVpCX2K5eVQlnQyrE6odV9U=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"657104915a425f62b97954259d0cab13aa1d57d5"</string>
+		</dict>
+		<key>Frameworks/libabsl_flags_marshalling.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			GDV5OzdbloDtx9TrmEfm607CTXU=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"1835793b375b9680edc7d4eb9847e6eb4ec24d75"</string>
+		</dict>
+		<key>Frameworks/libabsl_flags_private_handle_accessor.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			zsVpyjelDK8eEOQ5MjUg0XxK0N4=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"cec569ca37a50caf1e10e439323520d17c4ad0de"</string>
+		</dict>
+		<key>Frameworks/libabsl_flags_program_name.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			IOcrb5QsuemqhPPj6HR+Rf9tlK0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"20e72b6f942cb9e9aa84f3e3e8747e45ff6d94ad"</string>
+		</dict>
+		<key>Frameworks/libabsl_flags_reflection.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			KvmzBv6KYMzMjqreVO2Xb+LsLXw=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"2af9b306fe8a60cccc8eaade54ed976fe2ec2d7c"</string>
+		</dict>
+		<key>Frameworks/libabsl_graphcycles_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			xMrpBbP9IJ5vKRxMAy/DxixYNjQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"c4cae905b3fd209e6f291c4c032fc3c62c583634"</string>
+		</dict>
+		<key>Frameworks/libabsl_hash.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			yO/TQ+8sxhmE03VUDlsyBKpi384=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"c8efd343ef2cc61984d375540e5b3204aa62dfce"</string>
+		</dict>
+		<key>Frameworks/libabsl_hashtablez_sampler.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			SWyWBcQXUIbxbIOE4yHf9F/8Bvc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"496c9605c4175086f16c8384e321dff45ffc06f7"</string>
+		</dict>
+		<key>Frameworks/libabsl_int128.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			fyh9+rssYRfDrR7SEK/M7gUqBIg=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"7f287dfabb2c6117c3ad1ed210afccee052a0488"</string>
+		</dict>
+		<key>Frameworks/libabsl_kernel_timeout_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			bfYfSGiVZ8+7DQ+l4VVZ4hNDE9w=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"6df61f48689567cfbb0d0fa5e15559e2134313dc"</string>
+		</dict>
+		<key>Frameworks/libabsl_leak_check.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			bak9taQFP8G7y5qzawFs8vj8AlA=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"6da93db5a4053fc1bbcb9ab36b016cf2f8fc0250"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_entry.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			uxhUU6mPWQg1RzT9aJs/Zfktipg=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"bb185453a98f5908354734fd689b3f65f92d8a98"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_globals.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			2YpTuIlnqTcqDG4HcMVdeADTbS0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"d98a53b88967a9372a0c6e0770c55d7800d36d2d"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_initialize.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			cDRmmd6skyfSXq1Dj7tuBSpgePU=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"70346699deac9327d25ead438fbb6e052a6078f5"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_check_op.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			XjS+mTluHLx2UVuL22BPrqnF7kg=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"5e34be99396e1cbc76515b8bdb604faea9c5ee48"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_conditions.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			SpF/kcc5PuoV1iQCH9rrsYJD7fI=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"4a917f91c7393eea15d624021fdaebb18243edf2"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_fnmatch.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			BAIzb3ywdIsPp6NmYhTAnwhgDMM=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"0402336f7cb0748b0fa7a3666214c09f08600cc3"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_format.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			hI8ZbwuyPu6rUBhjssbh6/EaJt0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"848f196f0bb23eeeab501863b2c6e1ebf11a26dd"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_globals.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			F7771M0J5B5aK7ZnPVT+qV7/zR8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"17befbd4cd09e41e5a2bb6673d54fea95effcd1f"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_log_sink_set.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			S4JUj1lhP+vZQpigsO53Yg+MK3I=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"4b82548f59613febd94298a0b0ee77620f8c2b72"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_message.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			T1TrmJcGgTIs7LXQ7iep6eTJ3vY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"4f54eb98970681322cecb5d0ee27a9e9e4c9def6"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_nullguard.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			Ashx/5wgJcFeoZab/rTSavpiZIk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"02c871ff9c2025c15ea1969bfeb4d26afa626489"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_proto.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			PRbHfZ4QA2dMKBzCgIkHFdcEi8M=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"3d16c77d9e1003674c281cc280890715d7048bc3"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_internal_structured_proto.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			P8EV1orRVn/SxLGNtpOocCB6NwU=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"3fc115d68ad1567fd2c4b18db693a870207a3705"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_severity.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			BH8CsCPhOCfBYUE4WjWnQObhAXo=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"047f02b023e13827c16141385a35a740e6e1017a"</string>
+		</dict>
+		<key>Frameworks/libabsl_log_sink.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			WhnhUvE1J/Zbo6zZFqgy2Avf+s8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"5a19e152f13527f65ba3acd916a832d80bdffacf"</string>
+		</dict>
+		<key>Frameworks/libabsl_malloc_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			+Klr0m6hMk4k0I4FoAb647SHees=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"f8a96bd26ea1324e24d08e05a006fae3b48779eb"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_distributions.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			6Zp7TwbFZf/7TpMuPD+OTKynNF0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"e99a7b4f06c565fffb4e932e3c3f8e4caca7345d"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_internal_entropy_pool.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			kGoGR3T3L62dhvZObxoltSwtGrk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"906a064774f72fad9d86f64e6f1a25b52c2d1ab9"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_internal_platform.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			yF3YN+/o40qynf7B90BgpEGd2zs=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"c85dd837efe8e34ab29dfec1f74060a4419ddb3b"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_internal_randen.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			v2MFPw9hKGBZkRpoSG9WRtAgdIw=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"bf63053f0f61286059911a68486f5646d020748c"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_internal_randen_hwaes.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			vDEwOoggar695ODQNGutx6dr4rQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"bc31303a88206abebde4e0d0346badc7a76be2b4"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_internal_randen_hwaes_impl.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			f8D3GxGF8MJ45SAgAx0IEXQ0Zao=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"7fc0f71b1185f0c278e52020031d0811743465aa"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_internal_randen_slow.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			i2QJGMmK2nPiiVTbVCVsV9h5RQc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"8b640918c98ada73e28954db54256c57d8794507"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_internal_seed_material.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			BDiDF2Q8dfOjJGZQTtcaMxh1pLw=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"04388317643c75f3a32466504ed71a331875a4bc"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_seed_gen_exception.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			BCBfg6U14SZf2R8R5Awe4qZz85I=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"04205f83a535e1265fd91f11e40c1ee2a673f392"</string>
+		</dict>
+		<key>Frameworks/libabsl_random_seed_sequences.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ZgH1iMFB+4+rHn+16Uy7qro4R3M=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"6601f588c141fb8fab1e7fb5e94cbbaaba384773"</string>
+		</dict>
+		<key>Frameworks/libabsl_raw_hash_set.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			DVN+tGg0vS6u8oemERrcjUa2XLc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"0d537eb46834bd2eaef287a6111adc8d46b65cb7"</string>
+		</dict>
+		<key>Frameworks/libabsl_raw_logging_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			vK1dDRomKyCXtassIHcuboSdXXQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"bcad5d0d1a262b2097b5ab2c20772e6e849d5d74"</string>
+		</dict>
+		<key>Frameworks/libabsl_spinlock_wait.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			jHaXT9ee48SWi1+Jyd25SgArCpk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"8c76974fd79ee3c4968b5f89c9ddb94a002b0a99"</string>
+		</dict>
+		<key>Frameworks/libabsl_stacktrace.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			dyQjndVsYCx7tkzdJk/hSVIcvoc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"7724239dd56c602c7bb64cdd264fe149521cbe87"</string>
+		</dict>
+		<key>Frameworks/libabsl_status.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			vievBkPFV5s/kXRZPazuKFdIeAk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"be27af0643c5579b3f9174593dacee2857487809"</string>
+		</dict>
+		<key>Frameworks/libabsl_statusor.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			1ABV8uK2DMoFJ2fANVfxaPu0k2c=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"d40055f2e2b60cca052767c03557f168fbb49367"</string>
+		</dict>
+		<key>Frameworks/libabsl_str_format_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			J5ZgihfZDwCsvsEWwsK4uh4CjYY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"2796608a17d90f00acbec116c2c2b8ba1e028d86"</string>
+		</dict>
+		<key>Frameworks/libabsl_strerror.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			3t/NZY0mKXBU0z2Z6qlXTa77nzE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"dedfcd658d26297054d33d99eaa9574daefb9f31"</string>
+		</dict>
+		<key>Frameworks/libabsl_strings.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			mOkK1fJniqydSWaA0M9C2Q/DBmg=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"98e90ad5f2678aac9d496680d0cf42d90fc30668"</string>
+		</dict>
+		<key>Frameworks/libabsl_strings_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			gdQzB8oaVlmi7QOmJH1FaLE+KNM=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"81d43307ca1a5659a2ed03a6247d4568b13e28d3"</string>
+		</dict>
+		<key>Frameworks/libabsl_symbolize.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			O/J5qQSCMqqqLXBMpsrMl75VMJk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"3bf279a9048232aaaa2d704ca6cacc97be553099"</string>
+		</dict>
+		<key>Frameworks/libabsl_synchronization.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			gpLVWYWsmaLlp792Rvi8o2Rc6+o=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"8292d55985ac99a2e5a7bf7646f8bca3645cebea"</string>
+		</dict>
+		<key>Frameworks/libabsl_throw_delegate.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			L8Rra2TVi2E5AykRHK6WE9PFKK4=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"2fc46b6b64d58b61390329111cae9613d3c528ae"</string>
+		</dict>
+		<key>Frameworks/libabsl_time.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			F1rXk0L7fQh9UYuERxpN2QVAdYI=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"175ad79342fb7d087d518b84471a4dd905407582"</string>
+		</dict>
+		<key>Frameworks/libabsl_time_zone.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			NrwCixqKICfo80dZ3xlNQuaBhqY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"36bc028b1a8a2027e8f34759df194d42e68186a6"</string>
+		</dict>
+		<key>Frameworks/libabsl_tracing_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			SdJyXBRDt3gSkPHbe3w8zKm+SDE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"49d2725c1443b7781290f1db7b7c3ccca9be4831"</string>
+		</dict>
+		<key>Frameworks/libabsl_utf8_for_code_point.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			I1p6D609ag4FvI8nVwpcA4alk+s=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"235a7a0fad3d6a0e05bc8f27570a5c0386a593eb"</string>
+		</dict>
+		<key>Frameworks/libabsl_vlog_config_internal.2601.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			a0CgkWlcLuM25+XNXIwm0s3eazk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"6b40a091695c2ee336e7e5cd5c8c26d2cdde6b39"</string>
+		</dict>
+		<key>Frameworks/libboost_atomic.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			1Lx0D7EXxVVnJqC7Hc2kTL+4Fy0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"d4bc740fb117c5556726a0bb1dcda44cbfb8172d"</string>
+		</dict>
+		<key>Frameworks/libboost_charconv.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			6YfsBEut5YIqnjYLNQawrufThck=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"e987ec044bade5822a9e360b3506b0aee7d385c9"</string>
+		</dict>
+		<key>Frameworks/libboost_chrono.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			KH7p/dTMPl6t57n2So6cGuwtQE4=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"287ee9fdd4cc3e5eade7b9f64a8e9c1aec2d404e"</string>
+		</dict>
+		<key>Frameworks/libboost_container.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			lnumLVXRJbyV4wY9eZDS8yrzgZ4=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"967ba62d55d125bc95e3063d7990d2f32af3819e"</string>
+		</dict>
+		<key>Frameworks/libboost_context.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			QT1bd4/fUUumNyHfvrSqxulqCcQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"413d5b778fdf514ba63721dfbeb4aac6e96a09c4"</string>
+		</dict>
+		<key>Frameworks/libboost_contract.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			KMpMAsJRmByyECxIaHNcgvsxN7E=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"28ca4c02c251981cb2102c4868735c82fb3137b1"</string>
+		</dict>
+		<key>Frameworks/libboost_coroutine.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			zdXIOa/QO40fEOqwz8OP9L6ns2k=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"cdd5c839afd03b8d1f10eab0cfc38ff4bea7b369"</string>
+		</dict>
+		<key>Frameworks/libboost_date_time.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			h9dvRRZAy+hAut9HdmhxVfDPKo4=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"87d76f451640cbe840badf4776687155f0cf2a8e"</string>
+		</dict>
+		<key>Frameworks/libboost_fiber.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			UMC4YoDoHlxGXFCu6enIxcPtwwE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"50c0b86280e81e5c465c50aee9e9c8c5c3edc301"</string>
+		</dict>
+		<key>Frameworks/libboost_filesystem.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			8TW8c7zdRD9OkXfp/ECDmgK4QZI=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"f135bc73bcdd443f4e9177e9fc40839a02b84192"</string>
+		</dict>
+		<key>Frameworks/libboost_graph.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			GMtR9Uf+Pa+1aNBwcTlBQIOuEfc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"18cb51f547fe3dafb568d0707139414083ae11f7"</string>
+		</dict>
+		<key>Frameworks/libboost_iostreams.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			S4H0gq7E3EiPyq5kHfyRJGnyLLk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"4b81f482aec4dc488fcaae641dfc912469f22cb9"</string>
+		</dict>
+		<key>Frameworks/libboost_json.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			MgjBOQhKH0ZCv/tvhQXewmW0XBc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"3208c139084a1f4642bffb6f8505dec265b45c17"</string>
+		</dict>
+		<key>Frameworks/libboost_locale.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			vHQNULycTcZVvN0PqSC7own4YH8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"bc740d50bc9c4dc655bcdd0fa920bba309f8607f"</string>
+		</dict>
+		<key>Frameworks/libboost_log.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			roiIxyl/ShRfaEC/bFd3sJI+sb0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"ae8888c7297f4a145f6840bf6c5777b0923eb1bd"</string>
+		</dict>
+		<key>Frameworks/libboost_log_setup.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			NxUgVqOs2zM2uNBHvcXW7Zof6o8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"37152056a3acdb3336b8d047bdc5d6ed9a1fea8f"</string>
+		</dict>
+		<key>Frameworks/libboost_math_c99.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			6N8lnA9ClCzAQtBWPStlhp3/Xuk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"e8df259c0f42942cc042d0563d2b65869dff5ee9"</string>
+		</dict>
+		<key>Frameworks/libboost_math_c99f.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			bfmp9fixNp4V9udsy0cmV7D/k0M=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"6df9a9f5f8b1369e15f6e76ccb472657b0ff9343"</string>
+		</dict>
+		<key>Frameworks/libboost_math_c99l.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ezCft5BuIdnK4u68t3JxOetTcAg=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"7b309fb7906e21d9cae2eebcb7727139eb537008"</string>
+		</dict>
+		<key>Frameworks/libboost_math_tr1.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			zz0cGAwSJqDthytS/0wQCntyJa4=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"cf3d1c180c1226a0ed872b52ff4c100a7b7225ae"</string>
+		</dict>
+		<key>Frameworks/libboost_math_tr1f.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ocWDDJWleL+MCsnCrfaB6RSbEYg=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"a1c5830c95a578bf8c0ac9c2adf681e9149b1188"</string>
+		</dict>
+		<key>Frameworks/libboost_math_tr1l.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			oPOjucTHXLKCh3MUrBZS4H+9jIY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"a0f3a3b9c4c75cb282877314ac1652e07fbd8c86"</string>
+		</dict>
+		<key>Frameworks/libboost_nowide.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			wVmTCrTh4aQrhTZb14npVW5Vzg4=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"c159930ab4e1e1a42b85365bd789e9556e55ce0e"</string>
+		</dict>
+		<key>Frameworks/libboost_prg_exec_monitor.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			1J2l28FlbchO80MAmwJSRxiih7o=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"d49da5dbc1656dc84ef343009b02524718a287ba"</string>
+		</dict>
+		<key>Frameworks/libboost_process.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			njNF/RZdHXYVBAvmwWvMq1d51EU=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"9e3345fd165d1d7615040be6c16bccab5779d445"</string>
+		</dict>
+		<key>Frameworks/libboost_program_options.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ji1dvfcHlkwTrPBUILes5ir6VVQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"8e2d5dbdf707964c13acf05420b7ace62afa5554"</string>
+		</dict>
+		<key>Frameworks/libboost_random.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			kktfzgTAwXxm1rq2ycxxmuKsWCE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"924b5fce04c0c17c66d6bab6c9cc719ae2ac5821"</string>
+		</dict>
+		<key>Frameworks/libboost_regex.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			kBm6scPO2RXSRrUc73YaS79DNrE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"9019bab1c3ced915d246b51cef761a4bbf4336b1"</string>
+		</dict>
+		<key>Frameworks/libboost_serialization.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			8Tl9Ysg1B2ALwRXjm0WFs4CP8ME=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"f1397d62c83507600bc115e39b4585b3808ff0c1"</string>
+		</dict>
+		<key>Frameworks/libboost_stacktrace_addr2line.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			uKtrvA2sH8elpq/b9l9gAu4o8i4=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"b8ab6bbc0dac1fc7a5a6afdbf65f6002ee28f22e"</string>
+		</dict>
+		<key>Frameworks/libboost_stacktrace_basic.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			Z9g+ougUFx1FLSguI/dsoC60PmY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"67d83ea2e814171d452d282e23f76ca02eb43e66"</string>
+		</dict>
+		<key>Frameworks/libboost_stacktrace_noop.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			8lRv7bSihDwA7ekl50sqM5a+dwM=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"f2546fedb4a2843c00ede925e74b2a3396be7703"</string>
+		</dict>
+		<key>Frameworks/libboost_thread.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			JfMEkruX0twwrhnlnpt24D1LYp8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"25f30492bb97d2dc30ae19e59e9b76e03d4b629f"</string>
+		</dict>
+		<key>Frameworks/libboost_timer.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			A6IHbS8LgQvLRpoU7pZEFkvp/Ls=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"03a2076d2f0b810bcb469a14ee9644164be9fcbb"</string>
+		</dict>
+		<key>Frameworks/libboost_type_erasure.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			9Rr9x7KRX9xNrE87ksD8anA45hc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"f51afdc7b2915fdc4dac4f3b92c0fc6a7038e617"</string>
+		</dict>
+		<key>Frameworks/libboost_unit_test_framework.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			kElb8TWN+MC7eWAs15aO5dro5hE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"90495bf1358df8c0bb79602cd7968ee5dae8e611"</string>
+		</dict>
+		<key>Frameworks/libboost_url.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			WY32VOGhrzap0aVGEqdITnaIzQ8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"598df654e1a1af36a9d1a54612a7484e7688cd0f"</string>
+		</dict>
+		<key>Frameworks/libboost_wave.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			FzuVf2SkCFX0EiFuI7Wiqx+oB0w=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"173b957f64a40855f412216e23b5a2ab1fa8074c"</string>
+		</dict>
+		<key>Frameworks/libboost_wserialization.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			Hu+UgGw4opkT9yzvPxvZ429ShbY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"1eef94806c38a29913f72cef3f1bd9e36f5285b6"</string>
+		</dict>
+		<key>Frameworks/libcrypto.3.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			XmKo3WWw8G9PjCzGTcROoovBSt0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"5e62a8dd65b0f06f4f8c2cc64dc44ea28bc14add"</string>
+		</dict>
+		<key>Frameworks/libcrypto.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			N6QhmnEsXdLseIJj3jwwgHQq/Uk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"37a4219a712c5dd2ec788263de3c3080742afd49"</string>
+		</dict>
+		<key>Frameworks/libdb_cxx-4.8.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ugmoOzvzlHWUqb4VKqcR4mDS+R8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"ba09a83b3bf3947594a9be152aa711e260d2f91f"</string>
+		</dict>
+		<key>Frameworks/libevent-2.1.7.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			yx0jxNHRZ3B1IFBwjVGHS28Ztq0=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"cb1d23c4d1d16770752050708d51874b6f19b6ad"</string>
+		</dict>
+		<key>Frameworks/libevent.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			3jyT3nHh60vJu17OXE8SO/x1VUo=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"de3c93de71e1eb4bc9bb5ece5c4f123bfc75554a"</string>
+		</dict>
+		<key>Frameworks/libevent_core-2.1.7.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			HKKe1+ckuK2FGGiNexmaf+cgWxk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"1ca29ed7e724b8ad8518688d7b199a7fe7205b19"</string>
+		</dict>
+		<key>Frameworks/libevent_core.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			sOxELaJ+5LSuwZBx8eDzWE6hpBg=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"b0ec442da27ee4b4aec19071f1e0f3584ea1a418"</string>
+		</dict>
+		<key>Frameworks/libevent_extra-2.1.7.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			9wvTcWYbo0Obkn42HVwTGTLxrpo=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"f70bd371661ba3439b927e361d5c131932f1ae9a"</string>
+		</dict>
+		<key>Frameworks/libevent_extra.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			OD2bWBAEw2X5K7kqr5q7P1vCI+k=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"383d9b581004c365f92bb92aaf9abb3f5bc223e9"</string>
+		</dict>
+		<key>Frameworks/libevent_openssl-2.1.7.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			Jejt6nLjqoCEkQU7D+BT0z0Y+zk=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"25e8edea72e3aa808491053b0fe053d33d18fb39"</string>
+		</dict>
+		<key>Frameworks/libevent_openssl.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			364bz057RcFZIdzX/sw542r1bQs=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"dfae1bcf4e7b45c15921dcd7fecc39e36af56d0b"</string>
+		</dict>
+		<key>Frameworks/libevent_pthreads-2.1.7.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			sivqXsbiewBt7HquGG+ZYGYtu8o=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"b22bea5ec6e27b006dec7aae186f9960662dbbca"</string>
+		</dict>
+		<key>Frameworks/libevent_pthreads.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			R2VZffl7hx/cqlFiZUmltRVXnvA=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"4765597df97b871fdcaa51626549a5b515579ef0"</string>
+		</dict>
+		<key>Frameworks/libfreetype.6.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			b40iKNab+vweEVyqLjfNBILz9W8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"6f8d2228d69bfafc1e115caa2e37cd0482f3f56f"</string>
+		</dict>
+		<key>Frameworks/libglib-2.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			j1nPsFLRQ6HaXCh6W4e4RByKJYw=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"8f59cfb052d143a1da5c287a5b87b8441c8a258c"</string>
+		</dict>
+		<key>Frameworks/libgthread-2.0.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			W2CQz6StN5eTQlf8As32i9NvQeE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"5b6090cfa4ad3797934257fc02cdf68bd36f41e1"</string>
+		</dict>
+		<key>Frameworks/libicudata.78.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			kErlihO8nIawrorZqy0C7173cTE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"904ae58a13bc9c86b0ae8ad9ab2d02ef5ef77131"</string>
+		</dict>
+		<key>Frameworks/libicui18n.78.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			naht2O8XO5i2yYY3RrJPvjgSBp8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"9da86dd8ef173b98b6c9863746b24fbe3812069f"</string>
+		</dict>
+		<key>Frameworks/libicuuc.78.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			Cf3PlalG76EdoXOb0qpyr4D/1Wc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"09fdcf95a946efa11da1739bd2aa72af80ffd567"</string>
+		</dict>
+		<key>Frameworks/libintl.8.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			Q+AsUx1ZPJdXrdaCjDuLftcWzd8=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"43e02c531d593c9757add6828c3b8b7ed716cddf"</string>
+		</dict>
+		<key>Frameworks/liblzma.5.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			UHqqkFJ0RDZTEEF/wqIBzDA0z8c=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"507aaa90527444365310417fc2a201cc3034cfc7"</string>
+		</dict>
+		<key>Frameworks/libmd4c.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			ia4UzkgeNXEN1ZJsbnbgv2dEaTM=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"89ae14ce481e35710dd5926c6e76e0bf67446933"</string>
+		</dict>
+		<key>Frameworks/libpcre2-16.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			oPSuP+MSX/wJcAUZf/RKKlXafjM=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"a0f4ae3fe3125ffc097005197ff44a2a55da7e33"</string>
+		</dict>
+		<key>Frameworks/libpcre2-8.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			EdDvn3oaeeiem38ILYDWZ9ysoOc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"11d0ef9f7a1a79e89e9b7f082d80d667dcaca0e7"</string>
+		</dict>
+		<key>Frameworks/libpng16.16.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			GWAbV7K9o/ht+IgubCBVPI8LZmM=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"19601b57b2bda3f86df8882e6c20553c8f0b6663"</string>
+		</dict>
+		<key>Frameworks/libprotobuf.34.1.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			yHWb1lAms/lpv4feTn2rZne2W58=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"c8759bd65026b3f969bf87de4e7dab6677b65b9f"</string>
+		</dict>
+		<key>Frameworks/libsqlite3.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			plxstgzyRhAT3afhaxLBAsy+KVc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"a65c6cb60cf2461013dda7e16b12c102ccbe2957"</string>
+		</dict>
+		<key>Frameworks/libssl.3.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			1Na/IWAikR28i+vzBSEaLYLnjLc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"d4d6bf216022911dbc8bebf305211a2d82e78cb7"</string>
+		</dict>
+		<key>Frameworks/libssl.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			4jdufQrvlJ62FRi4J70ljab4NHc=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"e2376e7d0aef949eb61518b827bd258da6f83477"</string>
+		</dict>
+		<key>Frameworks/libutf8_range.34.1.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			HoevnTe4xGTIwBeCddyd7TX9yNY=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"1e87af9d37b8c464c8c0178275dc9ded35fdc8d6"</string>
+		</dict>
+		<key>Frameworks/libutf8_validity.34.1.0.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			rsTPYmIUzxb0HNcj3OLQYQnn3XE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"aec4cf626214cf16f41cd723dce2d06109e7dd71"</string>
+		</dict>
+		<key>Frameworks/libzstd.1.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			G6lDA6tBASQLYyX5fDpUczS1qzE=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"1ba94303ab4101240b6325f97c3a547334b5ab31"</string>
+		</dict>
+		<key>PlugIns/platforms/libqcocoa.dylib</key>
+		<dict>
+			<key>cdhash</key>
+			<data>
+			5M+oVOhgZdI4m+gCayM4/qUtHfQ=
+			</data>
+			<key>requirement</key>
+			<string>cdhash H"e4cfa854e86065d2389be8026b2338fea52d1df4"</string>
+		</dict>
+		<key>Resources/xpchain.icns</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			EYpdptNN1V+mT3ODwF/hyCJpe7vh+bUqUG2Bi34U00I=
+			</data>
+		</dict>
+	</dict>
+	<key>rules</key>
+	<dict>
+		<key>^Resources/</key>
+		<true/>
+		<key>^Resources/.*\.lproj/</key>
+		<dict>
+			<key>optional</key>
+			<true/>
+			<key>weight</key>
+			<real>1000</real>
+		</dict>
+		<key>^Resources/.*\.lproj/locversion.plist$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>1100</real>
+		</dict>
+		<key>^Resources/Base\.lproj/</key>
+		<dict>
+			<key>weight</key>
+			<real>1010</real>
+		</dict>
+		<key>^version.plist$</key>
+		<true/>
+	</dict>
+	<key>rules2</key>
+	<dict>
+		<key>.*\.dSYM($|/)</key>
+		<dict>
+			<key>weight</key>
+			<real>11</real>
+		</dict>
+		<key>^(.*/)?\.DS_Store$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>2000</real>
+		</dict>
+		<key>^(Frameworks|SharedFrameworks|PlugIns|Plug-ins|XPCServices|Helpers|MacOS|Library/(Automator|Spotlight|LoginItems))/</key>
+		<dict>
+			<key>nested</key>
+			<true/>
+			<key>weight</key>
+			<real>10</real>
+		</dict>
+		<key>^.*</key>
+		<true/>
+		<key>^Info\.plist$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+		<key>^PkgInfo$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+		<key>^Resources/</key>
+		<dict>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+		<key>^Resources/.*\.lproj/</key>
+		<dict>
+			<key>optional</key>
+			<true/>
+			<key>weight</key>
+			<real>1000</real>
+		</dict>
+		<key>^Resources/.*\.lproj/locversion.plist$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>1100</real>
+		</dict>
+		<key>^Resources/Base\.lproj/</key>
+		<dict>
+			<key>weight</key>
+			<real>1010</real>
+		</dict>
+		<key>^[^/]+$</key>
+		<dict>
+			<key>nested</key>
+			<true/>
+			<key>weight</key>
+			<real>10</real>
+		</dict>
+		<key>^embedded\.provisionprofile$</key>
+		<dict>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+		<key>^version\.plist$</key>
+		<dict>
+			<key>weight</key>
+			<real>20</real>
+		</dict>
+	</dict>
+</dict>
+</plist>

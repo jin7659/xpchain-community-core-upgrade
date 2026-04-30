@@ -134,6 +134,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             if (Params().NetworkIDString() != "main") {
                 pblock->nBits = UintToArith256(Params().GetConsensus().powLimit).GetCompact();
             }
+            LogPrintf("DEBUG: generateBlocks called for height %d, nBits=0x%08x\n", nHeight+1, pblock->nBits);
         }
         while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount && !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus())) {
             ++pblock->nNonce;

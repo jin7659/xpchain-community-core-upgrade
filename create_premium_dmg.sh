@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-APP_NAME="XPChain-Qt"
+APP_NAME="XPChain-Core"
 APP_BUNDLE="${APP_NAME}.app"
 DMG_NAME="XPChain-Core.dmg"
 BACKGROUND_IMG="contrib/macdeploy/background_pure_white.png"
