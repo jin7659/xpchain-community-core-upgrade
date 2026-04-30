@@ -118,10 +118,10 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     UniValue blockHashes(UniValue::VARR);
     while (nHeight < nHeightEnd && !ShutdownRequested())
     {
-        if(IsPoSHeight(nHeight+1,Params().GetConsensus()))
+        /*if(IsPoSHeight(nHeight+1,Params().GetConsensus()))
         {
             break;
-        }
+        }*/
         std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
 
         if (!pblocktemplate.get())
