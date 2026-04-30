@@ -8,6 +8,6 @@ if ENABLE_QT
   dist_man1_MANS+=xpchain-qt.1
 endif
 
-if BUILD_BITCOIN_UTILS
+if BUILD_XPCHAIN_UTILS
   dist_man1_MANS+=xpchain-cli.1 xpchain-tx.1
 endif

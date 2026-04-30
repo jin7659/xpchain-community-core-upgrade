@@ -726,10 +726,10 @@ TARGET_DARWIN_FALSE
 TARGET_DARWIN_TRUE
 ENABLE_ZMQ_FALSE
 ENABLE_ZMQ_TRUE
-BUILD_BITCOIN_LIBS_FALSE
-BUILD_BITCOIN_LIBS_TRUE
-BUILD_BITCOIN_UTILS_FALSE
-BUILD_BITCOIN_UTILS_TRUE
+BUILD_XPCHAIN_LIBS_FALSE
+BUILD_XPCHAIN_LIBS_TRUE
+BUILD_XPCHAIN_UTILS_FALSE
+BUILD_XPCHAIN_UTILS_TRUE
 BUILD_XPCHAIND_FALSE
 BUILD_XPCHAIND_TRUE
 PROTOC
@@ -3508,7 +3508,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-ac_config_headers="$ac_config_headers src/config/bitcoin-config.h"
+ac_config_headers="$ac_config_headers src/config/xpchain-config.h"
 
 
 
@@ -22446,9 +22446,9 @@ CPPFLAGS="$CPPFLAGS -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS"
 # Check whether --with-utils was given.
 if test ${with_utils+y}
 then :
-  withval=$with_utils; build_bitcoin_utils=$withval
+  withval=$with_utils; build_xpchain_utils=$withval
 else case e in #(
-  e) build_bitcoin_utils=yes ;;
+  e) build_xpchain_utils=yes ;;
 esac
 fi
 
@@ -22457,9 +22457,9 @@ fi
 # Check whether --with-libs was given.
 if test ${with_libs+y}
 then :
-  withval=$with_libs; build_bitcoin_libs=$withval
+  withval=$with_libs; build_xpchain_libs=$withval
 else case e in #(
-  e) build_bitcoin_libs=yes ;;
+  e) build_xpchain_libs=yes ;;
 esac
 fi
 
@@ -25749,7 +25749,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
 
-# The following macro will add the necessary defines to bitcoin-config.h, but
+# The following macro will add the necessary defines to xpchain-config.h, but
 # they also need to be passed down to any subprojects. Pull the results out of
 # the cache and add them to CPPFLAGS.
 # Check whether --enable-largefile was given.
@@ -32695,7 +32695,7 @@ printf '%s\n' "$bitcoin_enable_qt (Qt5)" >&6; }
 
 
 
-if test x$build_bitcoin_utils$build_xpchaind$bitcoin_enable_qt$use_tests$use_bench = xnonononono; then
+if test x$build_xpchain_utils$build_xpchaind$xpchain_enable_qt$use_tests$use_bench = xnonononono; then
     use_boost=no
 else
     use_boost=yes
@@ -34840,7 +34840,7 @@ fi
   fi
 
       fi
-      if test x$build_bitcoin_utils$build_xpchaind$bitcoin_enable_qt$use_tests != xnononono; then
+      if test x$build_xpchain_utils$build_xpchaind$xpchain_enable_qt$use_tests != xnononono; then
 
 pkg_failed=no
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for libevent" >&5
@@ -35266,7 +35266,7 @@ esac
 fi
 
 
-  if test x$build_bitcoin_utils$build_xpchaind$bitcoin_enable_qt$use_tests != xnononono; then
+  if test x$build_xpchain_utils$build_xpchaind$xpchain_enable_qt$use_tests != xnononono; then
     ac_fn_cxx_check_header_compile "$LINENO" "event2/event.h" "ac_cv_header_event2_event_h" "$ac_includes_default"
 if test "x$ac_cv_header_event2_event_h" = xyes
 then :
@@ -35606,7 +35606,7 @@ CXXFLAGS="${save_CXXFLAGS}"
 
 need_bundled_univalue=yes
 
-if test x$build_bitcoin_utils$build_xpchaind$bitcoin_enable_qt$use_tests$use_bench = xnonononono; then
+if test x$build_xpchain_utils$build_xpchaind$xpchain_enable_qt$use_tests$use_bench = xnonononono; then
   need_bundled_univalue=no
 else
 
@@ -35923,36 +35923,36 @@ printf '%s\n' "$build_xpchaind" >&6; }
 
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether to build utils (xpchain-cli xpchain-tx)" >&5
 printf %s "checking whether to build utils (xpchain-cli xpchain-tx)... " >&6; }
- if test x$build_bitcoin_utils = xyes; then
-  BUILD_BITCOIN_UTILS_TRUE=
-  BUILD_BITCOIN_UTILS_FALSE='#'
+ if test x$build_xpchain_utils = xyes; then
+  BUILD_XPCHAIN_UTILS_TRUE=
+  BUILD_XPCHAIN_UTILS_FALSE='#'
 else
-  BUILD_BITCOIN_UTILS_TRUE='#'
-  BUILD_BITCOIN_UTILS_FALSE=
+  BUILD_XPCHAIN_UTILS_TRUE='#'
+  BUILD_XPCHAIN_UTILS_FALSE=
 fi
 
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $build_bitcoin_utils" >&5
-printf '%s\n' "$build_bitcoin_utils" >&6; }
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $build_xpchain_utils" >&5
+printf '%s\n' "$build_xpchain_utils" >&6; }
 
 { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether to build libraries" >&5
 printf %s "checking whether to build libraries... " >&6; }
- if test x$build_bitcoin_libs = xyes; then
-  BUILD_BITCOIN_LIBS_TRUE=
-  BUILD_BITCOIN_LIBS_FALSE='#'
+ if test x$build_xpchain_libs = xyes; then
+  BUILD_XPCHAIN_LIBS_TRUE=
+  BUILD_XPCHAIN_LIBS_FALSE='#'
 else
-  BUILD_BITCOIN_LIBS_TRUE='#'
-  BUILD_BITCOIN_LIBS_FALSE=
+  BUILD_XPCHAIN_LIBS_TRUE='#'
+  BUILD_XPCHAIN_LIBS_FALSE=
 fi
 
-if test x$build_bitcoin_libs = xyes; then
+if test x$build_xpchain_libs = xyes; then
 
 printf '%s\n' "#define HAVE_CONSENSUS_LIB 1" >>confdefs.h
 
   ac_config_files="$ac_config_files libxpchainconsensus.pc:libxpchainconsensus.pc.in"
 
 fi
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $build_bitcoin_libs" >&5
-printf '%s\n' "$build_bitcoin_libs" >&6; }
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $build_xpchain_libs" >&5
+printf '%s\n' "$build_xpchain_libs" >&6; }
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -36071,16 +36071,16 @@ printf '%s\n' "no" >&6; }
 fi
 
 BUILD_TEST_QT=""
-if test x$bitcoin_enable_qt != xno; then
+if test x$xpchain_enable_qt != xno; then
     { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether to build GUI with support for D-Bus" >&5
 printf %s "checking whether to build GUI with support for D-Bus... " >&6; }
-  if test x$bitcoin_enable_qt_dbus != xno; then
+  if test x$xpchain_enable_qt_dbus != xno; then
 
 printf '%s\n' "#define USE_DBUS 1" >>confdefs.h
 
   fi
-  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $bitcoin_enable_qt_dbus" >&5
-printf '%s\n' "$bitcoin_enable_qt_dbus" >&6; }
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $xpchain_enable_qt_dbus" >&5
+printf '%s\n' "$xpchain_enable_qt_dbus" >&6; }
 
     { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether to build GUI with support for QR codes" >&5
 printf %s "checking whether to build GUI with support for QR codes... " >&6; }
@@ -36111,7 +36111,7 @@ printf '%s\n' "$as_me: WARNING: \"xgettext is required to update qt translations
 
   { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether to build test_xpchain-qt" >&5
 printf %s "checking whether to build test_xpchain-qt... " >&6; }
-  if test x$use_gui_tests$bitcoin_enable_qt_test = xyesyes; then
+  if test x$use_gui_tests$xpchain_enable_qt_test = xyesyes; then
     { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf '%s\n' "yes" >&6; }
     BUILD_TEST_QT="yes"
@@ -36130,8 +36130,8 @@ else
 fi
 
 
-{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether to build test_bitcoin" >&5
-printf %s "checking whether to build test_bitcoin... " >&6; }
+{ printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking whether to build test_xpchain" >&5
+printf %s "checking whether to build test_xpchain... " >&6; }
 if test x$use_tests = xyes; then
   { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 printf '%s\n' "yes" >&6; }
@@ -36152,7 +36152,7 @@ else
 printf '%s\n' "no" >&6; }
 fi
 
-if test x$build_bitcoin_utils$build_bitcoin_libs$build_xpchaind$bitcoin_enable_qt$use_bench$use_tests = xnononononono; then
+if test x$build_xpchain_utils$build_xpchain_libs$build_xpchaind$xpchain_enable_qt$use_bench$use_tests = xnononononono; then
   as_fn_error $? "No targets! Please specify at least one of: --with-utils --with-libs --with-daemon --with-gui --enable-bench or --enable-tests" "$LINENO" 5
 fi
 
@@ -36196,7 +36196,7 @@ else
   ENABLE_TESTS_FALSE=
 fi
 
- if test x$bitcoin_enable_qt = xyes; then
+ if test x$xpchain_enable_qt = xyes; then
   ENABLE_QT_TRUE=
   ENABLE_QT_FALSE='#'
 else
@@ -36399,7 +36399,7 @@ ac_config_links="$ac_config_links contrib/filter-lcov.py:contrib/filter-lcov.py"
 
 ac_config_links="$ac_config_links test/functional/test_runner.py:test/functional/test_runner.py"
 
-ac_config_links="$ac_config_links test/util/bitcoin-util-test.py:test/util/bitcoin-util-test.py"
+ac_config_links="$ac_config_links test/util/xpchain-util-test.py:test/util/xpchain-util-test.py"
 
 ac_config_links="$ac_config_links test/util/rpcauth-test.py:test/util/rpcauth-test.py"
 
@@ -36582,12 +36582,12 @@ if test -z "${BUILD_XPCHAIND_TRUE}" && test -z "${BUILD_XPCHAIND_FALSE}"; then
   as_fn_error $? "conditional \"BUILD_XPCHAIND\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${BUILD_BITCOIN_UTILS_TRUE}" && test -z "${BUILD_BITCOIN_UTILS_FALSE}"; then
-  as_fn_error $? "conditional \"BUILD_BITCOIN_UTILS\" was never defined.
+if test -z "${BUILD_XPCHAIN_UTILS_TRUE}" && test -z "${BUILD_XPCHAIN_UTILS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_XPCHAIN_UTILS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${BUILD_BITCOIN_LIBS_TRUE}" && test -z "${BUILD_BITCOIN_LIBS_FALSE}"; then
-  as_fn_error $? "conditional \"BUILD_BITCOIN_LIBS\" was never defined.
+if test -z "${BUILD_XPCHAIN_LIBS_TRUE}" && test -z "${BUILD_XPCHAIN_LIBS_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_XPCHAIN_LIBS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_ZMQ_TRUE}" && test -z "${ENABLE_ZMQ_FALSE}"; then
@@ -37633,7 +37633,7 @@ cat >>"$CONFIG_STATUS" <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "src/config/bitcoin-config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/config/bitcoin-config.h" ;;
+    "src/config/xpchain-config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/config/xpchain-config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "libxpchainconsensus.pc") CONFIG_FILES="$CONFIG_FILES libxpchainconsensus.pc:libxpchainconsensus.pc.in" ;;
@@ -37647,7 +37647,7 @@ do
     "doc/Doxyfile") CONFIG_FILES="$CONFIG_FILES doc/Doxyfile" ;;
     "contrib/filter-lcov.py") CONFIG_LINKS="$CONFIG_LINKS contrib/filter-lcov.py:contrib/filter-lcov.py" ;;
     "test/functional/test_runner.py") CONFIG_LINKS="$CONFIG_LINKS test/functional/test_runner.py:test/functional/test_runner.py" ;;
-    "test/util/bitcoin-util-test.py") CONFIG_LINKS="$CONFIG_LINKS test/util/bitcoin-util-test.py:test/util/bitcoin-util-test.py" ;;
+    "test/util/xpchain-util-test.py") CONFIG_LINKS="$CONFIG_LINKS test/util/xpchain-util-test.py:test/util/xpchain-util-test.py" ;;
     "test/util/rpcauth-test.py") CONFIG_LINKS="$CONFIG_LINKS test/util/rpcauth-test.py:test/util/rpcauth-test.py" ;;
 
   *) as_fn_error $? "invalid argument: '$ac_config_target'" "$LINENO" 5;;
@@ -39303,8 +39303,8 @@ esac
 echo
 echo "Options used to compile and link:"
 echo "  with wallet   = $enable_wallet"
-echo "  with gui / qt = $bitcoin_enable_qt"
-if test x$bitcoin_enable_qt != xno; then
+echo "  with gui / qt = $xpchain_enable_qt"
+if test x$xpchain_enable_qt != xno; then
     echo "    with qr     = $use_qr"
 fi
 echo "  with zmq      = $use_zmq"

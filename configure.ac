@@ -1196,11 +1196,11 @@ AM_CONDITIONAL([BUILD_XPCHAIND], [test x$build_xpchaind = xyes])
 AC_MSG_RESULT($build_xpchaind)
 
 AC_MSG_CHECKING([whether to build utils (xpchain-cli xpchain-tx)])
-AM_CONDITIONAL([BUILD_BITCOIN_UTILS], [test x$build_xpchain_utils = xyes])
+AM_CONDITIONAL([BUILD_XPCHAIN_UTILS], [test x$build_xpchain_utils = xyes])
 AC_MSG_RESULT($build_xpchain_utils)
 
 AC_MSG_CHECKING([whether to build libraries])
-AM_CONDITIONAL([BUILD_BITCOIN_LIBS], [test x$build_xpchain_libs = xyes])
+AM_CONDITIONAL([BUILD_XPCHAIN_LIBS], [test x$build_xpchain_libs = xyes])
 if test x$build_xpchain_libs = xyes; then
   AC_DEFINE(HAVE_CONSENSUS_LIB, 1, [Define this symbol if the consensus lib has been built])
   AC_CONFIG_FILES([libxpchainconsensus.pc:libxpchainconsensus.pc.in])
