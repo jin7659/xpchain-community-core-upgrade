@@ -306,10 +306,12 @@ void MintingTableModel::updateTransaction(const QString &hash, int status, bool 
 
 void MintingTableModel::updateAge()
 {
-    Q_EMIT dataChanged(index(0, Age), index(priv->size()-1, Age));
-    Q_EMIT dataChanged(index(0, CoinDay), index(priv->size()-1, CoinDay));
-    Q_EMIT dataChanged(index(0, MintProbability), index(priv->size()-1, MintProbability));
-    Q_EMIT dataChanged(index(0, MintReward), index(priv->size()-1, MintReward));
+    if (priv->size() > 0) {
+        Q_EMIT dataChanged(index(0, Age), index(priv->size()-1, Age));
+        Q_EMIT dataChanged(index(0, CoinDay), index(priv->size()-1, CoinDay));
+        Q_EMIT dataChanged(index(0, MintProbability), index(priv->size()-1, MintProbability));
+        Q_EMIT dataChanged(index(0, MintReward), index(priv->size()-1, MintReward));
+    }
     priv->refreshWallet();
 }
 

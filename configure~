@@ -28354,7 +28354,7 @@ fi
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: Qt dependencies not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: Qt dependencies not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "Qt dependencies not found" "$LINENO" 5
@@ -28566,7 +28566,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: QtCore headers missing; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: QtCore headers missing; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "QtCore headers missing" "$LINENO" 5
@@ -28594,7 +28594,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: QtGui headers missing; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: QtGui headers missing; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "QtGui headers missing" "$LINENO" 5
@@ -28622,7 +28622,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: QtNetwork headers missing; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: QtNetwork headers missing; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "QtNetwork headers missing" "$LINENO" 5
@@ -28792,7 +28792,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: libimm32 not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: libimm32 not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "libimm32 not found" "$LINENO" 5
@@ -29358,7 +29358,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib${QT_LIB_PREFIX}Core not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib${QT_LIB_PREFIX}Core not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib${QT_LIB_PREFIX}Core not found" "$LINENO" 5
@@ -29428,7 +29428,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib${QT_LIB_PREFIX}Gui not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib${QT_LIB_PREFIX}Gui not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib${QT_LIB_PREFIX}Gui not found" "$LINENO" 5
@@ -29498,7 +29498,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib${QT_LIB_PREFIX}Network not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib${QT_LIB_PREFIX}Network not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib${QT_LIB_PREFIX}Network not found" "$LINENO" 5
@@ -29568,7 +29568,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib${QT_LIB_PREFIX}Widgets not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib${QT_LIB_PREFIX}Widgets not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib${QT_LIB_PREFIX}Widgets not found" "$LINENO" 5
@@ -31003,7 +31003,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib$QT_LIB_PREFIXPlatformSupport not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib$QT_LIB_PREFIXPlatformSupport not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib$QT_LIB_PREFIXPlatformSupport not found" "$LINENO" 5
@@ -31074,7 +31074,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib$QT_LIB_PREFIXFontDatabaseSupport not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib$QT_LIB_PREFIXFontDatabaseSupport not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib$QT_LIB_PREFIXFontDatabaseSupport not found" "$LINENO" 5
@@ -31144,7 +31144,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib$QT_LIB_PREFIXEventDispatcherSupport not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib$QT_LIB_PREFIXEventDispatcherSupport not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib$QT_LIB_PREFIXEventDispatcherSupport not found" "$LINENO" 5
@@ -31214,7 +31214,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib$QT_LIB_PREFIXThemeSupport not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib$QT_LIB_PREFIXThemeSupport not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib$QT_LIB_PREFIXThemeSupport not found" "$LINENO" 5
@@ -31284,7 +31284,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib$QT_LIB_PREFIXFbSupport not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib$QT_LIB_PREFIXFbSupport not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib$QT_LIB_PREFIXFbSupport not found" "$LINENO" 5
@@ -31354,7 +31354,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib$QT_LIB_PREFIXDeviceDiscoverySupport not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib$QT_LIB_PREFIXDeviceDiscoverySupport not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib$QT_LIB_PREFIXDeviceDiscoverySupport not found" "$LINENO" 5
@@ -31424,7 +31424,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: lib$QT_LIB_PREFIXAccessibilitySupport not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: lib$QT_LIB_PREFIXAccessibilitySupport not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "lib$QT_LIB_PREFIXAccessibilitySupport not found" "$LINENO" 5
@@ -31520,7 +31520,7 @@ printf '%s\n' "no" >&6; };
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: Could not resolve: -lqtaccessiblewidgets; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: Could not resolve: -lqtaccessiblewidgets; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "Could not resolve: -lqtaccessiblewidgets" "$LINENO" 5
@@ -31564,7 +31564,7 @@ printf '%s\n' "no" >&6; };
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: Could not resolve: -lqminimal; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: Could not resolve: -lqminimal; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "Could not resolve: -lqminimal" "$LINENO" 5
@@ -31611,7 +31611,7 @@ printf '%s\n' "no" >&6; };
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: Could not resolve: -lqwindows; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: Could not resolve: -lqwindows; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "Could not resolve: -lqwindows" "$LINENO" 5
@@ -31658,7 +31658,7 @@ printf '%s\n' "no" >&6; };
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: Could not resolve: -lqxcb -lxcb-static; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: Could not resolve: -lqxcb -lxcb-static; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "Could not resolve: -lqxcb -lxcb-static" "$LINENO" 5
@@ -31747,7 +31747,7 @@ printf '%s\n' "no" >&6; };
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: Could not resolve: -lqcocoa; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: Could not resolve: -lqcocoa; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "Could not resolve: -lqcocoa" "$LINENO" 5
@@ -31993,7 +31993,7 @@ done
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: MOC not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: MOC not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "MOC not found" "$LINENO" 5
@@ -32124,7 +32124,7 @@ done
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: UIC not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: UIC not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "UIC not found" "$LINENO" 5
@@ -32255,7 +32255,7 @@ done
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: RCC not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: RCC not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "RCC not found" "$LINENO" 5
@@ -32386,7 +32386,7 @@ done
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: LRELEASE not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: LRELEASE not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "LRELEASE not found" "$LINENO" 5
@@ -32517,7 +32517,7 @@ done
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: LUPDATE not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: LUPDATE not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "LUPDATE not found" "$LINENO" 5
@@ -32675,7 +32675,7 @@ printf '%s\n' "$as_me: WARNING: lupdate is required to update qt translations" >
   else
     true
 
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
 
   fi
 
@@ -34726,7 +34726,7 @@ fi
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: libprotobuf not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: libprotobuf not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "libprotobuf not found" "$LINENO" 5
@@ -34741,7 +34741,7 @@ printf '%s\n' "no" >&6; }
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: libprotobuf not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: libprotobuf not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "libprotobuf not found" "$LINENO" 5
@@ -35499,7 +35499,7 @@ else case e in #(
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: libprotobuf not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: libprotobuf not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "libprotobuf not found" "$LINENO" 5
@@ -35893,7 +35893,7 @@ done
       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: WARNING: PROTOC not found; bitcoin-qt frontend will not be built" >&5
 printf '%s\n' "$as_me: WARNING: PROTOC not found; bitcoin-qt frontend will not be built" >&2;}
     fi
-    bitcoin_enable_qt=no
+    bitcoin_enable_qt=yes
     bitcoin_enable_qt_test=no
   else
     as_fn_error $? "PROTOC not found" "$LINENO" 5
