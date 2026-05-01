@@ -42,6 +42,7 @@ public:
     QVariant data(const QModelIndex &index, int role) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     QModelIndex index(int row, int column, const QModelIndex & parent = QModelIndex()) const;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     void setMintingInterval(int interval);
 

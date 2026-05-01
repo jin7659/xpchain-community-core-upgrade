@@ -337,6 +337,8 @@ QVariant MintingTableModel::data(const QModelIndex &index, int role) const
     if(!index.isValid())
         return QVariant();
     KernelRecord *rec = static_cast<KernelRecord*>(index.internalPointer());
+    if (!rec)
+        return QVariant();
 
     switch(role)
     {
@@ -540,6 +542,14 @@ QModelIndex MintingTableModel::index(int row, int column, const QModelIndex &par
     {
         return QModelIndex();
     }
+}
+
+Qt::ItemFlags MintingTableModel::flags(const QModelIndex &index) const
+{
+    if (!index.isValid())
+        return Qt::NoItemFlags;
+
+    return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 }
 
 void MintingTableModel::updateDisplayUnit()
