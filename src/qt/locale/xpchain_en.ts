@@ -307,7 +307,7 @@
     </message>
 </context>
 <context>
-    <name>BitcoinGUI</name>
+    <name>XPChainGUI</name>
     <message>
         <location filename="../bitcoingui.cpp" line="+318"/>
         <source>Sign &amp;message...</source>
@@ -4490,7 +4490,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
 </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>xpchain-core</name>
     <message>
         <location filename="../bitcoinstrings.cpp" line="+29"/>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>

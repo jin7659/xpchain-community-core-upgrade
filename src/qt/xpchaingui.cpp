@@ -1,7 +1,3 @@
-// Copyright (c) 2011-2018 The XPChain Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
 #include <qt/xpchaingui.h>
 
 #include <qt/xpchainunits.h>
@@ -24,6 +20,7 @@
 #include <qt/walletframe.h>
 #include <qt/walletmodel.h>
 #include <qt/walletview.h>
+#include <wallet/walletutil.h>
 #endif // ENABLE_WALLET
 
 #ifdef Q_OS_MAC
@@ -74,7 +71,8 @@ const std::string XPChainGUI::DEFAULT_UIPLATFORM =
 XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformStyle, const NetworkStyle *networkStyle, QWidget *parent) :
     QMainWindow(parent),
     m_node(node),
-    platformStyle(_platformStyle)
+    platformStyle(_platformStyle),
+    m_networkStyle(networkStyle)
 {
     QSettings settings;
     if (!restoreGeometry(settings.value("MainWindowGeometry").toByteArray())) {
@@ -82,24 +80,10 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
         move(QApplication::desktop()->availableGeometry().center() - frameGeometry().center());
     }
 
-    QString windowTitle = tr(PACKAGE_NAME) + " - ";
 #ifdef ENABLE_WALLET
     enableWallet = WalletModel::isWalletEnabled();
 #endif // ENABLE_WALLET
-    if(enableWallet)
-    {
-        windowTitle += tr("Wallet");
-    } else {
-        windowTitle += tr("Node");
-    }
-    windowTitle += " " + networkStyle->getTitleAddText();
-#ifndef Q_OS_MAC
-    QApplication::setWindowIcon(networkStyle->getTrayAndWindowIcon());
-    setWindowIcon(networkStyle->getTrayAndWindowIcon());
-#else
-    MacDockIconHandler::instance()->setIcon(networkStyle->getAppIcon());
-#endif
-    setWindowTitle(windowTitle);
+    updateWindowTitle();
 
     rpcConsole = new RPCConsole(node, _platformStyle, 0);
     helpMessageDialog = new HelpMessageDialog(node, this, false);
@@ -552,6 +536,7 @@ bool XPChainGUI::addWallet(WalletModel *walletModel)
         m_wallet_selector_label_action->setVisible(true);
         m_wallet_selector_action->setVisible(true);
     }
+    updateWindowTitle();
     rpcConsole->addWallet(walletModel);
     return walletFrame->addWallet(walletModel);
 }
@@ -568,6 +553,7 @@ bool XPChainGUI::removeWallet(WalletModel* walletModel)
         m_wallet_selector_label_action->setVisible(false);
         m_wallet_selector_action->setVisible(false);
     }
+    updateWindowTitle();
     rpcConsole->removeWallet(walletModel);
     return walletFrame->removeWallet(name);
 }
@@ -576,7 +562,11 @@ bool XPChainGUI::setCurrentWallet(const QString& name)
 {
     if(!walletFrame)
         return false;
-    return walletFrame->setCurrentWallet(name);
+    m_current_wallet_name = name;
+    if (m_current_wallet_name.isEmpty()) m_current_wallet_name = tr("default wallet");
+    bool ret = walletFrame->setCurrentWallet(name);
+    updateWindowTitle();
+    return ret;
 }
 
 bool XPChainGUI::setCurrentWalletBySelectorIndex(int index)
@@ -657,7 +647,7 @@ void XPChainGUI::createTrayIconMenu()
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addAction(openRPCConsoleAction);
-#ifndef Q_OS_MAC // This is built-in on Mac
+#ifndef Q_OS_MAC // This is built-인 on Mac
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 #endif
@@ -919,6 +909,28 @@ void XPChainGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVer
     labelBlocksIcon->setToolTip(tooltip);
     progressBarLabel->setToolTip(tooltip);
     progressBar->setToolTip(tooltip);
+}
+
+void XPChainGUI::updateWindowTitle()
+{
+    QString windowTitle = tr("XPChain Core");
+#ifdef ENABLE_WALLET
+    if (enableWallet) {
+        if (!m_current_wallet_name.isEmpty()) {
+            windowTitle += " - " + m_current_wallet_name;
+        } else {
+            windowTitle += " - " + tr("Wallet");
+        }
+    } else {
+        windowTitle += " - " + tr("Node");
+    }
+#else
+    windowTitle += " - " + tr("Node");
+#endif
+    if (m_networkStyle) {
+        windowTitle += " " + m_networkStyle->getTitleAddText();
+    }
+    setWindowTitle(windowTitle);
 }
 
 void XPChainGUI::message(const QString &title, const QString &message, unsigned int style, bool *ret)
@@ -1262,11 +1274,11 @@ static bool ThreadSafeMessageBox(XPChainGUI *gui, const std::string& message, co
     bool ret = false;
     // In case of modal message, use blocking connection to wait for user to click a button
     QMetaObject::invokeMethod(gui, "message",
-                               modal ? GUIUtil::blockingGUIThreadConnection() : Qt::QueuedConnection,
-                               Q_ARG(QString, QString::fromStdString(caption)),
-                               Q_ARG(QString, QString::fromStdString(message)),
-                               Q_ARG(unsigned int, style),
-                               Q_ARG(bool*, &ret));
+                                modal ? GUIUtil::blockingGUIThreadConnection() : Qt::QueuedConnection,
+                                Q_ARG(QString, QString::fromStdString(caption)),
+                                Q_ARG(QString, QString::fromStdString(message)),
+                                Q_ARG(unsigned int, style),
+                                Q_ARG(bool*, &ret));
     return ret;
 }
 
@@ -1362,8 +1374,12 @@ void UnitDisplayStatusBarControl::onMenuSelection(QAction* action)
         optionsModel->setDisplayUnit(action->data());
     }
 }
+
 void XPChainGUI::createWallet()
 {
+    // Ensure wallets directory exists so new wallets are created there
+    QDir().mkpath(QString::fromStdString(GetDataDir().string()) + "/wallets");
+
     CreateWalletDialog dlg(this);
     if(dlg.exec())
     {
@@ -1386,26 +1402,33 @@ void XPChainGUI::createWallet()
 
 void XPChainGUI::openWallet()
 {
-    // Try user's specific path first
-    QString wallets_dir = "/Users/jeongjinseob/xpchain/wallets";
+#ifdef ENABLE_WALLET
+    // Try default wallet directory
+    QString wallets_dir = QString::fromStdString(GetWalletDir().string());
     
-    // Fallback logic if the specific path doesn't exist
-    if (!QDir(wallets_dir).exists()) {
-        wallets_dir = Intro::getDefaultDataDirectory() + "/wallets";
-    }
-    
-    // Ensure the directory exists so the dialog starts there
+    // Ensure the directory exists
     QDir().mkpath(wallets_dir);
 
-    QString path = QFileDialog::getExistingDirectory(this, tr("Open Wallet"), wallets_dir, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    // Allow selecting both directories (BDB) and files (SQLite)
+    QString path = QFileDialog::getOpenFileName(this, tr("Open Wallet"), wallets_dir, tr("Wallets (*.dat * wallet.dat);;All Files (*)"));
+    if (path.isEmpty()) {
+        // Fallback to directory selection if no file was picked (for folder-based wallets)
+        path = QFileDialog::getExistingDirectory(this, tr("Open Wallet Directory"), wallets_dir, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    }
+
     if (!path.isEmpty()) {
-        QString wallet_name = QDir(wallets_dir).relativeFilePath(path);
-        if (wallet_name.startsWith("../")) {
-             // If selected path is outside prioritized folder, try relative to root data dir
-             wallet_name = QDir(Intro::getDefaultDataDirectory()).relativeFilePath(path);
-        }
+        // If user picked a file like /path/to/wallet.dat, we want the parent directory name if it's in a subfolder,
+        // or just the filename if it's a standalone SQLite wallet.
+        QFileInfo fileInfo(path);
+        QString wallet_name;
         
-        if (wallet_name.startsWith("../")) wallet_name = path; // Absolute path if still outside
+        if (fileInfo.fileName() == "wallet.dat") {
+            // Traditional BDB wallet in a folder
+            wallet_name = fileInfo.absoluteDir().dirName();
+        } else {
+            // Standalone SQLite wallet or other
+            wallet_name = fileInfo.fileName();
+        }
 
         UniValue params(UniValue::VARR);
         params.push_back(wallet_name.toStdString());
@@ -1418,6 +1441,7 @@ void XPChainGUI::openWallet()
             QMessageBox::critical(this, tr("Open Wallet Failed"), QString::fromStdString(e.what()));
         }
     }
+#endif
 }
 
 void XPChainGUI::backupAllWallets()

@@ -489,6 +489,7 @@ RPCConsole::RPCConsole(interfaces::Node& node, const PlatformStyle *_platformSty
 
     // set library version labels
 #ifdef ENABLE_WALLET
+    ui->label_berkeleyDBVersion->setText(tr("Using BerkeleyDB version"));
     ui->berkeleyDBVersion->setText(DbEnv::version(0, 0, 0));
 #else
     ui->label_berkeleyDBVersion->hide();
@@ -496,6 +497,7 @@ RPCConsole::RPCConsole(interfaces::Node& node, const PlatformStyle *_platformSty
 #endif
 
 #ifdef USE_SQLITE
+    ui->label_sqliteVersion->setText(tr("Using SQLite version"));
     ui->sqliteVersion->setText(sqlite3_libversion());
 #else
     ui->label_sqliteVersion->hide();

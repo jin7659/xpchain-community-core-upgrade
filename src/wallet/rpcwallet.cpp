@@ -3130,7 +3130,7 @@ static UniValue loadwallet(const JSONRPCRequest& request)
 
     std::string warning;
     if (!CWallet::Verify(wallet_file, false, error, warning)) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Wallet file verification failed: " + error);
+        throw JSONRPCError(RPC_WALLET_ERROR, _("Wallet file verification failed: ") + error);
     }
 
     std::shared_ptr<CWallet> const wallet = CWallet::CreateWalletFromFile(wallet_file, fs::absolute(wallet_file, GetWalletDir()));
@@ -3176,11 +3176,16 @@ static UniValue createwallet(const JSONRPCRequest& request)
 
     uint64_t flags = 0;
     LogPrintf("RPC createwallet: params count=%d, params=%s\n", request.params.size(), request.params.write());
-    if ((request.params[1].isBool() && request.params[1].get_bool()) || (request.params[1].isStr() && request.params[1].get_str() == "true")) {
+
+    if (request.params.size() > 1 && ((request.params[1].isBool() && request.params[1].get_bool()) || 
+        (request.params[1].isStr() && request.params[1].get_str() == "true") ||
+        (request.params[1].isNum() && request.params[1].get_int() > 0))) {
         flags |= (uint64_t)WALLET_FLAG_DISABLE_PRIVATE_KEYS;
     }
 
-    if ((request.params[2].isBool() && request.params[2].get_bool()) || (request.params[2].isStr() && request.params[2].get_str() == "true")) {
+    if (request.params.size() > 2 && ((request.params[2].isBool() && request.params[2].get_bool()) || 
+        (request.params[2].isStr() && request.params[2].get_str() == "true") ||
+        (request.params[2].isNum() && request.params[2].get_int() > 0))) {
         flags |= (uint64_t)WALLET_FLAG_DESCRIPTORS;
     }
 
@@ -3225,7 +3230,7 @@ static UniValue unloadwallet(const JSONRPCRequest& request)
     std::string wallet_name;
     if (GetWalletNameFromJSONRPCRequest(request, wallet_name)) {
         if (!request.params[0].isNull()) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Cannot unload the requested wallet");
+            throw JSONRPCError(RPC_INVALID_PARAMETER, _("Cannot unload the requested wallet"));
         }
     } else {
         wallet_name = request.params[0].get_str();
@@ -3233,7 +3238,7 @@ static UniValue unloadwallet(const JSONRPCRequest& request)
 
     std::shared_ptr<CWallet> wallet = GetWallet(wallet_name);
     if (!wallet) {
-        throw JSONRPCError(RPC_WALLET_NOT_FOUND, "Requested wallet does not exist or is not loaded");
+        throw JSONRPCError(RPC_WALLET_NOT_FOUND, _("Requested wallet does not exist or is not loaded"));
     }
 
     // Release the "main" shared pointer and prevent further notifications.

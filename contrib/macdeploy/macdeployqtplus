@@ -217,10 +217,18 @@ def getFrameworks(binaryPath, verbose):
     
     libraries = []
     for line in otoolLines:
-        line = line.replace("@loader_path", os.path.dirname(binaryPath))
+        line = line.strip()
+        if "@loader_path" in line:
+            # Try to resolve @loader_path relative to the current binaryPath
+            resolved_line = line.replace("@loader_path", os.path.dirname(binaryPath))
+            # If not found there, and it looks like a boost lib, try homebrew path
+            if not os.path.exists(resolved_line.split(" ")[0]) and "libboost" in line:
+                line = line.replace("@loader_path", "/opt/homebrew/lib")
+        
         # Handle @rpath - commonly used in Homebrew builds on macOS
         if "@rpath" in line:
              line = line.replace("@rpath", "/opt/homebrew/lib")
+        
         info = FrameworkInfo.fromOtoolLibraryLine(line.strip())
         if info is not None:
             if verbose >= 3:
@@ -343,9 +351,9 @@ def deployFrameworks(frameworks, bundlePath, binaryPath, strip, verbose, deploym
         
         # Copy framework to app bundle.
         deployedBinaryPath = copyFramework(framework, bundlePath, verbose)
-        # Skip the rest if already was deployed.
         if deployedBinaryPath is None:
-            continue
+            toDir = os.path.join(bundlePath, framework.destinationDirectory)
+            deployedBinaryPath = os.path.join(toDir, framework.binaryName)
         
         if strip:
             runStrip(deployedBinaryPath, verbose)
@@ -606,7 +614,7 @@ else:
 
 # ------------------------------------------------
 
-target = os.path.join("dist", "XPChain-Qt.app")
+target = os.path.join("dist", "XPChain-Core.app")
 
 if verbose >= 2:
     print("+ Copying source bundle +")
@@ -714,6 +722,22 @@ elif config.sign:
     subprocess.check_call("codesign --force %s %s"%(os.environ['CODESIGNARGS'], target), shell=True)
 
 # ------------------------------------------------
+
+
+if verbose >= 2:
+    print("+ Signing app bundle (brute-force) +")
+for root, dirs, files in os.walk(target):
+    for file in files:
+        p = os.path.join(root, file)
+        if not os.path.islink(p):
+            try:
+                with open(p, "rb") as f:
+                    header = f.read(4)
+                    if header in [b"\xca\xfe\xba\xbe", b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe"]:
+                        subprocess.call(["codesign", "--force", "--sign", "-", p])
+            except:
+                pass
+subprocess.call(["codesign", "--force", "--sign", "-", target])
 
 if config.dmg is not None:
 

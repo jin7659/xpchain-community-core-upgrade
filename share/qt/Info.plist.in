@@ -32,13 +32,16 @@
   <string>XPChain-Qt</string>
   
   <key>CFBundleName</key>
-  <string>XPChain-Qt</string>
+  <string>XPChain Core</string>
+
+  <key>CFBundleDisplayName</key>
+  <string>XPChain Core</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>io.xpchain.XPChain-Qt</string>
+  <string>io.xpchain.XPChain-Core</string>
 
   <key>CFBundleURLTypes</key>
   <array>

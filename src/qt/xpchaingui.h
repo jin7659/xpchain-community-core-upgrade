@@ -147,6 +147,8 @@ private:
     int spinnerFrame = 0;
 
     const PlatformStyle *platformStyle;
+    const NetworkStyle *m_networkStyle;
+    QString m_current_wallet_name;
 
     /** Create the main UI actions. */
     void createActions();
@@ -171,6 +173,7 @@ private:
     void updateNetworkState();
 
     void updateHeadersSyncProgressLabel();
+    void updateWindowTitle();
 
 Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */

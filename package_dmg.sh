@@ -54,7 +54,11 @@ cp -R ${QT_PATH}/lib/QtPrintSupport.framework "${APP_BUNDLE}/Contents/Frameworks
 cp -R ${QT_PATH}/lib/QtDBus.framework "${APP_BUNDLE}/Contents/Frameworks/" 2>/dev/null || true
 chmod -R u+w "${APP_BUNDLE}"
 
-# 3. Create temporary disk image
+# 3. Sign the bundle (Required for ARM-64)
+echo "Signing the bundle..."
+codesign --force --deep --sign - "${APP_BUNDLE}"
+
+# 4. Create temporary disk image
 echo "Creating temporary disk image..."
 hdiutil create -size 400m -fs HFS+ -volname "${VOL_NAME}" -ov "tmp.dmg"
 

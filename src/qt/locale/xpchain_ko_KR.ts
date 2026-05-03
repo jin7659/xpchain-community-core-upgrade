@@ -240,7 +240,7 @@
     </message>
 </context>
 <context>
-    <name>BitcoinGUI</name>
+    <name>XPChainGUI</name>
     <message>
         <source>Sign &amp;message...</source>
         <translation>메시지 서명(&amp;M)...</translation>
@@ -335,11 +335,11 @@
     </message>
     <message>
         <source>Wallet:</source>
-        <translation>지갑:&lt;br&gt;</translation>
+        <translation>지갑:</translation>
     </message>
     <message>
         <source>default wallet</source>
-        <translation>&lt;br&gt;기본 지갑</translation>
+        <translation>기본 지갑</translation>
     </message>
     <message>
         <source>Click to disable network activity.</source>
@@ -428,6 +428,18 @@
     <message>
         <source>&amp;File</source>
         <translation>파일(&amp;F)</translation>
+    </message>
+    <message>
+        <source>&amp;Create Wallet...</source>
+        <translation>지갑 생성(&amp;C)...</translation>
+    </message>
+    <message>
+        <source>&amp;Open Wallet...</source>
+        <translation>지갑 열기(&amp;O)...</translation>
+    </message>
+    <message>
+        <source>&amp;Backup All Wallets...</source>
+        <translation>모든 지갑 백업(&amp;B)...</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
@@ -600,6 +612,30 @@
     <message>
         <source>A fatal error occurred. XPChain can no longer continue safely and will quit.</source>
         <translation>치명적인 오류가 발생했습니다. XPChain을 더이상 안전하게 진행할 수 없어 곧 종료합니다.</translation>
+    </message>
+    <message>
+        <source>All %1 wallets backed up successfully to %2</source>
+        <translation>모든 %1 지갑이 %2로 성공적으로 백업되었습니다.</translation>
+    </message>
+    <message>
+        <source>Backup Partially Failed</source>
+        <translation>백업 일부 실패</translation>
+    </message>
+    <message>
+        <source>Successfully backed up %1 wallets, but failed for %2: %3</source>
+        <translation>%1 지갑은 성공적으로 백업되었으나, %2 지갑은 실패했습니다: %3</translation>
+    </message>
+    <message>
+        <source>Unit to show amounts in. Click to select another unit.</source>
+        <translation>금액을 표시할 단위. 다른 단위를 선택하려면 클릭하십시오.</translation>
+    </message>
+    <message>
+        <source>Open Wallet Failed</source>
+        <translation>지갑 열기 실패</translation>
+    </message>
+    <message>
+        <source>Wallet Creation Failed</source>
+        <translation>지갑 생성 실패</translation>
     </message>
 </context>
 <context>
@@ -1850,6 +1886,10 @@
     <message>
         <source>Using BerkeleyDB version</source>
         <translation>사용 중인 BerkeleyDB 버전</translation>
+    </message>
+    <message>
+        <source>Using SQLite version</source>
+        <translation>사용 중인 SQLite 버전</translation>
     </message>
     <message>
         <source>Datadir</source>
@@ -3497,7 +3537,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
 </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>xpchain-core</name>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file %s or %s</source>
         <translation>MIT 소프트웨어 라이센스에 따라 배포 됨, 첨부 파일 %s 또는 %s을 참조하십시오.</translation>
@@ -4005,6 +4045,18 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>Error</source>
         <translation>오류</translation>
+    </message>
+    <message>
+        <source>Wallet file verification failed: </source>
+        <translation>지갑 파일 검증 실패: </translation>
+    </message>
+    <message>
+        <source>Invalid -wallet path '%s'. -wallet path should point to a directory where wallet.dat and database/log.?????????? files can be stored, a location where such a directory could be created, or (for backwards compatibility) the name of an existing data file in -walletdir (%s)</source>
+        <translation>잘못된 -wallet 경로 '%s'. -wallet 경로는 wallet.dat 및 database/log.?????????? 파일을 저장할 수 있는 디렉토리, 또는 해당 디렉토리를 생성할 수 있는 위치, 또는 (하위 호환성을 위해) -walletdir에 있는 기존 데이터 파일의 이름이어야 합니다 (%s)</translation>
+    </message>
+    <message>
+        <source>Error loading wallet %s. %s</source>
+        <translation>지갑 %s 로딩 오류. %s</translation>
     </message>
 </context>
 </TS>

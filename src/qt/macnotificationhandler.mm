@@ -13,7 +13,7 @@
 - (NSString *)__bundleIdentifier
 {
     if (self == [NSBundle mainBundle]) {
-        return @"io.xpchain.XPChain-Qt";
+        return @"io.xpchain.XPChain-Core";
     } else {
         return [self __bundleIdentifier];
     }

@@ -42,4 +42,4 @@ ls -l src/qt/xpchain-qt
 strings src/qt/xpchain-qt | grep "v0.27.0.0-FINAL"
 
 echo "Creating the new DMG..."
-bash create_premium_dmg.sh
+bash package_dmg.sh
