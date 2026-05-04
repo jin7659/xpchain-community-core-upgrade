@@ -82,6 +82,7 @@ src/qt/bitcoin-qt.includes
 Makefile
 xpchain-qt
 XPChain-Qt.app
+XPChain-Core.app
 background.tiff*
 
 # Unit-tests
@@ -119,3 +120,5 @@ contrib/devtools/split-debug.sh
 
 docker-compose.yml
 docker-compose.override.yml
+dist/
+scratch/
