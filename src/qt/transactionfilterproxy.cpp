@@ -119,3 +119,9 @@ int TransactionFilterProxy::rowCount(const QModelIndex &parent) const
         return QSortFilterProxyModel::rowCount(parent);
     }
 }
+
+Qt::ItemFlags TransactionFilterProxy::flags(const QModelIndex &index) const
+{
+    if (!sourceModel()) return Qt::NoItemFlags;
+    return QSortFilterProxyModel::flags(index);
+}

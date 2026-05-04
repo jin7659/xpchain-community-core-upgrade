@@ -25,7 +25,7 @@
 #include <QVBoxLayout>
 
 MintingView::MintingView(const PlatformStyle *platformStyle, QWidget *parent) :
-    QWidget(parent), model(0), mintingView(0)
+    QWidget(parent), model(0), mintingView(0), mintingProxyModel(0)
 {
     QHBoxLayout *hlayout = new QHBoxLayout();
     hlayout->setContentsMargins(0,0,0,0);
@@ -125,8 +125,16 @@ MintingView::MintingView(const PlatformStyle *platformStyle, QWidget *parent) :
 void MintingView::setModel(WalletModel *_model)
 {
     this->model = _model;
+
+    if (mintingView) mintingView->setModel(nullptr);
+    if (mintingProxyModel) {
+        delete mintingProxyModel;
+        mintingProxyModel = nullptr;
+    }
+
     if(_model)
     {
+
         mintingProxyModel = new MintingFilterProxy(this);
         mintingProxyModel->setSourceModel(_model->getMintingTableModel());
         mintingProxyModel->setDynamicSortFilter(true);

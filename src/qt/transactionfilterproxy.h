@@ -50,6 +50,7 @@ public:
     void setShowInactive(bool showInactive);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    Qt::ItemFlags flags(const QModelIndex &index) const;
 
 protected:
     bool filterAcceptsRow(int source_row, const QModelIndex & source_parent) const;

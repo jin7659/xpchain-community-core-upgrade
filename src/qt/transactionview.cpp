@@ -203,8 +203,20 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
 void TransactionView::setModel(WalletModel *_model)
 {
     this->model = _model;
+
+    if (transactionView) transactionView->setModel(nullptr);
+    if (transactionProxyModel) {
+        delete transactionProxyModel;
+        transactionProxyModel = nullptr;
+    }
+    if (columnResizingFixer) {
+        delete columnResizingFixer;
+        columnResizingFixer = nullptr;
+    }
+
     if(_model)
     {
+
         transactionProxyModel = new TransactionFilterProxy(this);
         transactionProxyModel->setSourceModel(_model->getTransactionTableModel());
         transactionProxyModel->setDynamicSortFilter(true);
