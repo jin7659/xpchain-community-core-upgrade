@@ -2262,6 +2262,14 @@
         <source>Copy amount</source>
         <translation>거래액 복사</translation>
     </message>
+    <message>
+        <source>Address generation failure</source>
+        <translation>주소 생성 실패</translation>
+    </message>
+    <message>
+        <source>Taproot (Bech32m) addresses are not supported by legacy Berkeley DB wallets. Please create a new modern (SQLite) wallet to use Taproot features.</source>
+        <translation>탭루트(Bech32m) 주소는 레거시 Berkeley DB 지갑에서 지원되지 않습니다. 탭루트 기능을 사용하려면 새로운 현대식(SQLite) 지갑을 생성해 주세요.</translation>
+    </message>
 </context>
 <context>
     <name>ReceiveRequestDialog</name>

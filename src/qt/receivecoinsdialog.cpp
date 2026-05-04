@@ -113,6 +113,14 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
 
         // eventually disable the main receive button if private key operations are disabled
         ui->receiveButton->setEnabled(!model->privateKeysDisabled());
+
+        // Disable Taproot for legacy wallets
+        if (model->isLegacy()) {
+            ui->addressType->setItemData(3, QVariant(0), Qt::EnabledRole); // Disable the item
+            if (ui->addressType->currentIndex() == 3) {
+                ui->addressType->setCurrentIndex(2); // Fallback to Bech32 if Taproot was default
+            }
+        }
     }
 }
 
@@ -127,11 +135,16 @@ void ReceiveCoinsDialog::clear()
     ui->reqMessage->setText("");
     // Default to wallet's default address type
     if (model) {
-        if (model->wallet().getDefaultAddressType() == OutputType::BECH32M) {
+        OutputType default_type = model->wallet().getDefaultAddressType();
+        if (model->isLegacy() && default_type == OutputType::BECH32M) {
+            default_type = OutputType::BECH32; // Fallback for legacy
+        }
+
+        if (default_type == OutputType::BECH32M) {
             ui->addressType->setCurrentIndex(3);
-        } else if (model->wallet().getDefaultAddressType() == OutputType::BECH32) {
+        } else if (default_type == OutputType::BECH32) {
             ui->addressType->setCurrentIndex(2);
-        } else if (model->wallet().getDefaultAddressType() == OutputType::P2SH_SEGWIT) {
+        } else if (default_type == OutputType::P2SH_SEGWIT) {
             ui->addressType->setCurrentIndex(1);
         } else {
             ui->addressType->setCurrentIndex(0);
@@ -167,6 +180,12 @@ void ReceiveCoinsDialog::on_receiveButton_clicked()
     QString label = ui->reqLabel->text();
     /* Generate new receiving address */
     OutputType address_type = (OutputType)ui->addressType->currentData().toInt();
+    if (address_type == OutputType::BECH32M && model->isLegacy()) {
+        QMessageBox::warning(this, tr("Address generation failure"),
+            tr("Taproot (Bech32m) addresses are not supported by legacy Berkeley DB wallets. "
+               "Please create a new modern (SQLite) wallet to use Taproot features."));
+        return;
+    }
     address = model->getAddressTableModel()->addRow(AddressTableModel::Receive, label, "", address_type);
     SendCoinsRecipient info(address, label,
         ui->reqAmount->value(), ui->reqMessage->text());

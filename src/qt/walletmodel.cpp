@@ -600,6 +600,11 @@ bool WalletModel::isMultiwallet()
     return m_node.getWallets().size() > 1;
 }
 
+bool WalletModel::isLegacy() const
+{
+    return m_wallet->isLegacy();
+}
+
 // xpchain: optional setting to unlock wallet for block minting only;
 //         serves to disable the trivial sendmoney when OS account compromised
 bool fWalletUnlockMintOnly = false;

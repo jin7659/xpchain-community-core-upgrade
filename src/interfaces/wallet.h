@@ -248,6 +248,9 @@ public:
     // Get default change type.
     virtual OutputType getDefaultChangeType() = 0;
 
+    // Return whether wallet is a legacy (BDB) wallet.
+    virtual bool isLegacy() = 0;
+
     //! Register handler for unload message.
     using UnloadFn = std::function<void()>;
     virtual std::unique_ptr<Handler> handleUnload(UnloadFn fn) = 0;
