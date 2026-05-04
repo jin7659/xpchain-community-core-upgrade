@@ -15,6 +15,7 @@ uint256 CBlockHeader::GetHash() const
     return SerializeHash(*this);
 }
 
+#ifndef BUILD_XPCHAIN_INTERNAL
 std::string CBlock::ToString() const
 {
     std::stringstream s;
@@ -30,3 +31,4 @@ std::string CBlock::ToString() const
     }
     return s.str();
 }
+#endif

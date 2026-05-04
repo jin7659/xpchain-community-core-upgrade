@@ -1452,7 +1452,12 @@ uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn
         return ss.GetHash();
     }
 
-    static const uint256 one(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
+    static const uint256 one = []() {
+        uint256 v;
+        v.begin()[0] = 1;
+        for (unsigned int i = 1; i < v.size(); ++i) v.begin()[i] = 0;
+        return v;
+    }();
 
     // Check for invalid use of SIGHASH_SINGLE
     if ((nHashType & 0x1f) == SIGHASH_SINGLE) {

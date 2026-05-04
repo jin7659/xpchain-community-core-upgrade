@@ -9,10 +9,12 @@
 #include <tinyformat.h>
 #include <utilstrencodings.h>
 
+#ifndef BUILD_XPCHAIN_INTERNAL
 std::string COutPoint::ToString() const
 {
     return strprintf("COutPoint(%s, %u)", hash.ToString().substr(0,10), n);
 }
+#endif
 
 CTxIn::CTxIn(COutPoint prevoutIn, CScript scriptSigIn, uint32_t nSequenceIn)
 {
@@ -28,6 +30,7 @@ CTxIn::CTxIn(uint256 hashPrevTx, uint32_t nOut, CScript scriptSigIn, uint32_t nS
     nSequence = nSequenceIn;
 }
 
+#ifndef BUILD_XPCHAIN_INTERNAL
 std::string CTxIn::ToString() const
 {
     std::string str;
@@ -42,6 +45,7 @@ std::string CTxIn::ToString() const
     str += ")";
     return str;
 }
+#endif
 
 CTxOut::CTxOut(const CAmount& nValueIn, CScript scriptPubKeyIn)
 {
@@ -49,10 +53,12 @@ CTxOut::CTxOut(const CAmount& nValueIn, CScript scriptPubKeyIn)
     scriptPubKey = scriptPubKeyIn;
 }
 
+#ifndef BUILD_XPCHAIN_INTERNAL
 std::string CTxOut::ToString() const
 {
     return strprintf("CTxOut(nValue=%d.%08d, scriptPubKey=%s)", nValue / COIN, nValue % COIN, HexStr(scriptPubKey).substr(0, 30));
 }
+#endif
 
 CMutableTransaction::CMutableTransaction() : nVersion(CTransaction::CURRENT_VERSION), nLockTime(0) {}
 CMutableTransaction::CMutableTransaction(const CTransaction& tx) : vin(tx.vin), vout(tx.vout), nVersion(tx.nVersion), nLockTime(tx.nLockTime) {}
@@ -96,6 +102,7 @@ unsigned int CTransaction::GetTotalSize() const
     return ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
 }
 
+#ifndef BUILD_XPCHAIN_INTERNAL
 std::string CTransaction::ToString() const
 {
     std::string str;
@@ -113,3 +120,4 @@ std::string CTransaction::ToString() const
         str += "    " + tx_out.ToString() + "\n";
     return str;
 }
+#endif

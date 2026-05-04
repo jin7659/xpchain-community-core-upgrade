@@ -435,7 +435,9 @@ public:
     bool IsWalletFlagSet(uint64_t flag) override { return m_wallet.IsWalletFlagSet(flag); }
     OutputType getDefaultAddressType() override { return m_wallet.m_default_address_type; }
     OutputType getDefaultChangeType() override { return m_wallet.m_default_change_type; }
-    bool isLegacy() override { return !m_wallet.IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS); }
+    bool isLegacy() override { 
+        return m_wallet.GetDatabase().Format() == "berkeley"; 
+    }
     std::unique_ptr<Handler> handleUnload(UnloadFn fn) override
     {
         return MakeHandler(m_wallet.NotifyUnload.connect(fn));

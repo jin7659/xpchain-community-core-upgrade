@@ -16,6 +16,7 @@
 
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
+#include <outputtype.h>
 #include <key_io.h>
 #include <ui_interface.h>
 #include <util.h> // for GetBoolArg

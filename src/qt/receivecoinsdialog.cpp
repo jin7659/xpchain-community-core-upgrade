@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <wallet/wallet.h>
+#include <outputtype.h>
 
 #include <qt/receivecoinsdialog.h>
 #include <qt/forms/ui_receivecoinsdialog.h>
@@ -114,9 +115,9 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         // eventually disable the main receive button if private key operations are disabled
         ui->receiveButton->setEnabled(!model->privateKeysDisabled());
 
-        // Disable Taproot for legacy wallets
+        // Remove Taproot option for legacy wallets
         if (model->isLegacy()) {
-            ui->addressType->setItemData(3, QVariant(0), Qt::EnabledRole); // Disable the item
+            ui->addressType->removeItem(3);
             if (ui->addressType->currentIndex() == 3) {
                 ui->addressType->setCurrentIndex(2); // Fallback to Bech32 if Taproot was default
             }
