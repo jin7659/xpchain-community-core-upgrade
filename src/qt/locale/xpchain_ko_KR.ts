@@ -930,7 +930,7 @@
     </message>
     <message>
         <source>About %1</source>
-        <translation>%1 정보(&amp;A)</translation>
+        <translation>%1 정보</translation>
     </message>
     <message>
         <source>Command-line options</source>
