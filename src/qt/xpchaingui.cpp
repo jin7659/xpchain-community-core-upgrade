@@ -1409,12 +1409,7 @@ void XPChainGUI::openWallet()
     // Ensure the directory exists
     QDir().mkpath(wallets_dir);
 
-    // Allow selecting both directories (BDB) and files (SQLite)
     QString path = QFileDialog::getOpenFileName(this, tr("Open Wallet"), wallets_dir, tr("Wallets (*.dat * wallet.dat);;All Files (*)"));
-    if (path.isEmpty()) {
-        // Fallback to directory selection if no file was picked (for folder-based wallets)
-        path = QFileDialog::getExistingDirectory(this, tr("Open Wallet Directory"), wallets_dir, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-    }
 
     if (!path.isEmpty()) {
         // If user picked a file like /path/to/wallet.dat, we want the parent directory name if it's in a subfolder,
