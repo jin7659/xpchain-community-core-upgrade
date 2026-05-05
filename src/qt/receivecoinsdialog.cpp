@@ -65,11 +65,7 @@ ReceiveCoinsDialog::ReceiveCoinsDialog(const PlatformStyle *_platformStyle, QWid
     connect(copyMessageAction, SIGNAL(triggered()), this, SLOT(copyMessage()));
     connect(copyAmountAction, SIGNAL(triggered()), this, SLOT(copyAmount()));
 
-    // Address Type ComboBox
-    ui->addressType->addItem(tr("Base58 (Legacy)"), (int)OutputType::LEGACY);
-    ui->addressType->addItem(tr("Base58 (P2SH-SegWit)"), (int)OutputType::P2SH_SEGWIT);
-    ui->addressType->addItem(tr("Bech32 (SegWit)"), (int)OutputType::BECH32);
-    ui->addressType->addItem(tr("Bech32m (Taproot)"), (int)OutputType::BECH32M);
+    // Address Type ComboBox will be populated in setModel()
 
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clear()));
 }
@@ -102,26 +98,31 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         // Last 2 columns are set by the columnResizingFixer, when the table geometry is ready.
         columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(tableView, AMOUNT_MINIMUM_COLUMN_WIDTH, DATE_COLUMN_WIDTH, this);
 
-        if (model->wallet().getDefaultAddressType() == OutputType::BECH32M) {
-            ui->addressType->setCurrentIndex(3);
-        } else if (model->wallet().getDefaultAddressType() == OutputType::BECH32) {
-            ui->addressType->setCurrentIndex(2);
-        } else if (model->wallet().getDefaultAddressType() == OutputType::P2SH_SEGWIT) {
-            ui->addressType->setCurrentIndex(1);
+        // Dynamically populate Address Type ComboBox
+        int currentIndex = ui->addressType->currentIndex();
+        OutputType currentType = currentIndex != -1 ? (OutputType)ui->addressType->currentData().toInt() : model->wallet().getDefaultAddressType();
+        
+        ui->addressType->clear();
+        ui->addressType->addItem(tr("Base58 (Legacy)"), (int)OutputType::LEGACY);
+        ui->addressType->addItem(tr("Base58 (P2SH-SegWit)"), (int)OutputType::P2SH_SEGWIT);
+        ui->addressType->addItem(tr("Bech32 (SegWit)"), (int)OutputType::BECH32);
+        
+        if (!model->isLegacy()) {
+            ui->addressType->addItem(tr("Bech32m (Taproot)"), (int)OutputType::BECH32M);
+        }
+
+        // Restore previous selection if valid, otherwise fallback
+        int newIndex = ui->addressType->findData((int)currentType);
+        if (newIndex != -1) {
+            ui->addressType->setCurrentIndex(newIndex);
+        } else if (currentType == OutputType::BECH32M) {
+            ui->addressType->setCurrentIndex(ui->addressType->findData((int)OutputType::BECH32)); // Fallback
         } else {
             ui->addressType->setCurrentIndex(0);
         }
 
         // eventually disable the main receive button if private key operations are disabled
         ui->receiveButton->setEnabled(!model->privateKeysDisabled());
-
-        // Remove Taproot option for legacy wallets
-        if (model->isLegacy()) {
-            ui->addressType->removeItem(3);
-            if (ui->addressType->currentIndex() == 3) {
-                ui->addressType->setCurrentIndex(2); // Fallback to Bech32 if Taproot was default
-            }
-        }
     }
 }
 
