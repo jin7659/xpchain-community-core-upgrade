@@ -2109,7 +2109,7 @@
     </message>
     <message>
         <source>default wallet</source>
-        <translation>&lt;br&gt;기본 지갑</translation>
+        <translation>기본 지갑</translation>
     </message>
     <message>
         <source>Welcome to the %1 RPC console.</source>
