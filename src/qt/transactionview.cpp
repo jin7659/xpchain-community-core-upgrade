@@ -594,9 +594,11 @@ void TransactionView::focusTransaction(const QModelIndex &idx)
     if(!transactionProxyModel)
         return;
     QModelIndex targetIdx = transactionProxyModel->mapFromSource(idx);
-    transactionView->scrollTo(targetIdx);
-    transactionView->setCurrentIndex(targetIdx);
-    transactionView->setFocus();
+    if (targetIdx.isValid()) {
+        transactionView->scrollTo(targetIdx);
+        transactionView->setCurrentIndex(targetIdx);
+        transactionView->setFocus();
+    }
 }
 
 void TransactionView::focusTransaction(const uint256& txid)
@@ -613,15 +615,17 @@ void TransactionView::focusTransaction(const uint256& txid)
     transactionView->selectionModel()->clearSelection();
     for (const QModelIndex& index : results) {
         const QModelIndex targetIndex = transactionProxyModel->mapFromSource(index);
-        transactionView->selectionModel()->select(
-            targetIndex,
-            QItemSelectionModel::Rows | QItemSelectionModel::Select);
-        // Called once per destination to ensure all results are in view, unless
-        // transactions are not ordered by (ascending or descending) date.
-        transactionView->scrollTo(targetIndex);
-        // scrollTo() does not scroll far enough the first time when transactions
-        // are ordered by ascending date.
-        if (index == results[0]) transactionView->scrollTo(targetIndex);
+        if (targetIndex.isValid()) {
+            transactionView->selectionModel()->select(
+                targetIndex,
+                QItemSelectionModel::Rows | QItemSelectionModel::Select);
+            // Called once per destination to ensure all results are in view, unless
+            // transactions are not ordered by (ascending or descending) date.
+            transactionView->scrollTo(targetIndex);
+            // scrollTo() does not scroll far enough the first time when transactions
+            // are ordered by ascending date.
+            if (index == results[0]) transactionView->scrollTo(targetIndex);
+        }
     }
 }
 

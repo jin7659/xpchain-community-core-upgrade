@@ -258,8 +258,10 @@ void TransactionTableModel::updateConfirmations()
     // Invalidate status (number of confirmations) and (possibly) description
     //  for all rows. Qt is smart enough to only actually request the data for the
     //  visible rows.
-    Q_EMIT dataChanged(index(0, Status), index(priv->size()-1, Status));
-    Q_EMIT dataChanged(index(0, ToAddress), index(priv->size()-1, ToAddress));
+    if (priv->size() > 0) {
+        Q_EMIT dataChanged(index(0, Status), index(priv->size()-1, Status));
+        Q_EMIT dataChanged(index(0, ToAddress), index(priv->size()-1, ToAddress));
+    }
 }
 
 int TransactionTableModel::rowCount(const QModelIndex &parent) const
@@ -675,7 +677,9 @@ void TransactionTableModel::updateDisplayUnit()
 {
     // emit dataChanged to update Amount column with the current unit
     updateAmountColumnTitle();
-    Q_EMIT dataChanged(index(0, Amount), index(priv->size()-1, Amount));
+    if (priv->size() > 0) {
+        Q_EMIT dataChanged(index(0, Amount), index(priv->size()-1, Amount));
+    }
 }
 
 // queue notifications to show a non freezing progress dialog e.g. for rescan

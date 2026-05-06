@@ -5,9 +5,14 @@ src/bitcoin
 src/xpchaind
 src/xpchain-cli
 src/xpchain-tx
+src/xpchain-wallet
+src/xpchain-util
 src/test/test_bitcoin
 src/test/test_bitcoin_fuzzy
+src/test/test_xpchain
+src/bench/bench_xpchain
 src/qt/test/test_bitcoin-qt
+src/qt/test/test_xpchain-qt
 
 # autoreconf
 Makefile.in

@@ -193,7 +193,7 @@ public:
             parent->beginRemoveRows(QModelIndex(), lowerIndex, upperIndex - 1);
             for(int i = lowerIndex; i < upperIndex; i++)
             {
-                cachedWallet.removeAt(i);
+                cachedWallet.removeAt(lowerIndex);
             }
             parent->endRemoveRows();
 

@@ -143,7 +143,7 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
 
 void OverviewPage::handleTransactionClicked(const QModelIndex &index)
 {
-    if(filter)
+    if(filter && index.isValid())
         Q_EMIT transactionClicked(filter->mapToSource(index));
 }
 
