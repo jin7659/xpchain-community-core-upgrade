@@ -145,8 +145,8 @@ class FrameworkInfo(object):
             info.sourceResourcesDirectory = os.path.join(info.frameworkPath, "Resources")
             info.sourceContentsDirectory = os.path.join(info.frameworkPath, "Contents")
             info.sourceVersionContentsDirectory = os.path.join(info.frameworkPath, "Versions", info.version, "Contents")
-            info.destinationResourcesDirectory = os.path.join(cls.bundleFrameworkDirectory, info.frameworkName, "Resources")
-            info.destinationContentsDirectory = os.path.join(cls.bundleFrameworkDirectory, info.frameworkName, "Contents")
+            info.destinationResourcesDirectory = os.path.join(cls.bundleFrameworkDirectory, info.frameworkName, "Versions", info.version, "Resources")
+            info.destinationContentsDirectory = os.path.join(cls.bundleFrameworkDirectory, info.frameworkName, "Versions", info.version, "Contents")
             info.destinationVersionContentsDirectory = os.path.join(cls.bundleFrameworkDirectory, info.frameworkName, "Versions", info.version, "Contents")
         
         return info
@@ -299,6 +299,15 @@ def copyFramework(framework, path, verbose):
             os.symlink(linkto, linkfrom)
             if verbose >= 2:
                 print("Linked:", linkfrom, "->", linkto)
+
+        # 1. Create binary symlink in framework root
+        bin_link_from = os.path.join(path, "Contents", "Frameworks", framework.frameworkName, framework.binaryName)
+        bin_link_to = os.path.join("Versions", "Current", framework.binaryName)
+        if not os.path.exists(bin_link_from):
+            os.symlink(bin_link_to, bin_link_from)
+            if verbose >= 2:
+                print("Linked binary:", bin_link_from, "->", bin_link_to)
+
         fromResourcesDir = framework.sourceResourcesDirectory
         if os.path.exists(fromResourcesDir):
             toResourcesDir = os.path.join(path, framework.destinationResourcesDirectory)
@@ -306,6 +315,16 @@ def copyFramework(framework, path, verbose):
             if verbose >= 3:
                 print("Copied resources:", fromResourcesDir)
                 print(" to:", toResourcesDir)
+            
+            # 2. Create Resources symlink in framework root
+            if "Versions" in framework.destinationResourcesDirectory:
+                res_link_from = os.path.join(path, "Contents", "Frameworks", framework.frameworkName, "Resources")
+                res_link_to = os.path.join("Versions", "Current", "Resources")
+                if not os.path.exists(res_link_from):
+                    os.symlink(res_link_to, res_link_from)
+                    if verbose >= 2:
+                        print("Linked resources:", res_link_from, "->", res_link_to)
+
         fromContentsDir = framework.sourceVersionContentsDirectory
         if not os.path.exists(fromContentsDir):
             fromContentsDir = framework.sourceContentsDirectory
@@ -315,6 +334,15 @@ def copyFramework(framework, path, verbose):
             if verbose >= 3:
                 print("Copied Contents:", fromContentsDir)
                 print(" to:", toContentsDir)
+            
+            # 3. Create Contents symlink in framework root
+            if "Versions" in framework.destinationVersionContentsDirectory:
+                con_link_from = os.path.join(path, "Contents", "Frameworks", framework.frameworkName, "Contents")
+                con_link_to = os.path.join("Versions", "Current", "Contents")
+                if not os.path.exists(con_link_from):
+                    os.symlink(con_link_to, con_link_from)
+                    if verbose >= 2:
+                        print("Linked contents:", con_link_from, "->", con_link_to)
     elif framework.frameworkName.startswith("libQtGui"): # Copy qt_menu.nib (applies to non-framework layout)
         qtMenuNibSourcePath = os.path.join(framework.frameworkDirectory, "Resources", "qt_menu.nib")
         qtMenuNibDestinationPath = os.path.join(path, "Contents", "Resources", "qt_menu.nib")
@@ -737,7 +765,7 @@ for root, dirs, files in os.walk(target):
                         subprocess.call(["codesign", "--force", "--sign", "-", p])
             except:
                 pass
-subprocess.call(["codesign", "--force", "--sign", "-", target])
+subprocess.call(["codesign", "--force", "--deep", "--sign", "-", target])
 
 if config.dmg is not None:
 
