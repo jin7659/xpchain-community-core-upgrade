@@ -307,12 +307,20 @@ bool SQLiteDatabase::Backup(const std::string& strDest) const
         return false;
     }
 
-    // 전체 복사 수행
-    int rc = sqlite3_backup_step(pBackup, -1);
+    // 10페이지씩 쪼개어 복사 수행 (디스크 I/O를 타 스레드에 양보하여 메인 멈춤 현상 원천 방어)
+    int rc = SQLITE_OK;
+    do {
+        rc = sqlite3_backup_step(pBackup, 10);
+        if (rc == SQLITE_OK || rc == SQLITE_BUSY || rc == SQLITE_LOCKED) {
+            // 일시적인 락이나 동시 작업 경합 시 10ms 대기하여 양보합니다.
+            MilliSleep(10);
+        }
+    } while (rc == SQLITE_OK || rc == SQLITE_BUSY || rc == SQLITE_LOCKED);
+
     sqlite3_backup_finish(pBackup);
 
     if (rc != SQLITE_DONE) {
-        LogPrintf("SQLiteDatabase: Backup failed during execution: %s\n", sqlite3_errmsg(pDestDb));
+        LogPrintf("SQLiteDatabase: Backup failed during execution: %s (code %d)\n", sqlite3_errmsg(pDestDb), rc);
         sqlite3_close(pDestDb);
         return false;
     }
@@ -349,8 +357,24 @@ bool SQLiteDatabase::Rewrite(const char* pszSkip)
 
     return true;
 }
-bool SQLiteDatabase::PeriodicFlush() { return true; }
-void SQLiteDatabase::IncrementUpdateCounter() {}
+bool SQLiteDatabase::PeriodicFlush()
+{
+    if (!m_db) return false;
+    
+    // 주기적 플러시 요청 시, 백그라운드 스레드에서 WAL 데이터를 메인 파일에 정밀 병합합니다.
+    int nLog = 0, nCkpt = 0;
+    int rc = sqlite3_wal_checkpoint_v2(m_db, nullptr, SQLITE_CHECKPOINT_PASSIVE, &nLog, &nCkpt);
+    if (rc != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase::PeriodicFlush: WAL checkpoint failed: %s\n", sqlite3_errmsg(m_db));
+        return false;
+    }
+    return true;
+}
+
+void SQLiteDatabase::IncrementUpdateCounter()
+{
+    ++nUpdateCounter;
+}
 
 bool IsSQLiteFile(const fs::path& path)
 {
