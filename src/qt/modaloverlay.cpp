@@ -11,6 +11,8 @@
 
 #include <QResizeEvent>
 #include <QPropertyAnimation>
+#include <QPainter>
+#include <QStyleOption>
 
 ModalOverlay::ModalOverlay(QWidget *parent) :
 QWidget(parent),
@@ -171,4 +173,12 @@ void ModalOverlay::closeClicked()
 {
     showHide(true);
     userClosed = true;
+}
+
+void ModalOverlay::paintEvent(QPaintEvent *event)
+{
+    QStyleOption opt;
+    opt.init(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }

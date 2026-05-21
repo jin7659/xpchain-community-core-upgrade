@@ -203,3 +203,44 @@ QToolTip {
     color: #ffffff;
     padding: 4px;
 }
+
+/* ModalOverlay Sync Panel Styling */
+ModalOverlay {
+    background-color: transparent;
+}
+
+#bgWidget {
+    background-color: rgba(0, 0, 0, 180);
+}
+
+#contentWidget {
+    background-color: rgba(26, 26, 26, 245);
+    border: 1px solid rgba(255, 128, 0, 0.4);
+    border-radius: 12px;
+}
+
+#contentWidget QLabel {
+    background-color: transparent;
+    color: #e0e0e0;
+}
+
+#warningIcon {
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+    margin: 0px;
+}
+
+#contentWidget QProgressBar {
+    background-color: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    border-radius: 4px;
+    height: 6px;
+    text-align: center;
+}
+
+#contentWidget QProgressBar::chunk {
+    background-color: #ff8000;
+    border-radius: 3px;
+}
+
