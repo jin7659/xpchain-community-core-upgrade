@@ -36,6 +36,21 @@ void SQLiteDatabase::Open()
         throw std::runtime_error("SQLiteDatabase: Failed to open database: " + std::string(sqlite3_errmsg(m_db)));
     }
 
+    // SQLCipher 암호화 적용
+    if (!m_key.empty()) {
+#ifdef USE_SQLCIPHER
+        if (sqlite3_key(m_db, m_key.data(), m_key.size()) != SQLITE_OK) {
+            sqlite3_close(m_db);
+            m_db = nullptr;
+            throw std::runtime_error("SQLiteDatabase: Invalid encryption key");
+        }
+#else
+        sqlite3_close(m_db);
+        m_db = nullptr;
+        throw std::runtime_error("SQLiteDatabase: Database encryption is not supported (SQLCipher is missing)");
+#endif
+    }
+
     // 기본 테이블 생성
     if (m_writable) {
         const char* create_table_sql = "CREATE TABLE IF NOT EXISTS main(key BLOB PRIMARY KEY, value BLOB);";
@@ -44,6 +59,26 @@ void SQLiteDatabase::Open()
             std::string msg = errmsg;
             sqlite3_free(errmsg);
             throw std::runtime_error("SQLiteDatabase: Failed to create table: " + msg);
+        }
+    }
+
+    // 성능 최적화 PRAGMA 설정
+    if (m_writable) {
+        char* errmsg = nullptr;
+        // WAL 모드 설정 (동시성 및 쓰기 속도 대폭 향상)
+        if (sqlite3_exec(m_db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Failed to set journal_mode to WAL: %s\n", errmsg ? errmsg : "unknown");
+            sqlite3_free(errmsg);
+        }
+        // synchronous를 NORMAL로 설정 (WAL 모드 시 안전하면서 빠른 쓰기 가능)
+        if (sqlite3_exec(m_db, "PRAGMA synchronous=NORMAL;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Failed to set synchronous to NORMAL: %s\n", errmsg ? errmsg : "unknown");
+            sqlite3_free(errmsg);
+        }
+        // 캐시 크기 설정 (약 2MB 캐시로 잦은 I/O 오버헤드 완화)
+        if (sqlite3_exec(m_db, "PRAGMA cache_size=-2000;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Failed to set cache_size: %s\n", errmsg ? errmsg : "unknown");
+            sqlite3_free(errmsg);
         }
     }
     
@@ -210,7 +245,34 @@ int SQLiteCursor::Read(CDataStream& key, CDataStream& value)
 // 나머지 필수 구현들 (Stub)
 void SQLiteDatabase::Flush() {}
 bool SQLiteDatabase::Backup(const std::string& strDest) const { return false; }
-bool SQLiteDatabase::Rewrite(const char* pszSkip) { return true; }
+bool SQLiteDatabase::Rewrite(const char* pszSkip)
+{
+    if (!m_db) return false;
+
+    // 만약 키가 설정되어 있다면, 기존 DB를 암호화된 상태로 변환(Rekey)하거나 암호를 변경합니다.
+    if (!m_key.empty()) {
+#ifdef USE_SQLCIPHER
+        if (sqlite3_rekey(m_db, m_key.data(), m_key.size()) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Failed to rekey/encrypt database: %s\n", sqlite3_errmsg(m_db));
+            return false;
+        }
+        LogPrintf("SQLiteDatabase: Database encryption/rekey successful for %s\n", m_path);
+#else
+        LogPrintf("SQLiteDatabase: Database encryption is not supported (SQLCipher is missing)\n");
+        return false;
+#endif
+    }
+    
+    // VACUUM을 통해 보안상 남아있을 수 있는 평문 데이터를 완전히 제거하고 파일을 정리합니다.
+    char* errmsg = nullptr;
+    if (sqlite3_exec(m_db, "VACUUM;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase: VACUUM failed: %s\n", errmsg);
+        sqlite3_free(errmsg);
+        return false;
+    }
+
+    return true;
+}
 bool SQLiteDatabase::PeriodicFlush() { return true; }
 void SQLiteDatabase::IncrementUpdateCounter() {}
 

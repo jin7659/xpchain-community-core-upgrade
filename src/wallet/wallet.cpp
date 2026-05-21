@@ -28,6 +28,7 @@
 #include <utilmoneystr.h>
 #include <wallet/fees.h>
 #include <wallet/walletutil.h>
+#include <wallet/sqlite.h>
 #include <kernel.h>
 
 #include <algorithm>
@@ -726,6 +727,11 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
 
         // Need to completely rewrite the wallet file; if we don't, bdb might keep
         // bits of the unencrypted private key in slack space in the database file.
+        // SQLCipher의 경우 Rewrite() 내부에서 파일 전체 암호화(rekey)를 수행합니다.
+        if (database->Format() == "sqlite") {
+            auto sqlite_db = static_cast<SQLiteDatabase*>(database.get());
+            sqlite_db->SetKey(strWalletPassphrase);
+        }
         database->Rewrite();
 
     }

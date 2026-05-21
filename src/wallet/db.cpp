@@ -880,9 +880,30 @@ bool BerkeleyDatabase::Backup(const std::string& strDest) const
 #include <wallet/sqlite.h>
 #endif
 
+bool IsBerkeleyBDBFile(const fs::path& path)
+{
+    if (!fs::is_regular_file(path)) return false;
+    FILE* f = fsbridge::fopen(path, "rb");
+    if (!f) return false;
+    
+    unsigned char magic[16];
+    size_t read_bytes = fread(magic, 1, 16, f);
+    fclose(f);
+    
+    if (read_bytes < 16) return false;
+    
+    uint32_t bdb_magic = ((uint32_t)magic[12] << 24) | ((uint32_t)magic[13] << 16) | ((uint32_t)magic[14] << 8) | magic[15];
+    uint32_t bdb_magic_le = ((uint32_t)magic[15] << 24) | ((uint32_t)magic[14] << 16) | ((uint32_t)magic[13] << 8) | magic[12];
+    
+    // Btree magic: 0x00061561, Hash magic: 0x00053162
+    return (bdb_magic == 0x00061561 || bdb_magic_le == 0x00061561 ||
+            bdb_magic == 0x00053162 || bdb_magic_le == 0x00053162);
+}
+
 std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint64_t wallet_creation_flags)
 {
     bool is_sqlite = false;
+    bool is_bdb = false;
     if (fs::is_regular_file(path)) {
         FILE* f = fsbridge::fopen(path, "rb");
         if (f) {
@@ -894,11 +915,20 @@ std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint6
             }
             fclose(f);
         }
+        
+        // SQLite가 아닌 경우에만 Berkeley DB 여부를 추가 판별
+        if (!is_sqlite) {
+            is_bdb = IsBerkeleyBDBFile(path);
+        }
     }
 
     // WALLET_FLAG_DESCRIPTORS implies SQLite. 
-    // New wallets with this flag or existing SQLite files will use SQLiteDatabase.
-    if (is_sqlite || (wallet_creation_flags & WALLET_FLAG_DESCRIPTORS) || path.extension() == ".sqlite") {
+    // New wallets with this flag or existing SQLite files (including encrypted ones) will use SQLiteDatabase.
+    // 단, 명시적으로 Berkeley DB 파일로 감지된 경우에는 BDB 환경으로 처리합니다.
+    if (!is_bdb && (is_sqlite || (wallet_creation_flags & WALLET_FLAG_DESCRIPTORS) || 
+        path.extension() == ".sqlite" || path.filename() == "wallet.dat")) {
+        // 만약 매직바이트는 없지만 확장자가 sqlite이거나, 
+        // 이미 sqlite로 알려진 파일이라면 암호화된 상태일 가능성이 큽니다.
 #ifdef USE_SQLITE
         return std::make_unique<SQLiteDatabase>(path.string());
 #else

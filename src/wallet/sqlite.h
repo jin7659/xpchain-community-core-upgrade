@@ -7,8 +7,13 @@
 
 #include <wallet/db.h>
 
+#ifdef USE_SQLCIPHER
+#include <sqlcipher/sqlite3.h>
+#else
 #include <sqlite3.h>
+#endif
 #include <fs.h>
+#include <support/allocators/secure.h>
 
 /** 파일이 SQLite 데이터베이스인지 확인 */
 bool IsSQLiteFile(const fs::path& path);
@@ -27,9 +32,15 @@ private:
     /** 쓰기 가능한지 여부 */
     bool m_writable{false};
 
+    /** SQLCipher 암호화 키 */
+    SecureString m_key;
+
 public:
     SQLiteDatabase(const std::string& path, bool writable = true);
     ~SQLiteDatabase();
+
+    /** 암호화 키 설정 */
+    void SetKey(const SecureString& key) { m_key = key; }
 
     /** WalletDatabase 인터페이스 구현 */
     void Open() override;
