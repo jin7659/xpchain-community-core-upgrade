@@ -8,6 +8,9 @@
 #include <qt/transactiontablemodel.h>
 
 #include <QModelIndex>
+#include <QClipboard>
+#include <QTimer>
+#include <QApplication>
 
 TransactionDescDialog::TransactionDescDialog(const QModelIndex &idx, QWidget *parent) :
     QDialog(parent),
@@ -17,6 +20,15 @@ TransactionDescDialog::TransactionDescDialog(const QModelIndex &idx, QWidget *pa
     setWindowTitle(tr("Details for %1").arg(idx.data(TransactionTableModel::TxHashRole).toString()));
     QString desc = idx.data(TransactionTableModel::LongDescriptionRole).toString();
     ui->detailText->setHtml(desc);
+
+    QString txid = idx.data(TransactionTableModel::TxHashRole).toString();
+    connect(ui->copyTxIDButton, &QPushButton::clicked, this, [this, txid]() {
+        QApplication::clipboard()->setText(txid);
+        ui->copyTxIDButton->setText(tr("Copied!"));
+        QTimer::singleShot(1000, this, [this]() {
+            ui->copyTxIDButton->setText(tr("Copy TXID"));
+        });
+    });
 }
 
 TransactionDescDialog::~TransactionDescDialog()

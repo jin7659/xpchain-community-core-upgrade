@@ -103,6 +103,8 @@ public Q_SLOTS:
     void decryptForMinting(bool status);
     /** Backup the wallet */
     void backupWallet();
+    /** Handle completed backup */
+    void backupFinished(bool success, const QString &filename);
     /** Change encrypted wallet passphrase */
     void changePassphrase();
     /** Ask for passphrase to unlock wallet temporarily */

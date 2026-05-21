@@ -875,6 +875,9 @@ XPCHAIN_QT_INIT
 
 dnl sets $xpchain_enable_qt, $xpchain_enable_qt_test, $xpchain_enable_qt_dbus
 XPCHAIN_QT_CONFIGURE([$use_pkgconfig])
+xpchain_enable_qt=$bitcoin_enable_qt
+xpchain_enable_qt_test=$bitcoin_enable_qt_test
+xpchain_enable_qt_dbus=$bitcoin_enable_qt_dbus
 
 if test x$build_xpchain_utils$build_xpchaind$xpchain_enable_qt$use_tests$use_bench = xnonononono; then
     use_boost=no

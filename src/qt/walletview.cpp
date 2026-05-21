@@ -32,6 +32,8 @@
 #include <QProgressDialog>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QThreadPool>
+#include <QRunnable>
 
 WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     QStackedWidget(parent),
@@ -298,8 +300,31 @@ void WalletView::decryptForMinting(bool status)
     }
 }
 
+class BackupWorker : public QRunnable
+{
+public:
+    BackupWorker(WalletModel* model, const std::string& filepath, QObject* receiver)
+        : m_model(model), m_filepath(filepath), m_receiver(receiver) {}
+
+    void run() override
+    {
+        bool success = m_model->wallet().backupWallet(m_filepath);
+        QMetaObject::invokeMethod(m_receiver, "backupFinished",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(bool, success),
+                                  Q_ARG(QString, QString::fromStdString(m_filepath)));
+    }
+
+private:
+    WalletModel* m_model;
+    std::string m_filepath;
+    QObject* m_receiver;
+};
+
 void WalletView::backupWallet()
 {
+    if (!walletModel) return;
+
     QString filename = GUIUtil::getSaveFileName(this,
         tr("Backup Wallet"), QString(),
         tr("Wallet Data (*.dat)"), nullptr);
@@ -307,11 +332,21 @@ void WalletView::backupWallet()
     if (filename.isEmpty())
         return;
 
-    if (!walletModel->wallet().backupWallet(filename.toLocal8Bit().data())) {
+    // 비동기 백업 개시 정보성 발룬 알림
+    Q_EMIT message(tr("Backup Wallet"), tr("Wallet backup has started in the background..."), CClientUIInterface::MSG_INFORMATION);
+
+    // QThreadPool을 통해 논블로킹 백그라운드 태스크로 백업 수행
+    BackupWorker* worker = new BackupWorker(walletModel, filename.toLocal8Bit().data(), this);
+    worker->setAutoDelete(true);
+    QThreadPool::globalInstance()->start(worker);
+}
+
+void WalletView::backupFinished(bool success, const QString &filename)
+{
+    if (!success) {
         Q_EMIT message(tr("Backup Failed"), tr("There was an error trying to save the wallet data to %1.").arg(filename),
             CClientUIInterface::MSG_ERROR);
-        }
-    else {
+    } else {
         Q_EMIT message(tr("Backup Successful"), tr("The wallet data was successfully saved to %1.").arg(filename),
             CClientUIInterface::MSG_INFORMATION);
     }
