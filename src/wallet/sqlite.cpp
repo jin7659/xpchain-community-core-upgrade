@@ -9,6 +9,8 @@
 #include <streams.h>
 #include <fstream>
 #include <cstring>
+#include <support/cleanse.h>
+#include <sys/stat.h>
 
 
 SQLiteDatabase::SQLiteDatabase(const std::string& path, bool writable)
@@ -101,6 +103,9 @@ void SQLiteDatabase::Open()
         }
     }
     
+    // 파일 소유자 전용 최소 권한 강제화 (owner read/write only)
+    chmod(m_path.c_str(), 0600);
+    
     LogPrintf("SQLiteDatabase: Opened wallet file %s\n", m_path);
 }
 
@@ -109,6 +114,11 @@ void SQLiteDatabase::Close()
     if (m_db) {
         sqlite3_close(m_db);
         m_db = nullptr;
+    }
+    // 암호화 마스터 키가 적재되었던 메모리 영역 즉각 강제 세정 및 소거
+    if (!m_key.empty()) {
+        memory_cleanse(m_key.data(), m_key.size());
+        m_key.clear();
     }
 }
 
@@ -342,6 +352,10 @@ bool SQLiteDatabase::Backup(const std::string& strDest) const
     }
 
     sqlite3_close(pDestDb);
+    
+    // 백업 생성 파일 권한을 소유자 전용 최소 권한(0600)으로 제한
+    chmod(strDest.c_str(), 0600);
+    
     LogPrintf("SQLiteDatabase: Successfully backed up wallet database to %s\n", strDest);
     return true;
 }
@@ -467,6 +481,8 @@ bool SQLiteDatabase::Recover(const fs::path& wallet_path, void *callbackDataIn, 
     // 파일 백업 이름으로 이동
     try {
         fs::rename(wallet_path, backup_path);
+        // 격리된 임시 백업 파일도 소유자 전용 권한(0600)으로 제한
+        chmod(backup_path.string().c_str(), 0600);
         LogPrintf("SQLiteDatabase::Recover: Renamed %s to %s\n", wallet_path.string(), backup_path.string());
     } catch (const fs::filesystem_error& e) {
         LogPrintf("SQLiteDatabase::Recover: Failed to rename %s to %s: %s\n", wallet_path.string(), backup_path.string(), e.what());
@@ -578,6 +594,9 @@ bool SQLiteDatabase::Recover(const fs::path& wallet_path, void *callbackDataIn, 
     
     sqlite3_close(pSrcDb);
     sqlite3_close(pDestDb);
+    
+    // 새로 복구 작성된 지갑 데이터베이스 파일 권한을 소유자 전용 최소 권한(0600)으로 제한
+    chmod(wallet_path.string().c_str(), 0600);
     
     return fSuccess && (salvaged_count > 0);
 }
