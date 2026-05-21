@@ -105,6 +105,10 @@ std::unique_ptr<DatabaseBatch> SQLiteDatabase::MakeBatch(bool flush_on_close)
 SQLiteBatch::SQLiteBatch(SQLiteDatabase& database) : m_database(database)
 {
     m_database.Open();
+    if (m_database.Db()) {
+        sqlite3_prepare_v2(m_database.Db(), "SELECT value FROM main WHERE key = ?;", -1, &m_read_stmt, nullptr);
+        sqlite3_prepare_v2(m_database.Db(), "INSERT OR REPLACE INTO main(key, value) VALUES(?, ?);", -1, &m_write_stmt, nullptr);
+    }
 }
 
 SQLiteBatch::~SQLiteBatch()
@@ -114,37 +118,35 @@ SQLiteBatch::~SQLiteBatch()
 
 bool SQLiteBatch::ReadKey(CDataStream&& key, CDataStream& value)
 {
-    const char* sql = "SELECT value FROM main WHERE key = ?;";
-    sqlite3_stmt* stmt = nullptr;
+    if (!m_read_stmt) return false;
     
-    if (sqlite3_prepare_v2(m_database.Db(), sql, -1, &stmt, nullptr) != SQLITE_OK) return false;
+    sqlite3_reset(m_read_stmt);
+    sqlite3_clear_bindings(m_read_stmt);
     
-    sqlite3_bind_blob(stmt, 1, key.data(), key.size(), SQLITE_STATIC);
+    sqlite3_bind_blob(m_read_stmt, 1, key.data(), key.size(), SQLITE_STATIC);
     
     bool found = false;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const void* data = sqlite3_column_blob(stmt, 0);
-        int len = sqlite3_column_bytes(stmt, 0);
+    if (sqlite3_step(m_read_stmt) == SQLITE_ROW) {
+        const void* data = sqlite3_column_blob(m_read_stmt, 0);
+        int len = sqlite3_column_bytes(m_read_stmt, 0);
         value.write((const char*)data, len);
         found = true;
     }
     
-    sqlite3_finalize(stmt);
     return found;
 }
 
 bool SQLiteBatch::WriteKey(CDataStream&& key, CDataStream&& value, bool overwrite)
 {
-    const char* sql = "INSERT OR REPLACE INTO main(key, value) VALUES(?, ?);";
-    sqlite3_stmt* stmt = nullptr;
+    if (!m_write_stmt) return false;
     
-    if (sqlite3_prepare_v2(m_database.Db(), sql, -1, &stmt, nullptr) != SQLITE_OK) return false;
+    sqlite3_reset(m_write_stmt);
+    sqlite3_clear_bindings(m_write_stmt);
     
-    sqlite3_bind_blob(stmt, 1, key.data(), key.size(), SQLITE_STATIC);
-    sqlite3_bind_blob(stmt, 2, value.data(), value.size(), SQLITE_STATIC);
+    sqlite3_bind_blob(m_write_stmt, 1, key.data(), key.size(), SQLITE_STATIC);
+    sqlite3_bind_blob(m_write_stmt, 2, value.data(), value.size(), SQLITE_STATIC);
     
-    bool success = (sqlite3_step(stmt) == SQLITE_DONE);
-    sqlite3_finalize(stmt);
+    bool success = (sqlite3_step(m_write_stmt) == SQLITE_DONE);
     return success;
 }
 
@@ -178,7 +180,17 @@ bool SQLiteBatch::HasKey(CDataStream&& key)
 }
 
 void SQLiteBatch::Flush() {}
-void SQLiteBatch::Close() {}
+void SQLiteBatch::Close()
+{
+    if (m_read_stmt) {
+        sqlite3_finalize(m_read_stmt);
+        m_read_stmt = nullptr;
+    }
+    if (m_write_stmt) {
+        sqlite3_finalize(m_write_stmt);
+        m_write_stmt = nullptr;
+    }
+}
 
 std::unique_ptr<DatabaseCursor> SQLiteBatch::GetCursor()
 {
