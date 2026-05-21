@@ -36,6 +36,9 @@ void SQLiteDatabase::Open()
         throw std::runtime_error("SQLiteDatabase: Failed to open database: " + std::string(sqlite3_errmsg(m_db)));
     }
 
+    // 멀티스레드 환경에서 잠금 대기 타임아웃 설정 (5초)
+    sqlite3_busy_timeout(m_db, 5000);
+
     // SQLCipher 암호화 적용
     if (!m_key.empty()) {
 #ifdef USE_SQLCIPHER
@@ -242,9 +245,70 @@ int SQLiteCursor::Read(CDataStream& key, CDataStream& value)
     return -1; // Error
 }
 
-// 나머지 필수 구현들 (Stub)
-void SQLiteDatabase::Flush() {}
-bool SQLiteDatabase::Backup(const std::string& strDest) const { return false; }
+// 나머지 필수 구현들
+void SQLiteDatabase::Flush()
+{
+    if (!m_db) return;
+
+    // WAL 모드의 미결합 로그 페이지를 메인 파일로 안전하게 결합 및 체크포인트 수행
+    int nLog = 0, nCkpt = 0;
+    int rc = sqlite3_wal_checkpoint_v2(m_db, nullptr, SQLITE_CHECKPOINT_PASSIVE, &nLog, &nCkpt);
+    if (rc != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase: WAL checkpoint failed: %s\n", sqlite3_errmsg(m_db));
+    } else {
+        LogPrint(BCLog::DB, "SQLiteDatabase: WAL checkpoint successful. %d log pages, %d checkpointed\n", nLog, nCkpt);
+    }
+}
+
+bool SQLiteDatabase::Backup(const std::string& strDest) const
+{
+    if (!m_db) return false;
+
+    sqlite3* pDestDb = nullptr;
+    int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
+    if (sqlite3_open_v2(strDest.c_str(), &pDestDb, flags, nullptr) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase: Backup failed - Unable to open destination database: %s\n", sqlite3_errmsg(pDestDb));
+        if (pDestDb) sqlite3_close(pDestDb);
+        return false;
+    }
+
+    // 암호화된 원본 지갑 파일인 경우, 백업 대상 파일도 안전하게 동일 키로 암호화 설정
+    if (!m_key.empty()) {
+#ifdef USE_SQLCIPHER
+        if (sqlite3_key(pDestDb, m_key.data(), m_key.size()) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Backup failed - Unable to encrypt destination database: %s\n", sqlite3_errmsg(pDestDb));
+            sqlite3_close(pDestDb);
+            return false;
+        }
+#else
+        LogPrintf("SQLiteDatabase: Backup failed - SQLCipher key specified but SQLCipher is not enabled\n");
+        sqlite3_close(pDestDb);
+        return false;
+#endif
+    }
+
+    // 온라인 백업 세션 초기화
+    sqlite3_backup* pBackup = sqlite3_backup_init(pDestDb, "main", m_db, "main");
+    if (!pBackup) {
+        LogPrintf("SQLiteDatabase: Backup failed - Unable to initialize backup: %s\n", sqlite3_errmsg(pDestDb));
+        sqlite3_close(pDestDb);
+        return false;
+    }
+
+    // 전체 복사 수행
+    int rc = sqlite3_backup_step(pBackup, -1);
+    sqlite3_backup_finish(pBackup);
+
+    if (rc != SQLITE_DONE) {
+        LogPrintf("SQLiteDatabase: Backup failed during execution: %s\n", sqlite3_errmsg(pDestDb));
+        sqlite3_close(pDestDb);
+        return false;
+    }
+
+    sqlite3_close(pDestDb);
+    LogPrintf("SQLiteDatabase: Successfully backed up wallet database to %s\n", strDest);
+    return true;
+}
 bool SQLiteDatabase::Rewrite(const char* pszSkip)
 {
     if (!m_db) return false;
