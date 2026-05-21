@@ -66,8 +66,14 @@ void SQLiteDatabase::Open()
     }
 
     // 성능 최적화 PRAGMA 설정
+    char* errmsg = nullptr;
+    // 메모리 맵 I/O 활성화 (읽기 성능 극대화, 256MB 지정)
+    if (sqlite3_exec(m_db, "PRAGMA mmap_size=268435456;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase: Failed to set mmap_size: %s\n", errmsg ? errmsg : "unknown");
+        sqlite3_free(errmsg);
+    }
+
     if (m_writable) {
-        char* errmsg = nullptr;
         // WAL 모드 설정 (동시성 및 쓰기 속도 대폭 향상)
         if (sqlite3_exec(m_db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
             LogPrintf("SQLiteDatabase: Failed to set journal_mode to WAL: %s\n", errmsg ? errmsg : "unknown");
@@ -81,6 +87,16 @@ void SQLiteDatabase::Open()
         // 캐시 크기 설정 (약 2MB 캐시로 잦은 I/O 오버헤드 완화)
         if (sqlite3_exec(m_db, "PRAGMA cache_size=-2000;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
             LogPrintf("SQLiteDatabase: Failed to set cache_size: %s\n", errmsg ? errmsg : "unknown");
+            sqlite3_free(errmsg);
+        }
+        // WAL 저널 크기 상한 설정 (4MB로 과도한 디스크 팽창 방지)
+        if (sqlite3_exec(m_db, "PRAGMA journal_size_limit=4194304;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Failed to set journal_size_limit: %s\n", errmsg ? errmsg : "unknown");
+            sqlite3_free(errmsg);
+        }
+        // 증분 진공(Incremental Auto-Vacuum) 활성화 (백그라운드 빈 공간 점진적 압축 기틀)
+        if (sqlite3_exec(m_db, "PRAGMA auto_vacuum=INCREMENTAL;", nullptr, nullptr, &errmsg) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Failed to set auto_vacuum to INCREMENTAL: %s\n", errmsg ? errmsg : "unknown");
             sqlite3_free(errmsg);
         }
     }
@@ -368,6 +384,14 @@ bool SQLiteDatabase::PeriodicFlush()
         LogPrintf("SQLiteDatabase::PeriodicFlush: WAL checkpoint failed: %s\n", sqlite3_errmsg(m_db));
         return false;
     }
+
+    // 증분 진공(Incremental Auto-Vacuum)을 통해 50페이지 단위로 빈 물리 용량을 무부하 자동 회수
+    char* errmsg = nullptr;
+    if (sqlite3_exec(m_db, "PRAGMA incremental_vacuum(50);", nullptr, nullptr, &errmsg) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase::PeriodicFlush: incremental_vacuum failed: %s\n", errmsg ? errmsg : "unknown");
+        sqlite3_free(errmsg);
+    }
+
     return true;
 }
 
