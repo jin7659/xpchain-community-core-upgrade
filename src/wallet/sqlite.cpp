@@ -360,16 +360,9 @@ bool IsSQLiteFile(const fs::path& path)
     if (fs::is_directory(path)) {
         return false;
     }
-    std::ifstream file(path.string(), std::ios::binary);
-    if (!file.is_open()) {
-        return false;
-    }
-    char magic[16];
-    file.read(magic, 16);
-    if (file.gcount() == 16 && memcmp(magic, "SQLite format 3\0", 16) == 0) {
-        return true;
-    }
-    return false;
+    
+    // 명백한 Berkeley DB 파일이 아닌 경우 SQLite(SQLCipher 암호화 지갑 포함)로 처리합니다.
+    return !IsBerkeleyBDBFile(path);
 }
 
 bool SQLiteDatabase::Verify(const fs::path& path, std::string& error)
@@ -393,10 +386,19 @@ bool SQLiteDatabase::Verify(const fs::path& path, std::string& error)
     };
 
     bool integrity_ok = false;
-    if (sqlite3_exec(db, "PRAGMA integrity_check;", callback, &integrity_ok, &errmsg) != SQLITE_OK) {
-        error = errmsg ? errmsg : "Integrity check failed";
-        sqlite3_free(errmsg);
-        ok = false;
+    int rc = sqlite3_exec(db, "PRAGMA integrity_check;", callback, &integrity_ok, &errmsg);
+    if (rc != SQLITE_OK) {
+        if (rc == SQLITE_NOTADB) {
+            // SQLCipher 암호화 지갑인 경우, 키 입력 전에는 SQLITE_NOTADB(26) 오류가 발생합니다.
+            // 이는 지갑이 안전하게 암호화되어 있음을 뜻하므로 검증 성공으로 처리하여 복호화 단계로 진행되도록 유도합니다.
+            LogPrintf("SQLiteDatabase::Verify: Database %s appears to be encrypted (SQLCipher). Postponing integrity check.\n", path.string());
+            sqlite3_free(errmsg);
+            ok = true;
+        } else {
+            error = errmsg ? errmsg : "Integrity check failed";
+            sqlite3_free(errmsg);
+            ok = false;
+        }
     } else {
         ok = integrity_ok;
         if (!ok) error = "SQLite integrity check failed";
@@ -404,5 +406,131 @@ bool SQLiteDatabase::Verify(const fs::path& path, std::string& error)
 
     sqlite3_close(db);
     return ok;
+}
+
+bool SQLiteDatabase::Recover(const fs::path& wallet_path, void *callbackDataIn, bool (*recoverKVcallback)(void* callbackData, CDataStream ssKey, CDataStream ssValue), std::string& newFilename)
+{
+    std::string filename = wallet_path.filename().string();
+    int64_t now = GetTime();
+    newFilename = strprintf("%s.%d.bak", filename, now);
+    
+    fs::path backup_path = wallet_path.parent_path() / newFilename;
+    
+    // 파일 백업 이름으로 이동
+    try {
+        fs::rename(wallet_path, backup_path);
+        LogPrintf("SQLiteDatabase::Recover: Renamed %s to %s\n", wallet_path.string(), backup_path.string());
+    } catch (const fs::filesystem_error& e) {
+        LogPrintf("SQLiteDatabase::Recover: Failed to rename %s to %s: %s\n", wallet_path.string(), backup_path.string(), e.what());
+        return false;
+    }
+    
+    // 복구 작업 수행
+    // 1. 백업 데이터베이스 오픈 (읽기 전용)
+    sqlite3* pSrcDb = nullptr;
+    if (sqlite3_open_v2(backup_path.string().c_str(), &pSrcDb, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase::Recover: Failed to open backup database: %s\n", sqlite3_errmsg(pSrcDb));
+        if (pSrcDb) sqlite3_close(pSrcDb);
+        return false;
+    }
+    
+    // 2. 새 지갑 데이터베이스 파일 생성
+    sqlite3* pDestDb = nullptr;
+    int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
+    if (sqlite3_open_v2(wallet_path.string().c_str(), &pDestDb, flags, nullptr) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase::Recover: Failed to create fresh database: %s\n", sqlite3_errmsg(pDestDb));
+        sqlite3_close(pSrcDb);
+        if (pDestDb) sqlite3_close(pDestDb);
+        return false;
+    }
+    
+    // 대상 디비에 테이블 생성
+    const char* create_table_sql = "CREATE TABLE IF NOT EXISTS main(key BLOB PRIMARY KEY, value BLOB);";
+    char* errmsg = nullptr;
+    if (sqlite3_exec(pDestDb, create_table_sql, nullptr, nullptr, &errmsg) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase::Recover: Failed to create table in new database: %s\n", errmsg ? errmsg : "unknown");
+        sqlite3_free(errmsg);
+        sqlite3_close(pSrcDb);
+        sqlite3_close(pDestDb);
+        return false;
+    }
+    
+    // 3. 백업 디비로부터 데이터 조회
+    const char* select_sql = "SELECT key, value FROM main;";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(pSrcDb, select_sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase::Recover: Failed to prepare select statement on backup database: %s\n", sqlite3_errmsg(pSrcDb));
+        sqlite3_close(pSrcDb);
+        sqlite3_close(pDestDb);
+        return false;
+    }
+    
+    // 4. 레코드 복제
+    bool fSuccess = true;
+    int salvaged_count = 0;
+    
+    // 트랜잭션 시작
+    sqlite3_exec(pDestDb, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+    
+    sqlite3_stmt* write_stmt = nullptr;
+    sqlite3_prepare_v2(pDestDb, "INSERT OR REPLACE INTO main(key, value) VALUES(?, ?);", -1, &write_stmt, nullptr);
+    
+    if (!write_stmt) {
+        LogPrintf("SQLiteDatabase::Recover: Failed to prepare insert statement in new database\n");
+        sqlite3_finalize(stmt);
+        sqlite3_close(pSrcDb);
+        sqlite3_close(pDestDb);
+        return false;
+    }
+    
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const void* key_data = sqlite3_column_blob(stmt, 0);
+        int key_len = sqlite3_column_bytes(stmt, 0);
+        const void* val_data = sqlite3_column_blob(stmt, 1);
+        int val_len = sqlite3_column_bytes(stmt, 1);
+        
+        if (!key_data || key_len <= 0) continue;
+        
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        ssKey.write((const char*)key_data, key_len);
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        if (val_data && val_len > 0) {
+            ssValue.write((const char*)val_data, val_len);
+        }
+        
+        // 필터 콜백이 있으면 검사
+        if (recoverKVcallback) {
+            if (!(*recoverKVcallback)(callbackDataIn, ssKey, ssValue)) {
+                continue;
+            }
+        }
+        
+        sqlite3_reset(write_stmt);
+        sqlite3_clear_bindings(write_stmt);
+        sqlite3_bind_blob(write_stmt, 1, ssKey.data(), ssKey.size(), SQLITE_STATIC);
+        sqlite3_bind_blob(write_stmt, 2, ssValue.data(), ssValue.size(), SQLITE_STATIC);
+        
+        if (sqlite3_step(write_stmt) != SQLITE_DONE) {
+            LogPrintf("SQLiteDatabase::Recover: Failed to insert salvaged record\n");
+            fSuccess = false;
+            break;
+        }
+        salvaged_count++;
+    }
+    
+    sqlite3_finalize(stmt);
+    sqlite3_finalize(write_stmt);
+    
+    if (fSuccess) {
+        sqlite3_exec(pDestDb, "COMMIT TRANSACTION;", nullptr, nullptr, nullptr);
+        LogPrintf("SQLiteDatabase::Recover: Successfully salvaged %d records from %s\n", salvaged_count, newFilename);
+    } else {
+        sqlite3_exec(pDestDb, "ROLLBACK TRANSACTION;", nullptr, nullptr, nullptr);
+    }
+    
+    sqlite3_close(pSrcDb);
+    sqlite3_close(pDestDb);
+    
+    return fSuccess && (salvaged_count > 0);
 }
 

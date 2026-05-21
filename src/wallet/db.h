@@ -282,6 +282,9 @@ public:
     bool static Rewrite(BerkeleyDatabase& database, const char* pszSkip = nullptr);
 };
 
+/** 파일이 Berkeley DB 형식인지 확인 */
+bool IsBerkeleyBDBFile(const fs::path& path);
+
 /** 지갑 경로와 플래그에 따라 적절한 데이터베이스 엔진을 생성하는 팩토리 함수 */
 std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint64_t wallet_creation_flags = 0);
 

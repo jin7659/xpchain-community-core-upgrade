@@ -61,6 +61,9 @@ public:
 
     /** 데이터베이스 파일 검증 */
     static bool Verify(const fs::path& path, std::string& error);
+
+    /** 데이터베이스 파일 복구 (Salvage) */
+    static bool Recover(const fs::path& wallet_path, void* callbackDataIn, bool (*recoverKVcallback)(void* callbackData, CDataStream ssKey, CDataStream ssValue), std::string& newFilename);
 };
 
 

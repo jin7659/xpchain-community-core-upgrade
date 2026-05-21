@@ -16,6 +16,7 @@
 #include <util.h>
 #include <utiltime.h>
 #include <wallet/wallet.h>
+#include <wallet/sqlite.h>
 
 #include <atomic>
 
@@ -789,6 +790,9 @@ void MaybeCompactWalletDB()
 //
 bool WalletBatch::Recover(const fs::path& wallet_path, void *callbackDataIn, bool (*recoverKVcallback)(void* callbackData, CDataStream ssKey, CDataStream ssValue), std::string& out_backup_filename)
 {
+    if (IsSQLiteFile(wallet_path)) {
+        return SQLiteDatabase::Recover(wallet_path, callbackDataIn, recoverKVcallback, out_backup_filename);
+    }
     return BerkeleyBatch::Recover(wallet_path, callbackDataIn, recoverKVcallback, out_backup_filename);
 }
 
@@ -821,8 +825,6 @@ bool WalletBatch::RecoverKeysOnlyFilter(void *callbackData, CDataStream ssKey, C
 
     return true;
 }
-
-#include <wallet/sqlite.h>
 
 bool WalletBatch::VerifyEnvironment(const fs::path& wallet_path, std::string& errorStr)
 {
