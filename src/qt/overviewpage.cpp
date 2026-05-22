@@ -7,6 +7,7 @@
 #include <qt/assetpiechart.h>
 #include <qt/transactionanalyticswidget.h>
 #include <qt/txanalytics.h>
+#include <QScrollArea>
 
 #include <qt/xpchainunits.h>
 #include <qt/clientmodel.h>
@@ -150,9 +151,37 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     labelBadge->setStyleSheet("font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; background-color: #485a6a; border-radius: 4px; padding: 2px 6px;");
     ui->horizontalLayout_4->addWidget(labelBadge);
 
-    // Phase 3: 월간 채굴 보상 바 차트 위젯 배치 (오른쪽 트랜잭션 목록 아래)
+    // Phase 3: 월간 채굴 보상 바 차트 위젯 배치 (오른쪽 트랜잭션 목록 아래, 가로 스크롤 가능하게 QScrollArea로 감싸줌)
     analyticsWidget = new TransactionAnalyticsWidget(this);
-    ui->verticalLayout_3->addWidget(analyticsWidget);
+    
+    QScrollArea* scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(false); // 내부 위젯의 고유 가로 크기를 유지하여 스크롤 가능하게 함
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff); // 세로 스크롤바 비활성
+    scrollArea->setWidget(analyticsWidget);
+    scrollArea->setMinimumHeight(245);
+    scrollArea->setStyleSheet(
+        "QScrollArea {"
+        "  background: transparent;"
+        "  border: none;"
+        "}"
+        "QScrollBar:horizontal {"
+        "  border: none;"
+        "  background: #1A1A1A;"
+        "  height: 6px;"
+        "  margin: 0px 0px 0px 0px;"
+        "}"
+        "QScrollBar::handle:horizontal {"
+        "  background: #FF8C00;"
+        "  min-width: 20px;"
+        "  border-radius: 3px;"
+        "}"
+        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {"
+        "  border: none;"
+        "  background: none;"
+        "}"
+    );
+    ui->verticalLayout_3->addWidget(scrollArea);
 
     // use a SingleColorIcon for the "out of sync warning" icon
     QIcon icon = platformStyle->SingleColorIcon(":/icons/warning");

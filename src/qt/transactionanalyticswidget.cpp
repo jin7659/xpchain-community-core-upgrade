@@ -31,16 +31,22 @@ void TransactionAnalyticsWidget::calculateLayout()
     m_barRects.clear();
     if (m_rewardData.isEmpty()) return;
 
-    int w = width();
-    int h = height();
-
-    // 여백 및 가이드라인 설정
     int paddingLeft = 55;
     int paddingRight = 20;
     int paddingTop = 40;
     int paddingBottom = 40;
 
-    int chartWidth = w - paddingLeft - paddingRight;
+    int count = m_rewardData.size();
+    int barWidth = 18; // 바 너비 고정으로 시인성 확보
+    int spacing = 12;  // 바 사이의 간격 고정
+
+    // 동적 최소 가로 너비 계산 및 설정
+    int calculatedWidth = paddingLeft + paddingRight + count * (barWidth + spacing) - spacing + 20;
+    int finalWidth = qMax(calculatedWidth, 320); // 최소 320px 보장
+    setMinimumWidth(finalWidth);
+
+    int w = width();
+    int h = height();
     int chartHeight = h - paddingTop - paddingBottom;
 
     double maxVal = 0.0;
@@ -50,12 +56,6 @@ void TransactionAnalyticsWidget::calculateLayout()
         }
     }
     if (maxVal < 1.0) maxVal = 100.0; // 최소 기준치 설정
-
-    // 바 배치 계산
-    int count = m_rewardData.size();
-    int spacing = 12;
-    int barWidth = (chartWidth - (spacing * (count - 1))) / count;
-    if (barWidth < 4) barWidth = 4; // 최소 너비 보장
 
     for (int i = 0; i < count; ++i) {
         double val = m_rewardData[i].second;
