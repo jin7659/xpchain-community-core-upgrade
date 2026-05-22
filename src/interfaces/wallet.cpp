@@ -177,12 +177,13 @@ public:
                     return false;
                 }
 
+                int imported = 0;
                 // change: 0 (external), 1 (internal)
                 for (int change = 0; change <= 1; ++change) {
                     CExtKey changeKey;
                     if (!accountKey.Derive(changeKey, change)) {
                         LogPrintf("importMnemonicSeed: BIP44 change key derivation failed for change=%d\n", change);
-                        return false;
+                        continue;
                     }
 
                     // address_index: 0 to 99
@@ -190,11 +191,19 @@ public:
                         CExtKey childKey;
                         if (!changeKey.Derive(childKey, i)) {
                             LogPrintf("importMnemonicSeed: BIP44 child key derivation failed for index=%d\n", i);
-                            return false;
+                            continue;
                         }
 
                         CKey key = childKey.key;
                         CPubKey pubkey = key.GetPubKey();
+
+                        // 이미 존재하는 키는 건너뜀
+                        if (m_wallet.HaveKey(pubkey.GetID())) {
+                            LogPrintf("importMnemonicSeed: key already exists, skipping %s/%d/%d\n",
+                                      "m/44'/0'/0'", change, i);
+                            ++imported;
+                            continue;
+                        }
 
                         CKeyMetadata metadata;
                         metadata.nCreateTime = GetTime();
@@ -203,12 +212,16 @@ public:
 
                         m_wallet.LoadKeyMetadata(pubkey.GetID(), metadata);
 
-                        if (!m_wallet.AddKeyPubKeyWithDB(batch, key, pubkey)) {
-                            LogPrintf("importMnemonicSeed: AddKeyPubKeyWithDB failed for %s\n", metadata.hdKeypath);
-                            return false;
+                        if (m_wallet.AddKeyPubKeyWithDB(batch, key, pubkey)) {
+                            ++imported;
+                        } else {
+                            LogPrintf("importMnemonicSeed: AddKeyPubKeyWithDB failed for %s (skipping)\n",
+                                      metadata.hdKeypath);
                         }
                     }
                 }
+
+                LogPrintf("importMnemonicSeed: BIP44 import complete — %d keys processed\n", imported);
             } catch (const std::exception& e) {
                 LogPrintf("importMnemonicSeed (BIP44): unexpected error — %s\n", e.what());
                 return false;
