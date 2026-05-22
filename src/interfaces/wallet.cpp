@@ -158,7 +158,7 @@ public:
                 WalletBatch batch(m_wallet.GetDatabase());
                 CKeyID seed_id = masterKey.key.GetPubKey().GetID();
 
-                // Derive m/44'/398'/0'
+                // Derive m/44'/0'/0' (웹 지갑과 동일: coin_type=0, Bitcoin 경로)
                 CExtKey purposeKey;
                 if (!masterKey.Derive(purposeKey, 44 | BIP32_HARDENED_KEY_LIMIT)) {
                     LogPrintf("importMnemonicSeed: BIP44 purpose key derivation failed\n");
@@ -166,7 +166,7 @@ public:
                 }
 
                 CExtKey coinTypeKey;
-                if (!purposeKey.Derive(coinTypeKey, 398 | BIP32_HARDENED_KEY_LIMIT)) {
+                if (!purposeKey.Derive(coinTypeKey, 0 | BIP32_HARDENED_KEY_LIMIT)) {
                     LogPrintf("importMnemonicSeed: BIP44 coin type key derivation failed\n");
                     return false;
                 }
@@ -199,7 +199,7 @@ public:
                         CKeyMetadata metadata;
                         metadata.nCreateTime = GetTime();
                         metadata.hd_seed_id = seed_id;
-                        metadata.hdKeypath = "m/44'/398'/0'/" + std::to_string(change) + "/" + std::to_string(i);
+                        metadata.hdKeypath = "m/44'/0'/0'/" + std::to_string(change) + "/" + std::to_string(i);
 
                         m_wallet.LoadKeyMetadata(pubkey.GetID(), metadata);
 
