@@ -201,10 +201,7 @@ public:
                         metadata.hd_seed_id = seed_id;
                         metadata.hdKeypath = "m/44'/398'/0'/" + std::to_string(change) + "/" + std::to_string(i);
 
-                        if (!batch.WriteKeyMetadata(metadata, pubkey, true)) {
-                            LogPrintf("importMnemonicSeed: WriteKeyMetadata failed for %s\n", metadata.hdKeypath);
-                            return false;
-                        }
+                        m_wallet.LoadKeyMetadata(pubkey.GetID(), metadata);
 
                         if (!m_wallet.AddKeyPubKeyWithDB(batch, key, pubkey)) {
                             LogPrintf("importMnemonicSeed: AddKeyPubKeyWithDB failed for %s\n", metadata.hdKeypath);
