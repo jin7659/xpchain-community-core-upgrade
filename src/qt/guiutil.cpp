@@ -56,6 +56,8 @@
 #include <QThread>
 #include <QUrlQuery>
 #include <QMouseEvent>
+#include <QTimer>
+
 
 
 #if QT_VERSION >= 0x50200
@@ -773,11 +775,38 @@ bool SetStartOnSystemStartup(bool fAutoStart) { return false; }
 
 #endif
 
+static QTimer* clipboardTimer = nullptr;
+static QString lastCopiedString;
+
+void clearClipboardCallback()
+{
+    if (QApplication::clipboard()->text(QClipboard::Clipboard) == lastCopiedString) {
+        QApplication::clipboard()->clear(QClipboard::Clipboard);
+    }
+    if (QApplication::clipboard()->text(QClipboard::Selection) == lastCopiedString) {
+        QApplication::clipboard()->clear(QClipboard::Selection);
+    }
+    lastCopiedString.clear();
+}
+
 void setClipboard(const QString& str)
 {
     QApplication::clipboard()->setText(str, QClipboard::Clipboard);
     QApplication::clipboard()->setText(str, QClipboard::Selection);
+
+    lastCopiedString = str;
+
+    if (!clipboardTimer) {
+        clipboardTimer = new QTimer(QCoreApplication::instance());
+        clipboardTimer->setSingleShot(true);
+        QObject::connect(clipboardTimer, &QTimer::timeout, []() {
+            clearClipboardCallback();
+        });
+    }
+    clipboardTimer->stop();
+    clipboardTimer->start(60000); // 60 seconds
 }
+
 
 fs::path qstringToBoostPath(const QString &path)
 {

@@ -36,8 +36,8 @@ static const int MAX_URI_LENGTH = 255;
 #define EXPORT_IMAGE_SIZE 256
 
 /* Colors for minting tab for each coin age group */
-#define COLOR_MINT_YOUNG QColor(128, 64, 64)
-#define COLOR_MINT_MATURE QColor(64, 128, 64)
-#define COLOR_MINT_OLD QColor(26, 77, 26)
+#define COLOR_MINT_YOUNG QColor(25, 45, 75)
+#define COLOR_MINT_MATURE QColor(20, 55, 35)
+#define COLOR_MINT_OLD QColor(65, 30, 35)
 
 #endif // XPCHAIN_GUICONSTANTS_H

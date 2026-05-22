@@ -52,8 +52,8 @@ static const int MAX_URI_LENGTH = 255;
 #define QAPP_APP_NAME_TESTNET "XPChain Core-testnet"
 
 /* Colors for minting tab for each coin age group */
-#define COLOR_MINT_YOUNG QColor(214, 231, 249)
-#define COLOR_MINT_MATURE QColor(200, 255, 216)
-#define COLOR_MINT_OLD QColor(255, 218, 223)
+#define COLOR_MINT_YOUNG QColor(25, 45, 75)
+#define COLOR_MINT_MATURE QColor(20, 55, 35)
+#define COLOR_MINT_OLD QColor(65, 30, 35)
 
 #endif // XPCHAIN_QT_GUICONSTANTS_H

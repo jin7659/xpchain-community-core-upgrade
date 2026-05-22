@@ -5,6 +5,7 @@
 
 #include <logging.h>
 #include <utiltime.h>
+#include <regex>
 
 const char * const DEFAULT_DEBUGLOGFILE = "debug.log";
 
@@ -198,9 +199,31 @@ std::string BCLog::Logger::LogTimestampStr(const std::string &str)
     return strStamped;
 }
 
+static std::string MaskSensitiveData(const std::string& input) {
+    std::string output = input;
+    try {
+        // 대소문자 구분 없이 민감 파라미터 감지 및 치환
+        static const std::regex sensitive_patterns(
+            R"((passphrase|password|passEdit|privkey|private_key|privatekey|mnemonic|seed|secret_key|secret)(\s*[:=]\s*)([^\s,;\"]+|"[^"]*"))",
+            std::regex_constants::icase
+        );
+        output = std::regex_replace(output, sensitive_patterns, "$1$2[MASKED]");
+
+        // WIF 형식의 개인키 마스킹 (base58 51~52자)
+        static const std::regex wif_pattern(
+            R"(\b(5[H-K][1-9A-HJ-NP-Za-km-z]{49}|[LK][1-9A-HJ-NP-Za-km-z]{51})\b)"
+        );
+        output = std::regex_replace(output, wif_pattern, "[MASKED]");
+    } catch (...) {
+        // 예외 발생 시 원본 반환
+    }
+    return output;
+}
+
 void BCLog::Logger::LogPrintStr(const std::string &str)
 {
-    std::string strTimestamped = LogTimestampStr(str);
+    std::string masked_str = MaskSensitiveData(str);
+    std::string strTimestamped = LogTimestampStr(masked_str);
 
     if (m_print_to_console) {
         // print to console

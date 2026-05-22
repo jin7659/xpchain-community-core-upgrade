@@ -145,6 +145,7 @@ QT_MOC_CPP = \
   qt/moc_openuridialog.cpp \
   qt/moc_optionsdialog.cpp \
   qt/moc_optionsmodel.cpp \
+  qt/moc_assetpiechart.cpp \
   qt/moc_overviewpage.cpp \
   qt/moc_peertablemodel.cpp \
   qt/moc_paymentserver.cpp \
@@ -170,7 +171,9 @@ QT_MOC_CPP = \
   qt/moc_utilitydialog.cpp \
   qt/moc_walletframe.cpp \
   qt/moc_walletmodel.cpp \
-  qt/moc_walletview.cpp
+  qt/moc_walletview.cpp \
+  qt/moc_txanalytics.cpp \
+  qt/moc_transactionanalyticswidget.cpp
 
 XPCHAIN_MM = \
   qt/macdockiconhandler.mm \
@@ -224,6 +227,7 @@ XPCHAIN_QT_H = \
   qt/openuridialog.h \
   qt/optionsdialog.h \
   qt/optionsmodel.h \
+  qt/assetpiechart.h \
   qt/overviewpage.h \
   qt/paymentrequestplus.h \
   qt/paymentserver.h \
@@ -254,7 +258,9 @@ XPCHAIN_QT_H = \
   qt/walletmodel.h \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
-  qt/winshutdownmonitor.h
+  qt/winshutdownmonitor.h \
+  qt/txanalytics.h \
+  qt/transactionanalyticswidget.h
 
 RES_ICONS = \
   qt/res/icons/add.png \
@@ -353,6 +359,7 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/mintingview.cpp \
   qt/editstakingrewarddistributiondialog.cpp \
   qt/openuridialog.cpp \
+  qt/assetpiechart.cpp \
   qt/overviewpage.cpp \
   qt/paymentrequestplus.cpp \
   qt/paymentserver.cpp \
@@ -374,7 +381,9 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
-  qt/walletview.cpp
+  qt/walletview.cpp \
+  qt/txanalytics.cpp \
+  qt/transactionanalyticswidget.cpp
 
 XPCHAIN_QT_CPP = $(XPCHAIN_QT_BASE_CPP)
 if TARGET_WINDOWS

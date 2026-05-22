@@ -34,6 +34,8 @@
 #include <QVBoxLayout>
 #include <QThreadPool>
 #include <QRunnable>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
 
 WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     QStackedWidget(parent),
@@ -189,24 +191,50 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
     Q_EMIT incomingTransaction(date, walletModel->getOptionsModel()->getDisplayUnit(), amount, type, address, label, walletModel->getWalletName());
 }
 
+void WalletView::fadeToWidget(QWidget *widget)
+{
+    if (!widget) return;
+    if (currentWidget() == widget) return;
+
+    QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(widget);
+    widget->setGraphicsEffect(effect);
+
+    // anim의 부모를 effect 대신 WalletView(this)로 지정하여 독립된 안전한 생명주기를 부여합니다.
+    QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity", this);
+    anim->setDuration(250);
+    anim->setStartValue(0.0);
+    anim->setEndValue(1.0);
+    anim->setEasingCurve(QEasingCurve::OutQuad);
+
+    // QGraphicsEffect는 소멸 시(deleteLater) 자동으로 부착된 위젯에서 안전하게 연결이 끊어집니다.
+    // widget->setGraphicsEffect(nullptr) 동기 호출로 인한 이중 소멸 및 즉각적 파괴 댕글링 크래시를 완벽히 예방합니다.
+    connect(anim, &QPropertyAnimation::finished, [effect, anim]() {
+        effect->deleteLater();
+        anim->deleteLater();
+    });
+
+    setCurrentWidget(widget);
+    anim->start();
+}
+
 void WalletView::gotoOverviewPage()
 {
-    setCurrentWidget(overviewPage);
+    fadeToWidget(overviewPage);
 }
 
 void WalletView::gotoHistoryPage()
 {
-    setCurrentWidget(transactionsPage);
+    fadeToWidget(transactionsPage);
 }
 
 void WalletView::gotoReceiveCoinsPage()
 {
-    setCurrentWidget(receiveCoinsPage);
+    fadeToWidget(receiveCoinsPage);
 }
 
 void WalletView::gotoSendCoinsPage(QString addr)
 {
-    setCurrentWidget(sendCoinsPage);
+    fadeToWidget(sendCoinsPage);
 
     if (!addr.isEmpty())
         sendCoinsPage->setAddress(addr);
@@ -214,7 +242,7 @@ void WalletView::gotoSendCoinsPage(QString addr)
 
 void WalletView::gotoMintingPage()
 {
-    setCurrentWidget(mintingPage);
+    fadeToWidget(mintingPage);
 }
 
 void WalletView::gotoSignMessageTab(QString addr)

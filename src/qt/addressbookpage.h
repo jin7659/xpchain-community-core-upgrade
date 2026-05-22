@@ -10,6 +10,7 @@
 class AddressBookSortFilterProxyModel;
 class AddressTableModel;
 class PlatformStyle;
+class QTimer;
 
 namespace Ui {
     class AddressBookPage;
@@ -57,6 +58,7 @@ private:
     QMenu *contextMenu;
     QAction *deleteAction; // to be able to explicitly disable it
     QString newAddressToSelect;
+    QTimer *delayTimer;
 
 private Q_SLOTS:
     /** Delete currently selected address entry */
@@ -78,6 +80,8 @@ private Q_SLOTS:
     void contextualMenu(const QPoint &point);
     /** New entry/entries were added to address table */
     void selectNewAddress(const QModelIndex &parent, int begin, int /*end*/);
+    /** Search box text changed delay slot */
+    void onSearchTextChanged();
 
 Q_SIGNALS:
     void sendCoins(QString addr);

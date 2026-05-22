@@ -49,6 +49,13 @@ void SQLiteDatabase::Open()
             m_db = nullptr;
             throw std::runtime_error("SQLiteDatabase: Invalid encryption key");
         }
+
+        // 지갑 복호화 구동 속도를 비약적으로 향상시키기 위한 KDF 반복 횟수 최적화
+        char* errmsg_kdf = nullptr;
+        if (sqlite3_exec(m_db, "PRAGMA kdf_iter=64000;", nullptr, nullptr, &errmsg_kdf) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Failed to set kdf_iter: %s\n", errmsg_kdf ? errmsg_kdf : "unknown");
+            sqlite3_free(errmsg_kdf);
+        }
 #else
         sqlite3_close(m_db);
         m_db = nullptr;
@@ -102,7 +109,25 @@ void SQLiteDatabase::Open()
             sqlite3_free(errmsg);
         }
     }
-    
+
+    // 지갑 오픈 시점에 백그라운드 데이터베이스 실시간 무결성 검증 (PRAGMA quick_check)
+    char* errmsg_qc = nullptr;
+    auto quick_check_callback = [](void* data, int cols, char** values, char** names) -> int {
+        if (cols > 0 && values[0] && strcmp(values[0], "ok") == 0) {
+            *(bool*)data = true;
+        } else {
+            *(bool*)data = false;
+        }
+        return 0;
+    };
+    bool quick_check_ok = false;
+    if (sqlite3_exec(m_db, "PRAGMA quick_check;", quick_check_callback, &quick_check_ok, &errmsg_qc) != SQLITE_OK || !quick_check_ok) {
+        LogPrintf("SQLiteDatabase: quick_check failed: %s. Database may be corrupted.\n", errmsg_qc ? errmsg_qc : "unknown or corrupted");
+        if (errmsg_qc) sqlite3_free(errmsg_qc);
+    } else {
+        LogPrintf("SQLiteDatabase: quick_check passed successfully for %s.\n", m_path);
+    }
+
     // 파일 소유자 전용 최소 권한 강제화 (owner read/write only)
     chmod(m_path.c_str(), 0600);
     

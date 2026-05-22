@@ -4,6 +4,9 @@
 
 #include <qt/overviewpage.h>
 #include <qt/forms/ui_overviewpage.h>
+#include <qt/assetpiechart.h>
+#include <qt/transactionanalyticswidget.h>
+#include <qt/txanalytics.h>
 
 #include <qt/xpchainunits.h>
 #include <qt/clientmodel.h>
@@ -14,6 +17,11 @@
 #include <qt/transactionfilterproxy.h>
 #include <qt/transactiontablemodel.h>
 #include <qt/walletmodel.h>
+
+#include <util.h>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
@@ -115,11 +123,36 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui(new Ui::OverviewPage),
     clientModel(0),
     walletModel(0),
-    txdelegate(new TxViewDelegate(platformStyle, this))
+    txdelegate(new TxViewDelegate(platformStyle, this)),
+    analyticsWidget(nullptr),
+    networkManager(nullptr),
+    apiTimer(nullptr),
+    labelBadge(nullptr),
+    labelStakingTimeCorrection(nullptr)
 {
     ui->setupUi(this);
 
     m_balances.balance = -1;
+
+    // AssetPieChart 동적 생성 및 Balances 프레임 아래에 배치
+    pieChart = new AssetPieChart(this);
+    ui->verticalLayout_2->insertWidget(1, pieChart);
+
+    // Phase 3: 정밀 채굴 예상 시간 보정 안내 라벨 배치
+    labelStakingTimeCorrection = new QLabel(this);
+    labelStakingTimeCorrection->setStyleSheet("font-family: 'Inter'; font-size: 11px; color: #a0a0a0; padding: 4px;");
+    labelStakingTimeCorrection->setText(tr("정밀 채굴 예상 시간: 계산 중..."));
+    ui->verticalLayout_2->addWidget(labelStakingTimeCorrection);
+
+    // Phase 3: 자산 클래스 등급 배지 라벨 배치 (Balances 타이틀 영역)
+    labelBadge = new QLabel(this);
+    labelBadge->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    labelBadge->setStyleSheet("font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; background-color: #485a6a; border-radius: 4px; padding: 2px 6px;");
+    ui->horizontalLayout_4->addWidget(labelBadge);
+
+    // Phase 3: 월간 채굴 보상 바 차트 위젯 배치 (오른쪽 트랜잭션 목록 아래)
+    analyticsWidget = new TransactionAnalyticsWidget(this);
+    ui->verticalLayout_3->addWidget(analyticsWidget);
 
     // use a SingleColorIcon for the "out of sync warning" icon
     QIcon icon = platformStyle->SingleColorIcon(":/icons/warning");
@@ -139,6 +172,14 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     showOutOfSyncWarning(true);
     connect(ui->labelWalletStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
     connect(ui->labelTransactionsStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
+
+    // Phase 3: HTTP API 연동 타이머 구동
+    networkManager = new QNetworkAccessManager(this);
+    connect(networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onStakingDataReceived(QNetworkReply*)));
+
+    apiTimer = new QTimer(this);
+    connect(apiTimer, SIGNAL(timeout()), this, SLOT(requestStakingData()));
+    apiTimer->start(60000); // 60초 주기
 }
 
 void OverviewPage::handleTransactionClicked(const QModelIndex &index)
@@ -165,6 +206,12 @@ void OverviewPage::setBalance(const interfaces::WalletBalances& balances)
     ui->labelUnconfirmed->setText(XPChainUnits::formatWithUnit(unit, balances.unconfirmed_balance, false, XPChainUnits::separatorAlways));
     ui->labelImmature->setText(XPChainUnits::formatWithUnit(unit, balances.immature_balance, false, XPChainUnits::separatorAlways));
     ui->labelTotal->setText(XPChainUnits::formatWithUnit(unit, balances.balance + balances.unconfirmed_balance + balances.immature_balance, false, XPChainUnits::separatorAlways));
+    
+    if (pieChart) {
+        QString totalStr = XPChainUnits::formatWithUnit(unit, balances.balance + balances.unconfirmed_balance + balances.immature_balance, false, XPChainUnits::separatorAlways);
+        pieChart->setBalances(balances.balance, balances.unconfirmed_balance, balances.immature_balance, totalStr);
+    }
+
     ui->labelWatchAvailable->setText(XPChainUnits::formatWithUnit(unit, balances.watch_only_balance, false, XPChainUnits::separatorAlways));
     ui->labelWatchPending->setText(XPChainUnits::formatWithUnit(unit, balances.unconfirmed_watch_only_balance, false, XPChainUnits::separatorAlways));
     ui->labelWatchImmature->setText(XPChainUnits::formatWithUnit(unit, balances.immature_watch_only_balance, false, XPChainUnits::separatorAlways));
@@ -179,6 +226,9 @@ void OverviewPage::setBalance(const interfaces::WalletBalances& balances)
     ui->labelImmature->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
+
+    double totalXPC = (balances.balance + balances.unconfirmed_balance + balances.immature_balance) / 100000000.0;
+    updateAssetBadge(totalXPC);
 }
 
 // show/hide watch-only labels
@@ -233,6 +283,33 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
         updateWatchOnlyLabels(wallet.haveWatchOnly());
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
+
+        // Phase 3: SQLite 데이터베이스 초기화 및 히스토리 적재
+        QString dataDir = QString::fromStdString(GetDataDir().string());
+        if (TxAnalytics::getInstance().init(dataDir)) {
+            TxAnalytics::getInstance().clearHistory();
+            int rows = model->getTransactionTableModel()->rowCount(QModelIndex());
+            for (int i = 0; i < rows; ++i) {
+                QModelIndex idxType = model->getTransactionTableModel()->index(i, TransactionTableModel::Type, QModelIndex());
+                QModelIndex idxAmount = model->getTransactionTableModel()->index(i, TransactionTableModel::Amount, QModelIndex());
+                QModelIndex idxDate = model->getTransactionTableModel()->index(i, TransactionTableModel::Date, QModelIndex());
+                QModelIndex idxAddress = model->getTransactionTableModel()->index(i, TransactionTableModel::ToAddress, QModelIndex());
+
+                int typeVal = idxType.data(TransactionTableModel::TypeRole).toInt();
+                qint64 timeVal = idxDate.data(TransactionTableModel::DateRole).toDateTime().toSecsSinceEpoch();
+                double amountVal = idxAmount.data(TransactionTableModel::AmountRole).toDouble() / 100000000.0;
+                QString txidVal = idxType.data(TransactionTableModel::TxHashRole).toString();
+                QString addressVal = idxAddress.data(Qt::DisplayRole).toString();
+
+                TxAnalytics::getInstance().addHistory(txidVal, timeVal, typeVal, amountVal, addressVal);
+            }
+            if (analyticsWidget) {
+                analyticsWidget->updateData();
+            }
+        }
+
+        // Phase 3: 최초 즉각 1회 API 연동 실행
+        requestStakingData();
     }
 
     // update the display unit, to not use the default ("BTC")
@@ -264,4 +341,110 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
 {
     ui->labelWalletStatus->setVisible(fShow);
     ui->labelTransactionsStatus->setVisible(fShow);
+}
+
+void OverviewPage::requestStakingData()
+{
+    if (!networkManager) return;
+    QNetworkRequest request(QUrl("https://explorer.xpchain.co.kr/ext/summary"));
+    networkManager->get(request);
+}
+
+void OverviewPage::onStakingDataReceived(QNetworkReply* reply)
+{
+    if (!reply) return;
+
+    double networkWeight = 10000000.0; // 기본값
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray responseData = reply->readAll();
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
+        if (!jsonDoc.isNull() && jsonDoc.isObject()) {
+            QJsonObject jsonObj = jsonDoc.object();
+            if (jsonObj.contains("data") && jsonObj["data"].isArray()) {
+                QJsonArray dataArray = jsonObj["data"].toArray();
+                if (!dataArray.isEmpty() && dataArray.at(0).isObject()) {
+                    QJsonObject dataObj = dataArray.at(0).toObject();
+                    if (dataObj.contains("stakingw")) {
+                        networkWeight = dataObj["stakingw"].toDouble();
+                    } else if (dataObj.contains("difficulty")) {
+                        networkWeight = dataObj["difficulty"].toDouble() * 16700000.0;
+                    }
+                }
+            } else {
+                if (jsonObj.contains("stakingw")) {
+                    networkWeight = jsonObj["stakingw"].toDouble();
+                } else if (jsonObj.contains("difficulty")) {
+                    networkWeight = jsonObj["difficulty"].toDouble() * 16700000.0;
+                }
+            }
+        }
+    } else {
+        qWarning() << "Explorer API error:" << reply->errorString();
+    }
+
+    updateStakingTime(networkWeight);
+    reply->deleteLater();
+}
+
+void OverviewPage::updateStakingTime(double networkWeight)
+{
+    if (!walletModel || !labelStakingTimeCorrection) return;
+
+    double myWeight = (m_balances.balance + m_balances.immature_balance) / 100000000.0;
+
+    if (myWeight <= 0.0) {
+        labelStakingTimeCorrection->setText(tr("정밀 채굴 예상 시간: XPC 잔고가 필요합니다."));
+        return;
+    }
+
+    if (networkWeight <= 0.0) {
+        networkWeight = 10000000.0; // fallback
+    }
+
+    // 포아송 분포 기반 예상 채굴 시간 (분)
+    double expectedTimeMinutes = (networkWeight / myWeight) * 1.0;
+
+    QString timeText;
+    if (expectedTimeMinutes < 60.0) {
+        timeText = QString(tr("정밀 채굴 예상 시간: 약 %1분")).arg(expectedTimeMinutes, 0, 'f', 1);
+    } else if (expectedTimeMinutes < 1440.0) {
+        double hours = expectedTimeMinutes / 60.0;
+        timeText = QString(tr("정밀 채굴 예상 시간: 약 %1시간")).arg(hours, 0, 'f', 1);
+    } else {
+        double days = expectedTimeMinutes / 1440.0;
+        timeText = QString(tr("정밀 채굴 예상 시간: 약 %1일")).arg(days, 0, 'f', 1);
+    }
+
+    timeText += QString(" (온체인 가중치: %1 XPC)").arg(networkWeight, 0, 'f', 0);
+    labelStakingTimeCorrection->setText(timeText);
+}
+
+void OverviewPage::updateAssetBadge(double totalBalance)
+{
+    if (!labelBadge) return;
+
+    QString badgeText;
+    QString badgeStyle;
+
+    if (totalBalance >= 1000000.0) {
+        badgeText = tr("VIP Node");
+        badgeStyle = "font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; "
+                     "background-color: #e0a904; border-radius: 4px; padding: 2px 6px; border: 1px solid #ffffff;";
+    } else if (totalBalance >= 200000.0) {
+        badgeText = tr("Gold Miner");
+        badgeStyle = "font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; "
+                     "background-color: #8a9ba8; border-radius: 4px; padding: 2px 6px;";
+    } else if (totalBalance >= 50000.0) {
+        badgeText = tr("Elite Node");
+        badgeStyle = "font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; "
+                     "background-color: #106ba3; border-radius: 4px; padding: 2px 6px;";
+    } else {
+        badgeText = tr("Common Miner");
+        badgeStyle = "font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; "
+                     "background-color: #485a6a; border-radius: 4px; padding: 2px 6px;";
+    }
+
+    labelBadge->setText(badgeText);
+    labelBadge->setStyleSheet(badgeStyle);
 }

@@ -75,6 +75,8 @@ private:
     QProgressDialog *progressDialog;
     const PlatformStyle *platformStyle;
 
+    void fadeToWidget(QWidget *widget);
+
 public Q_SLOTS:
     /** Switch to overview (home) page */
     void gotoOverviewPage();

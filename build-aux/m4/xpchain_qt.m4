@@ -428,7 +428,7 @@ dnl Outputs: have_qt_test and have_qt_dbus are set (if applicable) to yes|no.
 AC_DEFUN([_XPCHAIN_QT_FIND_LIBS_WITH_PKGCONFIG],[
   m4_ifdef([PKG_CHECK_MODULES],[
     QT_LIB_PREFIX=Qt5
-    qt5_modules="Qt5Core Qt5Gui Qt5Network Qt5Widgets"
+    qt5_modules="Qt5Core Qt5Gui Qt5Network Qt5Widgets Qt5Sql"
     XPCHAIN_QT_CHECK([
       PKG_CHECK_MODULES([QT5], [$qt5_modules], [QT_INCLUDES="$QT5_CFLAGS"; QT_LIBS="$QT5_LIBS" have_qt=yes],[have_qt=no])
 
@@ -460,7 +460,7 @@ AC_DEFUN([_XPCHAIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   TEMP_LIBS="$LIBS"
   XPCHAIN_QT_CHECK([
     if test "x$qt_include_path" != x; then
-      QT_INCLUDES="-I$qt_include_path -I$qt_include_path/QtCore -I$qt_include_path/QtGui -I$qt_include_path/QtWidgets -I$qt_include_path/QtNetwork -I$qt_include_path/QtTest -I$qt_include_path/QtDBus"
+      QT_INCLUDES="-I$qt_include_path -I$qt_include_path/QtCore -I$qt_include_path/QtGui -I$qt_include_path/QtWidgets -I$qt_include_path/QtNetwork -I$qt_include_path/QtSql -I$qt_include_path/QtTest -I$qt_include_path/QtDBus"
       CPPFLAGS="$QT_INCLUDES $CPPFLAGS"
     fi
   ])
@@ -468,6 +468,7 @@ AC_DEFUN([_XPCHAIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   XPCHAIN_QT_CHECK([AC_CHECK_HEADER([QtPlugin],,XPCHAIN_QT_FAIL(QtCore headers missing))])
   XPCHAIN_QT_CHECK([AC_CHECK_HEADER([QApplication],, XPCHAIN_QT_FAIL(QtGui headers missing))])
   XPCHAIN_QT_CHECK([AC_CHECK_HEADER([QLocalSocket],, XPCHAIN_QT_FAIL(QtNetwork headers missing))])
+  XPCHAIN_QT_CHECK([AC_CHECK_HEADER([QSqlQuery],, XPCHAIN_QT_FAIL(QtSql headers missing))])
 
   XPCHAIN_QT_CHECK([
     if test "x$bitcoin_qt_want_version" = xauto; then
@@ -502,6 +503,7 @@ AC_DEFUN([_XPCHAIN_QT_FIND_LIBS_WITHOUT_PKGCONFIG],[
   XPCHAIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Gui]    ,[main],,XPCHAIN_QT_FAIL(lib${QT_LIB_PREFIX}Gui not found)))
   XPCHAIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Network],[main],,XPCHAIN_QT_FAIL(lib${QT_LIB_PREFIX}Network not found)))
   XPCHAIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Widgets],[main],,XPCHAIN_QT_FAIL(lib${QT_LIB_PREFIX}Widgets not found)))
+  XPCHAIN_QT_CHECK(AC_CHECK_LIB([${QT_LIB_PREFIX}Sql],[main],,XPCHAIN_QT_FAIL(lib${QT_LIB_PREFIX}Sql not found)))
   QT_LIBS="$LIBS"
   LIBS="$TEMP_LIBS"
 

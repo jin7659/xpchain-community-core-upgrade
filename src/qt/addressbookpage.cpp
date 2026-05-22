@@ -20,6 +20,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QSortFilterProxyModel>
+#include <QTimer>
 
 class AddressBookSortFilterProxyModel final : public QSortFilterProxyModel
 {
@@ -137,6 +138,12 @@ AddressBookPage::AddressBookPage(const PlatformStyle *platformStyle, Mode _mode,
     connect(ui->tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
 
     connect(ui->closeButton, SIGNAL(clicked()), this, SLOT(accept()));
+
+    // 타이핑 딜레이를 위한 싱글샷 타이머 설정 (200ms)
+    delayTimer = new QTimer(this);
+    delayTimer->setSingleShot(true);
+    delayTimer->setInterval(200);
+    connect(delayTimer, SIGNAL(timeout()), this, SLOT(onSearchTextChanged()));
 }
 
 AddressBookPage::~AddressBookPage()
@@ -154,7 +161,8 @@ void AddressBookPage::setModel(AddressTableModel *_model)
     proxyModel = new AddressBookSortFilterProxyModel(type, this);
     proxyModel->setSourceModel(_model);
 
-    connect(ui->searchLineEdit, SIGNAL(textChanged(QString)), proxyModel, SLOT(setFilterWildcard(QString)));
+    // 실시간 무거운 필터링 대신 딜레이 타이머를 작동시켜 성능 극대화
+    connect(ui->searchLineEdit, SIGNAL(textChanged(QString)), delayTimer, SLOT(start()));
 
     ui->tableView->setModel(proxyModel);
     ui->tableView->sortByColumn(0, Qt::AscendingOrder);
@@ -331,4 +339,11 @@ void AddressBookPage::selectNewAddress(const QModelIndex &parent, int begin, int
         ui->tableView->selectRow(idx.row());
         newAddressToSelect.clear();
     }
+}
+
+void AddressBookPage::onSearchTextChanged()
+{
+    if(!proxyModel)
+        return;
+    proxyModel->setFilterWildcard(ui->searchLineEdit->text());
 }

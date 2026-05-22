@@ -98,6 +98,12 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     search_widget->setPlaceholderText(tr("Enter address, transaction id, or label to search"));
     hlayout->addWidget(search_widget);
 
+    tagSearchWidget = new QLineEdit(this);
+    tagSearchWidget->setPlaceholderText(tr("Tag/Memo..."));
+    tagSearchWidget->setFixedWidth(120);
+    tagSearchWidget->setStyleSheet("border: 1px solid #ff8c00; border-radius: 4px; padding: 2px 4px; color: #ffffff; background-color: #2b2b2b;");
+    hlayout->addWidget(tagSearchWidget);
+
     amountWidget = new QLineEdit(this);
     amountWidget->setPlaceholderText(tr("Min amount"));
     if (platformStyle->getUseExtraSpacing()) {
@@ -118,6 +124,10 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     QTimer* prefix_typing_delay = new QTimer(this);
     prefix_typing_delay->setSingleShot(true);
     prefix_typing_delay->setInterval(input_filter_delay);
+
+    QTimer* tag_typing_delay = new QTimer(this);
+    tag_typing_delay->setSingleShot(true);
+    tag_typing_delay->setInterval(input_filter_delay);
 
     QVBoxLayout *vlayout = new QVBoxLayout(this);
     vlayout->setContentsMargins(0,0,0,0);
@@ -184,6 +194,8 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     connect(amount_typing_delay, SIGNAL(timeout()), this, SLOT(changedAmount()));
     connect(search_widget, SIGNAL(textChanged(QString)), prefix_typing_delay, SLOT(start()));
     connect(prefix_typing_delay, SIGNAL(timeout()), this, SLOT(changedSearch()));
+    connect(tagSearchWidget, SIGNAL(textChanged(QString)), tag_typing_delay, SLOT(start()));
+    connect(tag_typing_delay, SIGNAL(timeout()), this, SLOT(changedTagSearch()));
 
     connect(view, SIGNAL(doubleClicked(QModelIndex)), this, SIGNAL(doubleClicked(QModelIndex)));
     connect(view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
@@ -337,6 +349,13 @@ void TransactionView::changedSearch()
     if(!transactionProxyModel)
         return;
     transactionProxyModel->setSearchString(search_widget->text());
+}
+
+void TransactionView::changedTagSearch()
+{
+    if(!transactionProxyModel)
+        return;
+    transactionProxyModel->setTagSearchString(tagSearchWidget->text().trimmed());
 }
 
 void TransactionView::changedAmount()

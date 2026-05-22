@@ -911,6 +911,12 @@ if config.dmg is not None:
         if p.returncode:
             print("Error running osascript.")
 
+        # Ensure the temp disk image is detached before converting
+        try:
+            subprocess.call(["hdiutil", "detach", disk_root, "-force"])
+        except Exception as e:
+            print("Warning: Could not force detach:", e)
+
         if verbose >= 2:
             print("+ Finalizing .dmg disk image +")
             time.sleep(5)

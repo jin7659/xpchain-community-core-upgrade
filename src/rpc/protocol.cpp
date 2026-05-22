@@ -13,6 +13,10 @@
 #include <version.h>
 
 #include <fstream>
+#ifndef WIN32
+#include <sys/stat.h>
+#endif
+
 
 /**
  * JSON-RPC protocol.  XPChain speaks version 1.0 for maximum compatibility,
@@ -100,7 +104,13 @@ bool GenerateAuthCookie(std::string *cookie_out)
         LogPrintf("Unable to rename cookie authentication file %s to %s\n", filepath_tmp.string(), filepath.string());
         return false;
     }
+#ifndef WIN32
+    if (chmod(filepath.string().c_str(), S_IRUSR | S_IWUSR) != 0) {
+        LogPrintf("Warning: Unable to set permissions to 0600 on cookie file %s\n", filepath.string());
+    }
+#endif
     LogPrintf("Generated RPC authentication cookie %s\n", filepath.string());
+
 
     if (cookie_out)
         *cookie_out = cookie;

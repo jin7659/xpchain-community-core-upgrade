@@ -6,8 +6,11 @@
 #define XPCHAIN_QT_OVERVIEWPAGE_H
 
 #include <interfaces/wallet.h>
-
 #include <QWidget>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QTimer>
+#include <QLabel>
 #include <memory>
 
 class ClientModel;
@@ -15,6 +18,8 @@ class TransactionFilterProxy;
 class TxViewDelegate;
 class PlatformStyle;
 class WalletModel;
+class AssetPieChart;
+class TransactionAnalyticsWidget;
 
 namespace Ui {
     class OverviewPage;
@@ -49,6 +54,14 @@ private:
     ClientModel *clientModel;
     WalletModel *walletModel;
     interfaces::WalletBalances m_balances;
+    AssetPieChart *pieChart;
+    TransactionAnalyticsWidget *analyticsWidget;
+
+    // Phase 3 추가 멤버
+    QNetworkAccessManager *networkManager;
+    QTimer *apiTimer;
+    QLabel *labelBadge;
+    QLabel *labelStakingTimeCorrection;
 
     TxViewDelegate *txdelegate;
     std::unique_ptr<TransactionFilterProxy> filter;
@@ -59,6 +72,12 @@ private Q_SLOTS:
     void updateAlerts(const QString &warnings);
     void updateWatchOnlyLabels(bool showWatchOnly);
     void handleOutOfSyncWarningClicks();
+
+    // Phase 3 추가 슬롯
+    void requestStakingData();
+    void onStakingDataReceived(QNetworkReply* reply);
+    void updateStakingTime(double networkWeight);
+    void updateAssetBadge(double totalBalance);
 };
 
 #endif // XPCHAIN_QT_OVERVIEWPAGE_H
