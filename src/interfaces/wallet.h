@@ -70,6 +70,12 @@ public:
     //! Abort a rescan.
     virtual void abortRescan() = 0;
 
+    //! Import BIP39 mnemonic seed into wallet.
+    virtual bool importMnemonicSeed(const std::vector<unsigned char>& seed_bytes) = 0;
+
+    //! Rescan blockchain from startTime.
+    virtual int64_t rescanFromTime(int64_t start_time) = 0;
+
     //! Back up wallet.
     virtual bool backupWallet(const std::string& filename) = 0;
 

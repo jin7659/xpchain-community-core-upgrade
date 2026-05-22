@@ -144,19 +144,19 @@ void TransactionAnalyticsWidget::paintEvent(QPaintEvent* event)
         const auto& br = m_barRects[i];
         bool isHovered = (i == m_hoveredBarIndex);
 
-        // 그라데이션 설정 (스포티한 네온 오렌지 매칭)
+        // 그라데이션 설정 (파란색 테마 매칭)
         QLinearGradient barGrad(br.rect.left(), br.rect.top(), br.rect.left(), br.rect.bottom());
         if (isHovered) {
-            barGrad.setColorAt(0, QColor(255, 150, 0)); // 밝은 네온
-            barGrad.setColorAt(1, QColor(255, 60, 0));
+            barGrad.setColorAt(0, QColor(30, 143, 204)); // 밝은 파란색
+            barGrad.setColorAt(1, QColor(16, 107, 163));
         } else {
-            barGrad.setColorAt(0, QColor(255, 123, 0)); // 메인 스포티 오렌지
-            barGrad.setColorAt(1, QColor(255, 51, 0));
+            barGrad.setColorAt(0, QColor(16, 107, 163)); // 메인 파란색
+            barGrad.setColorAt(1, QColor(13, 79, 122));
         }
 
         painter.setBrush(barGrad);
         if (isHovered) {
-            painter.setPen(QPen(QColor(255, 200, 150), 1.5));
+            painter.setPen(QPen(QColor(180, 220, 255), 1.5));
         } else {
             painter.setPen(Qt::NoPen);
         }
@@ -206,7 +206,7 @@ void TransactionAnalyticsWidget::paintEvent(QPaintEvent* event)
         QRect tooltipRect(tooltipX, tooltipY, textW, textH);
 
         painter.setBrush(QColor(36, 37, 40, 235));
-        painter.setPen(QPen(QColor(255, 123, 0, 200), 1.5));
+        painter.setPen(QPen(QColor(16, 107, 163, 200), 1.5));
         painter.drawRoundedRect(tooltipRect, 6, 6);
 
         painter.setPen(QColor(255, 255, 255));

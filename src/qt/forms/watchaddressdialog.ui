@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>WatchAddressDialog</class>
+ <widget class="QDialog" name="WatchAddressDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>450</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Manage Watch-only Web Wallets</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog { background-color: #1e1e1e; color: #ffffff; }
+QLabel { color: #e0e0e0; font-size: 13px; }
+QLineEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #3d3d3d; border-radius: 4px; padding: 6px; font-size: 13px; }
+QLineEdit:focus { border: 1px solid #106ba3; }
+QPushButton { background-color: #2b2b2b; color: #ffffff; border: 1px solid #3d3d3d; border-radius: 4px; padding: 6px 16px; min-width: 80px; }
+QPushButton:hover { background-color: #106ba3; border: 1px solid #106ba3; color: #ffffff; font-weight: bold; }
+QPushButton:pressed { background-color: #0d4f7a; }
+QTableWidget { background-color: #2b2b2b; color: #ffffff; gridline-color: #3d3d3d; border: 1px solid #3d3d3d; border-radius: 4px; }
+QHeaderView::section { background-color: #1e1e1e; color: #ffffff; padding: 4px; border: 1px solid #3d3d3d; font-weight: bold; }
+QTableWidget::item:selected { background-color: #106ba3; color: #ffffff; }
+</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>12</number>
+   </property>
+   <property name="leftMargin">
+    <number>20</number>
+   </property>
+   <property name="topMargin">
+    <number>20</number>
+   </property>
+   <property name="rightMargin">
+    <number>20</number>
+   </property>
+   <property name="bottomMargin">
+    <number>20</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="titleLabel">
+     <property name="font">
+      <font>
+       <pointsize>16</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Watch-only Web Wallets</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="descLabel">
+     <property name="text">
+      <string>Add your XPChain web wallet addresses (https://wallet.xpchain.co.kr) to observe their balances in the dashboard in real-time. (Private keys are NOT imported or stored).</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="addressTable">
+     <column>
+      <property name="text">
+       <string>Address</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Label</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Balance (XPC)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Last Updated</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="inputLayout">
+     <item>
+      <widget class="QLineEdit" name="addressEdit">
+       <property name="placeholderText">
+        <string>XPChain Address (X...)</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="labelEdit">
+       <property name="placeholderText">
+        <string>Label (e.g. Hot Wallet)</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="addButton">
+       <property name="text">
+        <string>Add</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttonLayout">
+     <item>
+      <widget class="QPushButton" name="deleteButton">
+       <property name="text">
+        <string>Delete Selected</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="closeButton">
+       <property name="text">
+        <string>Close</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -13,7 +13,7 @@ class AssetPieChart : public QWidget
 public:
     explicit AssetPieChart(QWidget *parent = nullptr);
 
-    void setBalances(qint64 available, qint64 pending, qint64 immature, const QString& totalStr);
+    void setBalances(qint64 available, qint64 pending, qint64 immature, qint64 watchOnly, const QString& totalStr);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -24,9 +24,12 @@ protected:
 
 
 private:
+    void calculateAngles(double& availableAngle, double& pendingAngle, double& immatureAngle, double& watchOnlyAngle) const;
+
     qint64 m_available = 0;
     qint64 m_pending = 0;
     qint64 m_immature = 0;
+    qint64 m_watchOnly = 0;
     QString m_totalStr;
 };
 

@@ -63,6 +63,11 @@ private:
     QLabel *labelBadge;
     QLabel *labelStakingTimeCorrection;
 
+    // Phase 5 추가 멤버 (웹지갑 잔고 관찰)
+    QNetworkAccessManager *watchNetworkManager;
+    QTimer *watchTimer;
+    double m_watchOnlyWebWalletBalance;
+
     TxViewDelegate *txdelegate;
     std::unique_ptr<TransactionFilterProxy> filter;
 
@@ -78,6 +83,11 @@ private Q_SLOTS:
     void onStakingDataReceived(QNetworkReply* reply);
     void updateStakingTime(double networkWeight);
     void updateAssetBadge(double totalBalance);
+
+    // Phase 5 추가 슬롯
+    void onWatchAddressButtonClicked();
+    void requestWatchAddressBalances();
+    void onWatchAddressBalanceReceived(QNetworkReply* reply);
 };
 
 #endif // XPCHAIN_QT_OVERVIEWPAGE_H

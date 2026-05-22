@@ -50,7 +50,7 @@
       <item>
        <widget class="QWidget" name="contentWidget" native="true">
         <property name="styleSheet">
-         <string notr="true">#contentWidget { background: rgba(26,26,26,245); border: 1px solid rgba(255,128,0,0.4); border-radius: 10px; }
+         <string notr="true">#contentWidget { background: rgba(26,26,26,245); border: 1px solid rgba(16, 107, 163, 0.4); border-radius: 10px; }
 
 QLabel { color: #e0e0e0; background: transparent; }</string>
         </property>

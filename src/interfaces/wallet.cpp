@@ -134,6 +134,45 @@ public:
         return m_wallet.ChangeWalletPassphrase(old_wallet_passphrase, new_wallet_passphrase);
     }
     void abortRescan() override { m_wallet.AbortRescan(); }
+    bool importMnemonicSeed(const std::vector<unsigned char>& seed_bytes) override
+    {
+        LOCK2(cs_main, m_wallet.cs_wallet);
+
+        // 레거시 지갑(non-HD)인 경우 FEATURE_HD로 먼저 업그레이드
+        if (!m_wallet.IsHDEnabled()) {
+            if (!m_wallet.CanSupportFeature(FEATURE_HD)) {
+                LogPrintf("importMnemonicSeed: wallet does not support HD feature\n");
+                return false;
+            }
+            m_wallet.SetMinVersion(FEATURE_HD);
+            LogPrintf("importMnemonicSeed: upgraded legacy wallet to HD\n");
+        }
+
+        CExtKey masterKey;
+        masterKey.SetSeed(seed_bytes.data(), seed_bytes.size());
+        CKey key = masterKey.key;
+
+        try {
+            CPubKey master_pub_key = m_wallet.DeriveNewSeed(key);
+            m_wallet.SetHDSeed(master_pub_key);
+            m_wallet.NewKeyPool();
+        } catch (const std::runtime_error& e) {
+            LogPrintf("importMnemonicSeed: failed — %s\n", e.what());
+            return false;
+        } catch (const std::exception& e) {
+            LogPrintf("importMnemonicSeed: unexpected error — %s\n", e.what());
+            return false;
+        }
+        return true;
+    }
+    int64_t rescanFromTime(int64_t start_time) override
+    {
+        WalletRescanReserver reserver(&m_wallet);
+        if (!reserver.reserve()) {
+            return 0;
+        }
+        return m_wallet.RescanFromTime(start_time, reserver, true /* update */);
+    }
     bool backupWallet(const std::string& filename) override { return m_wallet.BackupWallet(filename); }
     std::string getWalletName() override { return m_wallet.GetName(); }
     bool getKeyFromPool(bool internal, CPubKey& pub_key) override

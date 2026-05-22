@@ -20,6 +20,7 @@
 #include <qt/splashscreen.h>
 #include <qt/utilitydialog.h>
 #include <qt/winshutdownmonitor.h>
+#include <qt/txanalytics.h>
 
 #ifdef ENABLE_WALLET
 #include <qt/paymentserver.h>
@@ -724,6 +725,7 @@ int main(int argc, char *argv[])
             app.exec();
             app.requestShutdown();
             app.exec();
+            TxAnalytics::destroy();
             rv = app.getReturnValue();
         } else {
             // A dialog with detailed error will have been shown by InitError()

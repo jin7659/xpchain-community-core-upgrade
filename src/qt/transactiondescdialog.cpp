@@ -38,17 +38,17 @@ TransactionDescDialog::TransactionDescDialog(const QModelIndex &idx, QWidget *pa
     // SQLite 태그 기능 추가
     QHBoxLayout *tagLayout = new QHBoxLayout();
     QLabel *tagLabel = new QLabel(tr("Tag/Memo:"), this);
-    tagLabel->setStyleSheet("font-weight: bold; color: #ff8c00;");
+    tagLabel->setStyleSheet("font-weight: bold; color: #106ba3;");
     QLineEdit *tagEdit = new QLineEdit(this);
     tagEdit->setPlaceholderText(tr("Enter custom tag or memo for this transaction..."));
-    tagEdit->setStyleSheet("padding: 4px; border: 1px solid #ff8c00; border-radius: 4px; background-color: #2b2b2b; color: #ffffff;");
+    tagEdit->setStyleSheet("padding: 4px; border: 1px solid #106ba3; border-radius: 4px; background-color: #2b2b2b; color: #ffffff;");
     
     // 현재 등록된 태그 로드
     QString currentTag = TxAnalytics::getInstance().getTag(txid);
     tagEdit->setText(currentTag);
     
     QPushButton *saveTagButton = new QPushButton(tr("Save Tag"), this);
-    saveTagButton->setStyleSheet("background-color: #ff8c00; color: white; border-radius: 4px; padding: 4px 12px; font-weight: bold;");
+    saveTagButton->setStyleSheet("background-color: #106ba3; color: white; border-radius: 4px; padding: 4px 12px; font-weight: bold;");
     
     tagLayout->addWidget(tagLabel);
     tagLayout->addWidget(tagEdit);
@@ -64,14 +64,14 @@ TransactionDescDialog::TransactionDescDialog(const QModelIndex &idx, QWidget *pa
             saveTagButton->setStyleSheet("background-color: #2ecc71; color: white; border-radius: 4px; padding: 4px 12px; font-weight: bold;");
             QTimer::singleShot(1000, saveTagButton, [saveTagButton]() {
                 saveTagButton->setText(tr("Save Tag"));
-                saveTagButton->setStyleSheet("background-color: #ff8c00; color: white; border-radius: 4px; padding: 4px 12px; font-weight: bold;");
+                saveTagButton->setStyleSheet("background-color: #106ba3; color: white; border-radius: 4px; padding: 4px 12px; font-weight: bold;");
             });
         } else {
             saveTagButton->setText(tr("Error!"));
             saveTagButton->setStyleSheet("background-color: #e74c3c; color: white; border-radius: 4px; padding: 4px 12px; font-weight: bold;");
             QTimer::singleShot(1000, saveTagButton, [saveTagButton]() {
                 saveTagButton->setText(tr("Save Tag"));
-                saveTagButton->setStyleSheet("background-color: #ff8c00; color: white; border-radius: 4px; padding: 4px 12px; font-weight: bold;");
+                saveTagButton->setStyleSheet("background-color: #106ba3; color: white; border-radius: 4px; padding: 4px 12px; font-weight: bold;");
             });
         }
     });

@@ -21,13 +21,40 @@ AssetPieChart::AssetPieChart(QWidget *parent)
 }
 
 
-void AssetPieChart::setBalances(qint64 available, qint64 pending, qint64 immature, const QString& totalStr)
+void AssetPieChart::setBalances(qint64 available, qint64 pending, qint64 immature, qint64 watchOnly, const QString& totalStr)
 {
     m_available = available;
     m_pending = pending;
     m_immature = immature;
+    m_watchOnly = watchOnly;
     m_totalStr = totalStr;
     update();
+}
+
+void AssetPieChart::calculateAngles(double& availableAngle, double& pendingAngle, double& immatureAngle, double& watchOnlyAngle) const
+{
+    qint64 total = m_available + m_pending + m_immature + m_watchOnly;
+    if (total <= 0) {
+        availableAngle = 0.0;
+        pendingAngle = 0.0;
+        immatureAngle = 0.0;
+        watchOnlyAngle = 0.0;
+        return;
+    }
+
+    int activeCount = 0;
+    if (m_available > 0) activeCount++;
+    if (m_pending > 0) activeCount++;
+    if (m_immature > 0) activeCount++;
+    if (m_watchOnly > 0) activeCount++;
+
+    const double MIN_ANGLE = 6.0; // 최소 각도 보장 (6도)
+    double remainingAngle = 360.0 - (activeCount * MIN_ANGLE);
+
+    availableAngle = (m_available > 0) ? (MIN_ANGLE + remainingAngle * m_available / total) : 0.0;
+    pendingAngle = (m_pending > 0) ? (MIN_ANGLE + remainingAngle * m_pending / total) : 0.0;
+    immatureAngle = (m_immature > 0) ? (MIN_ANGLE + remainingAngle * m_immature / total) : 0.0;
+    watchOnlyAngle = (m_watchOnly > 0) ? (MIN_ANGLE + remainingAngle * m_watchOnly / total) : 0.0;
 }
 
 void AssetPieChart::paintEvent(QPaintEvent *event)
@@ -42,7 +69,7 @@ void AssetPieChart::paintEvent(QPaintEvent *event)
 
     QRectF rect((width() - size) / 2.0, (height() - size) / 2.0, size, size);
 
-    qint64 total = m_available + m_pending + m_immature;
+    qint64 total = m_available + m_pending + m_immature + m_watchOnly;
 
     // 도넛 링의 두께 (지름에 비례하여 깔끔하게 설정)
     int penWidth = size * 0.12;
@@ -57,9 +84,11 @@ void AssetPieChart::paintEvent(QPaintEvent *event)
         painter.setPen(pen);
         painter.drawArc(rect, 0, 360 * 16);
     } else {
-        double availableAngle = 360.0 * m_available / total;
-        double pendingAngle = 360.0 * m_pending / total;
-        double immatureAngle = 360.0 * m_immature / total;
+        double availableAngle = 0.0;
+        double pendingAngle = 0.0;
+        double immatureAngle = 0.0;
+        double watchOnlyAngle = 0.0;
+        calculateAngles(availableAngle, pendingAngle, immatureAngle, watchOnlyAngle);
 
         int startAngle = 90 * 16; // 12시 방향에서 시작
 
@@ -86,6 +115,15 @@ void AssetPieChart::paintEvent(QPaintEvent *event)
             QPen pen(QColor("#90a4ae"), penWidth, Qt::SolidLine, Qt::FlatCap);
             painter.setPen(pen);
             int spanAngle = -immatureAngle * 16;
+            painter.drawArc(rect, startAngle, spanAngle);
+            startAngle += spanAngle;
+        }
+
+        // 4. Web Wallet (Blue)
+        if (m_watchOnly > 0) {
+            QPen pen(QColor("#106ba3"), penWidth, Qt::SolidLine, Qt::FlatCap);
+            painter.setPen(pen);
+            int spanAngle = -watchOnlyAngle * 16;
             painter.drawArc(rect, startAngle, spanAngle);
             startAngle += spanAngle;
         }
@@ -123,7 +161,7 @@ QSize AssetPieChart::minimumSizeHint() const
 
 void AssetPieChart::mouseMoveEvent(QMouseEvent *event)
 {
-    qint64 total = m_available + m_pending + m_immature;
+    qint64 total = m_available + m_pending + m_immature + m_watchOnly;
     if (total <= 0) {
         QToolTip::hideText();
         return;
@@ -170,10 +208,13 @@ void AssetPieChart::mouseMoveEvent(QMouseEvent *event)
     if (angle_from_12 < 0) {
         angle_from_12 += 360.0;
     }
+    double angle_from_12_adjusted = angle_from_12;
 
-    double availableAngle = 360.0 * m_available / total;
-    double pendingAngle = 360.0 * m_pending / total;
-    double immatureAngle = 360.0 * m_immature / total;
+    double availableAngle = 0.0;
+    double pendingAngle = 0.0;
+    double immatureAngle = 0.0;
+    double watchOnlyAngle = 0.0;
+    calculateAngles(availableAngle, pendingAngle, immatureAngle, watchOnlyAngle);
 
     QString sectionName;
     qint64 balance = 0;
@@ -181,7 +222,7 @@ void AssetPieChart::mouseMoveEvent(QMouseEvent *event)
     double start = 0.0;
     if (m_available > 0) {
         double end = start + availableAngle;
-        if (angle_from_12 >= start && angle_from_12 < end) {
+        if (angle_from_12_adjusted >= start && angle_from_12_adjusted < end) {
             sectionName = tr("Available");
             balance = m_available;
         }
@@ -189,7 +230,7 @@ void AssetPieChart::mouseMoveEvent(QMouseEvent *event)
     }
     if (m_pending > 0 && sectionName.isEmpty()) {
         double end = start + pendingAngle;
-        if (angle_from_12 >= start && angle_from_12 < end) {
+        if (angle_from_12_adjusted >= start && angle_from_12_adjusted < end) {
             sectionName = tr("Pending");
             balance = m_pending;
         }
@@ -197,15 +238,23 @@ void AssetPieChart::mouseMoveEvent(QMouseEvent *event)
     }
     if (m_immature > 0 && sectionName.isEmpty()) {
         double end = start + immatureAngle;
-        if (angle_from_12 >= start && angle_from_12 < end) {
+        if (angle_from_12_adjusted >= start && angle_from_12_adjusted < end) {
             sectionName = tr("Immature");
             balance = m_immature;
+        }
+        start = end;
+    }
+    if (m_watchOnly > 0 && sectionName.isEmpty()) {
+        double end = start + watchOnlyAngle;
+        if (angle_from_12_adjusted >= start && angle_from_12_adjusted < end) {
+            sectionName = tr("Web Wallet (Watch-only)");
+            balance = m_watchOnly;
         }
     }
 
     if (!sectionName.isEmpty()) {
         QLocale locale = QLocale::system();
-        double dCoins = (double)balance / 100000000.0;
+        double dCoins = (double)balance / 10000.0;
         double percent = 100.0 * balance / total;
         
         QString tooltipText = QString("<b>%1</b><br/>%2 XPC (%3%)")

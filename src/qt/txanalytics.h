@@ -16,6 +16,7 @@ class TxAnalytics : public QObject
 
 public:
     static TxAnalytics& getInstance();
+    static void destroy();
 
     // 초기화: 데이터 디렉토리 경로를 전달받아 tx_metadata.db와 인메모리 DB를 구성함
     bool init(const QString& dataDir);
@@ -36,12 +37,29 @@ public:
     // 월간 채굴 보상 통계 반환 (YYYY-MM, 합산금액)
     QList<QPair<QString, double>> getMonthlyMiningRewards();
 
+    // 관찰 주소 구조체
+    struct WatchAddress {
+        QString address;
+        QString label;
+        double balance;
+        qint64 updatedAt;
+    };
+
+    // 관찰 주소 CRUD 및 잔고 관리
+    bool addWatchAddress(const QString& address, const QString& label);
+    bool removeWatchAddress(const QString& address);
+    bool updateWatchAddressBalance(const QString& address, double balance);
+    QList<WatchAddress> getWatchAddresses();
+    double getWatchAddressesTotalBalance();
+
 private:
     TxAnalytics(QObject* parent = nullptr);
     ~TxAnalytics();
 
     TxAnalytics(const TxAnalytics&) = delete;
     TxAnalytics& operator=(const TxAnalytics&) = delete;
+
+    static TxAnalytics* m_instance;
 
     QSqlDatabase m_memDb;
     QSqlDatabase m_fileDb;

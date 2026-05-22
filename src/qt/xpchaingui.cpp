@@ -22,6 +22,7 @@
 #include <qt/walletmodel.h>
 #include <qt/walletview.h>
 #include <wallet/walletutil.h>
+#include <qt/mnemonicimportdialog.h>
 #endif // ENABLE_WALLET
 
 #ifdef Q_OS_MAC
@@ -172,7 +173,7 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
     QString curStyle = QApplication::style()->metaObject()->className();
     if(curStyle == "QWindowsStyle" || curStyle == "QWindowsXPStyle")
     {
-        progressBar->setStyleSheet("QProgressBar { background-color: #e8e8e8; border: 1px solid grey; border-radius: 7px; padding: 1px; text-align: center; } QProgressBar::chunk { background: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #FF8000, stop: 1 orange); border-radius: 7px; margin: 0px; }");
+        progressBar->setStyleSheet("QProgressBar { background-color: #e8e8e8; border: 1px solid grey; border-radius: 7px; padding: 1px; text-align: center; } QProgressBar::chunk { background: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #106ba3, stop: 1 #0d4f7a); border-radius: 7px; margin: 0px; }");
     }
 
     statusBar()->addWidget(progressBarLabel);
@@ -226,6 +227,9 @@ void XPChainGUI::createActions()
 
     openWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/open"), tr("&Open Wallet..."), this);
     openWalletAction->setStatusTip(tr("Open an existing wallet"));
+
+    importMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Restore Wallet from Mnemonic..."), this);
+    importMnemonicAction->setStatusTip(tr("Restore wallet using BIP39 mnemonic 12/24 words"));
 
     backupAllWalletsAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup All Wallets..."), this);
     backupAllWalletsAction->setStatusTip(tr("Backup all loaded wallets to a specific directory"));
@@ -353,6 +357,7 @@ void XPChainGUI::createActions()
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
     connect(createWalletAction, SIGNAL(triggered()), this, SLOT(createWallet()));
     connect(openWalletAction, SIGNAL(triggered()), this, SLOT(openWallet()));
+    connect(importMnemonicAction, SIGNAL(triggered()), this, SLOT(importMnemonic()));
     connect(backupAllWalletsAction, SIGNAL(triggered()), this, SLOT(backupAllWallets()));
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
@@ -393,6 +398,7 @@ void XPChainGUI::createMenuBar()
     {
         file->addAction(createWalletAction);
         file->addAction(openWalletAction);
+        file->addAction(importMnemonicAction);
         file->addAction(backupAllWalletsAction);
         file->addAction(openAction);
         file->addAction(backupWalletAction);
@@ -1410,6 +1416,25 @@ void XPChainGUI::createWallet()
             QMessageBox::critical(this, tr("Wallet Creation Failed"), QString::fromStdString(e.what()));
         }
     }
+}
+
+void XPChainGUI::importMnemonic()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame)
+        return;
+    WalletView *walletView = walletFrame->currentWalletView();
+    if (!walletView)
+        return;
+    WalletModel *walletModel = walletView->getWalletModel();
+    if (!walletModel) {
+        QMessageBox::warning(this, tr("No Wallet Selected"), tr("Please open or select a wallet first to restore."));
+        return;
+    }
+
+    MnemonicImportDialog dlg(this, walletModel);
+    dlg.exec();
+#endif
 }
 
 void XPChainGUI::openWallet()

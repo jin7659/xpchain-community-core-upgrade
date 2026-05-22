@@ -7,6 +7,7 @@
 #include <qt/assetpiechart.h>
 #include <qt/transactionanalyticswidget.h>
 #include <qt/txanalytics.h>
+#include <qt/watchaddressdialog.h>
 #include <QScrollArea>
 
 #include <qt/xpchainunits.h>
@@ -129,7 +130,10 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     networkManager(nullptr),
     apiTimer(nullptr),
     labelBadge(nullptr),
-    labelStakingTimeCorrection(nullptr)
+    labelStakingTimeCorrection(nullptr),
+    watchNetworkManager(nullptr),
+    watchTimer(nullptr),
+    m_watchOnlyWebWalletBalance(0.0)
 {
     ui->setupUi(this);
 
@@ -172,7 +176,7 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
         "  margin: 0px 0px 0px 0px;"
         "}"
         "QScrollBar::handle:horizontal {"
-        "  background: #FF8C00;"
+        "  background: #106ba3;"
         "  min-width: 20px;"
         "  border-radius: 3px;"
         "}"
@@ -209,6 +213,42 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     apiTimer = new QTimer(this);
     connect(apiTimer, SIGNAL(timeout()), this, SLOT(requestStakingData()));
     apiTimer->start(60000); // 60초 주기
+
+    // Phase 5: 웹지갑 관리 버튼 추가
+    QPushButton* watchAddressButton = new QPushButton(tr("Web Wallet Settings"), this);
+    watchAddressButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #2b2b2b;"
+        "  color: #ffffff;"
+        "  border: 1px solid #3d3d3d;"
+        "  border-radius: 4px;"
+        "  padding: 4px 10px;"
+        "  font-family: 'Inter';"
+        "  font-size: 11px;"
+        "  font-weight: bold;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #106ba3;"
+        "  border: 1px solid #106ba3;"
+        "  color: #ffffff;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #0d4f7a;"
+        "}"
+    );
+    ui->horizontalLayout_4->addWidget(watchAddressButton);
+    connect(watchAddressButton, SIGNAL(clicked()), this, SLOT(onWatchAddressButtonClicked()));
+
+    // Phase 5: 웹지갑 잔고 스캔 타이머 및 네트워크 설정
+    watchNetworkManager = new QNetworkAccessManager(this);
+    connect(watchNetworkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onWatchAddressBalanceReceived(QNetworkReply*)));
+
+    watchTimer = new QTimer(this);
+    connect(watchTimer, SIGNAL(timeout()), this, SLOT(requestWatchAddressBalances()));
+    watchTimer->start(60000); // 60초 주기
+
+    // 시작 시 즉시 웹지갑 잔고 조회 트리거
+    QTimer::singleShot(2000, this, SLOT(requestWatchAddressBalances()));
 }
 
 void OverviewPage::handleTransactionClicked(const QModelIndex &index)
@@ -224,27 +264,45 @@ void OverviewPage::handleOutOfSyncWarningClicks()
 
 OverviewPage::~OverviewPage()
 {
+    if (apiTimer) {
+        apiTimer->stop();
+    }
+    if (networkManager) {
+        networkManager->disconnect();
+    }
+    if (watchTimer) {
+        watchTimer->stop();
+    }
+    if (watchNetworkManager) {
+        watchNetworkManager->disconnect();
+    }
     delete ui;
 }
 
 void OverviewPage::setBalance(const interfaces::WalletBalances& balances)
 {
+    if (!walletModel || !walletModel->getOptionsModel()) return;
     int unit = walletModel->getOptionsModel()->getDisplayUnit();
     m_balances = balances;
     ui->labelBalance->setText(XPChainUnits::formatWithUnit(unit, balances.balance, false, XPChainUnits::separatorAlways));
     ui->labelUnconfirmed->setText(XPChainUnits::formatWithUnit(unit, balances.unconfirmed_balance, false, XPChainUnits::separatorAlways));
     ui->labelImmature->setText(XPChainUnits::formatWithUnit(unit, balances.immature_balance, false, XPChainUnits::separatorAlways));
-    ui->labelTotal->setText(XPChainUnits::formatWithUnit(unit, balances.balance + balances.unconfirmed_balance + balances.immature_balance, false, XPChainUnits::separatorAlways));
+    
+    qint64 watchOnlySatoshi = (qint64)(m_watchOnlyWebWalletBalance * 10000.0);
+    qint64 totalCombined = balances.balance + balances.unconfirmed_balance + balances.immature_balance + watchOnlySatoshi;
+
+    ui->labelTotal->setText(XPChainUnits::formatWithUnit(unit, totalCombined, false, XPChainUnits::separatorAlways));
     
     if (pieChart) {
-        QString totalStr = XPChainUnits::formatWithUnit(unit, balances.balance + balances.unconfirmed_balance + balances.immature_balance, false, XPChainUnits::separatorAlways);
-        pieChart->setBalances(balances.balance, balances.unconfirmed_balance, balances.immature_balance, totalStr);
+        QString totalStr = XPChainUnits::formatWithUnit(unit, totalCombined, false, XPChainUnits::separatorAlways);
+        pieChart->setBalances(balances.balance, balances.unconfirmed_balance, balances.immature_balance, watchOnlySatoshi, totalStr);
     }
 
-    ui->labelWatchAvailable->setText(XPChainUnits::formatWithUnit(unit, balances.watch_only_balance, false, XPChainUnits::separatorAlways));
+    qint64 totalWatchOnly = balances.watch_only_balance + watchOnlySatoshi;
+    ui->labelWatchAvailable->setText(XPChainUnits::formatWithUnit(unit, totalWatchOnly, false, XPChainUnits::separatorAlways));
     ui->labelWatchPending->setText(XPChainUnits::formatWithUnit(unit, balances.unconfirmed_watch_only_balance, false, XPChainUnits::separatorAlways));
     ui->labelWatchImmature->setText(XPChainUnits::formatWithUnit(unit, balances.immature_watch_only_balance, false, XPChainUnits::separatorAlways));
-    ui->labelWatchTotal->setText(XPChainUnits::formatWithUnit(unit, balances.watch_only_balance + balances.unconfirmed_watch_only_balance + balances.immature_watch_only_balance, false, XPChainUnits::separatorAlways));
+    ui->labelWatchTotal->setText(XPChainUnits::formatWithUnit(unit, totalWatchOnly + balances.unconfirmed_watch_only_balance + balances.immature_watch_only_balance, false, XPChainUnits::separatorAlways));
 
     // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
     // for the non-mining users
@@ -256,21 +314,24 @@ void OverviewPage::setBalance(const interfaces::WalletBalances& balances)
     ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
 
-    double totalXPC = (balances.balance + balances.unconfirmed_balance + balances.immature_balance) / 100000000.0;
+    double totalXPC = (balances.balance + balances.unconfirmed_balance + balances.immature_balance) / 10000.0;
     updateAssetBadge(totalXPC);
 }
 
 // show/hide watch-only labels
 void OverviewPage::updateWatchOnlyLabels(bool showWatchOnly)
 {
-    ui->labelSpendable->setVisible(showWatchOnly);      // show spendable label (only when watch-only is active)
-    ui->labelWatchonly->setVisible(showWatchOnly);      // show watch-only label
-    ui->lineWatchBalance->setVisible(showWatchOnly);    // show watch-only balance separator line
-    ui->labelWatchAvailable->setVisible(showWatchOnly); // show watch-only available balance
-    ui->labelWatchPending->setVisible(showWatchOnly);   // show watch-only pending balance
-    ui->labelWatchTotal->setVisible(showWatchOnly);     // show watch-only total balance
+    bool hasWatchAddress = !TxAnalytics::getInstance().getWatchAddresses().isEmpty();
+    bool finalShow = showWatchOnly || hasWatchAddress;
 
-    if (!showWatchOnly)
+    ui->labelSpendable->setVisible(finalShow);      // show spendable label (only when watch-only is active)
+    ui->labelWatchonly->setVisible(finalShow);      // show watch-only label
+    ui->lineWatchBalance->setVisible(finalShow);    // show watch-only balance separator line
+    ui->labelWatchAvailable->setVisible(finalShow); // show watch-only available balance
+    ui->labelWatchPending->setVisible(finalShow);   // show watch-only pending balance
+    ui->labelWatchTotal->setVisible(finalShow);     // show watch-only total balance
+
+    if (!finalShow)
         ui->labelWatchImmature->hide();
 }
 
@@ -420,7 +481,7 @@ void OverviewPage::updateStakingTime(double networkWeight)
 {
     if (!walletModel || !labelStakingTimeCorrection) return;
 
-    double myWeight = (m_balances.balance + m_balances.immature_balance) / 100000000.0;
+    double myWeight = (m_balances.balance + m_balances.immature_balance) / 10000.0;
 
     if (myWeight <= 0.0) {
         labelStakingTimeCorrection->setText(tr("정밀 채굴 예상 시간: XPC 잔고가 필요합니다."));
@@ -476,4 +537,85 @@ void OverviewPage::updateAssetBadge(double totalBalance)
 
     labelBadge->setText(badgeText);
     labelBadge->setStyleSheet(badgeStyle);
+}
+
+void OverviewPage::onWatchAddressButtonClicked()
+{
+    WatchAddressDialog dlg(this);
+    if (dlg.exec() == QDialog::Accepted) {
+        if (walletModel && walletModel->getOptionsModel()) {
+            updateWatchOnlyLabels(walletModel->wallet().haveWatchOnly());
+        }
+        requestWatchAddressBalances();
+    }
+}
+
+void OverviewPage::requestWatchAddressBalances()
+{
+    if (!watchNetworkManager) return;
+
+    QList<TxAnalytics::WatchAddress> list = TxAnalytics::getInstance().getWatchAddresses();
+    if (list.isEmpty()) {
+        m_watchOnlyWebWalletBalance = 0.0;
+        if (walletModel && walletModel->getOptionsModel()) {
+            updateWatchOnlyLabels(walletModel->wallet().haveWatchOnly());
+        }
+        setBalance(m_balances);
+        return;
+    }
+
+    for (const auto& wa : list) {
+        QUrl url(QString("https://explorer.xpchain.co.kr/ext/getbalance/%1").arg(wa.address));
+        QNetworkRequest request(url);
+        request.setHeader(QNetworkRequest::UserAgentHeader, "XPChainCore-HybridDashboard/1.0");
+
+        QNetworkReply* reply = watchNetworkManager->get(request);
+        reply->setProperty("address", wa.address);
+    }
+}
+
+void OverviewPage::onWatchAddressBalanceReceived(QNetworkReply* reply)
+{
+    if (!reply) return;
+
+    QString address = reply->property("address").toString();
+    if (address.isEmpty()) {
+        reply->deleteLater();
+        return;
+    }
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray data = reply->readAll();
+        QString responseStr = QString::fromUtf8(data).trimmed();
+        bool ok = false;
+        double balance = 0.0;
+
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        if (!doc.isNull() && doc.isObject()) {
+            QJsonObject obj = doc.object();
+            if (obj.contains("balance")) {
+                balance = obj.value("balance").toDouble();
+                ok = true;
+            }
+        }
+
+        if (!ok) {
+            balance = responseStr.toDouble(&ok);
+        }
+
+        if (ok) {
+            TxAnalytics::getInstance().updateWatchAddressBalance(address, balance);
+            m_watchOnlyWebWalletBalance = TxAnalytics::getInstance().getWatchAddressesTotalBalance();
+            if (walletModel && walletModel->getOptionsModel()) {
+                updateWatchOnlyLabels(walletModel->wallet().haveWatchOnly());
+                setBalance(m_balances);
+            }
+        } else {
+            qWarning() << "Failed to parse balance from explorer API for address:" << address << "Response:" << responseStr;
+        }
+    } else {
+        qWarning() << "Explorer API network error for address:" << address << ":" << reply->errorString();
+    }
+
+    reply->deleteLater();
 }

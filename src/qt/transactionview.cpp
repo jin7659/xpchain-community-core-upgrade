@@ -55,6 +55,7 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     }
 
     watchOnlyWidget = new QComboBox(this);
+    watchOnlyWidget->setFocusPolicy(Qt::NoFocus);
     watchOnlyWidget->setFixedWidth(24);
     watchOnlyWidget->addItem("", TransactionFilterProxy::WatchOnlyFilter_All);
     watchOnlyWidget->addItem(platformStyle->SingleColorIcon(":/icons/eye_plus"), "", TransactionFilterProxy::WatchOnlyFilter_Yes);
@@ -62,6 +63,7 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     hlayout->addWidget(watchOnlyWidget);
 
     dateWidget = new QComboBox(this);
+    dateWidget->setFocusPolicy(Qt::NoFocus);
     if (platformStyle->getUseExtraSpacing()) {
         dateWidget->setFixedWidth(121);
     } else {
@@ -77,6 +79,7 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     hlayout->addWidget(dateWidget);
 
     typeWidget = new QComboBox(this);
+    typeWidget->setFocusPolicy(Qt::NoFocus);
     if (platformStyle->getUseExtraSpacing()) {
         typeWidget->setFixedWidth(121);
     } else {
@@ -101,7 +104,7 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     tagSearchWidget = new QLineEdit(this);
     tagSearchWidget->setPlaceholderText(tr("Tag/Memo..."));
     tagSearchWidget->setFixedWidth(120);
-    tagSearchWidget->setStyleSheet("border: 1px solid #ff8c00; border-radius: 4px; padding: 2px 4px; color: #ffffff; background-color: #2b2b2b;");
+    tagSearchWidget->setStyleSheet("border: 1px solid #106ba3; border-radius: 4px; padding: 2px 4px; color: #ffffff; background-color: #2b2b2b;");
     hlayout->addWidget(tagSearchWidget);
 
     amountWidget = new QLineEdit(this);

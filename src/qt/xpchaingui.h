@@ -104,6 +104,7 @@ private:
     QToolBar* appToolBar = nullptr;
     QAction *createWalletAction = nullptr;
     QAction *openWalletAction = nullptr;
+    QAction *importMnemonicAction = nullptr;
     QAction *backupAllWalletsAction = nullptr;
     QAction* overviewAction = nullptr;
     QAction* historyAction = nullptr;
@@ -258,6 +259,8 @@ private Q_SLOTS:
     void showDebugWindowActivateConsole();
     /** Create a new wallet */
     void createWallet();
+    /** Restore wallet using BIP39 mnemonic */
+    void importMnemonic();
     /** Open a wallet */
     void openWallet();
     /** Backup all wallets */
