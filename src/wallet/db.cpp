@@ -714,6 +714,7 @@ bool BerkeleyBatch::Rewrite(BerkeleyDatabase& database, const char* pszSkip)
                             if (ret2 > 0)
                                 fSuccess = false;
                         }
+                    pcursor.reset();
                     if (fSuccess) {
                         db.Close();
                         env->CloseDb(strFile);
