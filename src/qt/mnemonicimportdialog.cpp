@@ -12,6 +12,7 @@
 #include <QDateTime>
 #include <QFileInfo>
 #include <qt/guiutil.h>
+#include <util.h>
 
 #include <thread>
 #include <vector>
@@ -71,10 +72,12 @@ void MnemonicImportDialog::on_importButton_clicked()
     QCoreApplication::processEvents();
 
     // 2. Perform wallet backup
-    // Create backup directory inside data dir
-    QString backupDir = model->wallet().isLegacy() ? "wallet_backups" : "backups";
-    QDir().mkpath(backupDir);
-    QString backupPath = backupDir + "/backup_before_mnemonic_" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") + ".dat";
+    // Create backup directory inside data dir (using absolute path)
+    QString dataDir = QString::fromStdString(GetDataDir().string());
+    QString backupDirName = model->wallet().isLegacy() ? "wallet_backups" : "backups";
+    QDir backupDir(dataDir);
+    backupDir.mkpath(backupDirName);
+    QString backupPath = dataDir + "/" + backupDirName + "/backup_before_mnemonic_" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") + ".dat";
     
     if (!model->wallet().backupWallet(backupPath.toStdString())) {
         QFileInfo backupInfo(backupPath);
