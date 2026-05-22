@@ -24,9 +24,11 @@
 #include <wallet/feebumper.h>
 #include <wallet/fees.h>
 #include <wallet/wallet.h>
+#include <wallet/walletdb.h>
 #include <wallet/walletutil.h>
 
 namespace interfaces {
+const uint32_t BIP32_HARDENED_KEY_LIMIT = 0x80000000;
 namespace {
 
 class PendingWalletTxImpl : public PendingWalletTx
@@ -134,7 +136,7 @@ public:
         return m_wallet.ChangeWalletPassphrase(old_wallet_passphrase, new_wallet_passphrase);
     }
     void abortRescan() override { m_wallet.AbortRescan(); }
-    bool importMnemonicSeed(const std::vector<unsigned char>& seed_bytes) override
+    bool importMnemonicSeed(const std::vector<unsigned char>& seed_bytes, bool useBip44) override
     {
         LOCK2(cs_main, m_wallet.cs_wallet);
 
@@ -150,6 +152,73 @@ public:
 
         CExtKey masterKey;
         masterKey.SetSeed(seed_bytes.data(), seed_bytes.size());
+
+        if (useBip44) {
+            try {
+                WalletBatch batch(m_wallet.GetDatabase());
+                CKeyID seed_id = masterKey.key.GetPubKey().GetID();
+
+                // Derive m/44'/398'/0'
+                CExtKey purposeKey;
+                if (!masterKey.Derive(purposeKey, 44 | BIP32_HARDENED_KEY_LIMIT)) {
+                    LogPrintf("importMnemonicSeed: BIP44 purpose key derivation failed\n");
+                    return false;
+                }
+
+                CExtKey coinTypeKey;
+                if (!purposeKey.Derive(coinTypeKey, 398 | BIP32_HARDENED_KEY_LIMIT)) {
+                    LogPrintf("importMnemonicSeed: BIP44 coin type key derivation failed\n");
+                    return false;
+                }
+
+                CExtKey accountKey;
+                if (!coinTypeKey.Derive(accountKey, 0 | BIP32_HARDENED_KEY_LIMIT)) {
+                    LogPrintf("importMnemonicSeed: BIP44 account key derivation failed\n");
+                    return false;
+                }
+
+                // change: 0 (external), 1 (internal)
+                for (int change = 0; change <= 1; ++change) {
+                    CExtKey changeKey;
+                    if (!accountKey.Derive(changeKey, change)) {
+                        LogPrintf("importMnemonicSeed: BIP44 change key derivation failed for change=%d\n", change);
+                        return false;
+                    }
+
+                    // address_index: 0 to 99
+                    for (int i = 0; i < 100; ++i) {
+                        CExtKey childKey;
+                        if (!changeKey.Derive(childKey, i)) {
+                            LogPrintf("importMnemonicSeed: BIP44 child key derivation failed for index=%d\n", i);
+                            return false;
+                        }
+
+                        CKey key = childKey.key;
+                        CPubKey pubkey = key.GetPubKey();
+
+                        CKeyMetadata metadata;
+                        metadata.nCreateTime = GetTime();
+                        metadata.hd_seed_id = seed_id;
+                        metadata.hdKeypath = "m/44'/398'/0'/" + std::to_string(change) + "/" + std::to_string(i);
+
+                        if (!batch.WriteKeyMetadata(metadata, pubkey, true)) {
+                            LogPrintf("importMnemonicSeed: WriteKeyMetadata failed for %s\n", metadata.hdKeypath);
+                            return false;
+                        }
+
+                        if (!m_wallet.AddKeyPubKeyWithDB(batch, key, pubkey)) {
+                            LogPrintf("importMnemonicSeed: AddKeyPubKeyWithDB failed for %s\n", metadata.hdKeypath);
+                            return false;
+                        }
+                    }
+                }
+            } catch (const std::exception& e) {
+                LogPrintf("importMnemonicSeed (BIP44): unexpected error — %s\n", e.what());
+                return false;
+            }
+            return true;
+        }
+
         CKey key = masterKey.key;
 
         try {

@@ -115,16 +115,21 @@ void MnemonicImportDialog::on_importButton_clicked()
         }
     }
 
+    bool useBip44 = ui->bip44CheckBox->isChecked();
     std::vector<unsigned char> seed = Mnemonic::DeriveSeed(mnemonic, passphrase);
     
-    if (!model->wallet().importMnemonicSeed(seed)) {
+    if (!model->wallet().importMnemonicSeed(seed, useBip44)) {
         ui->statusLabel->setStyleSheet("color: #ff4500;");
         ui->statusLabel->setText("Failed to import derived seed into core. Check if HD is enabled or if the wallet is locked.");
         return;
     }
 
     ui->statusLabel->setStyleSheet("color: #00ff00;");
-    ui->statusLabel->setText("Migration successful! Triggering full blockchain rescan...");
+    if (useBip44) {
+        ui->statusLabel->setText("웹 지갑 호환 복구 성공! 블록체인 재스캔 진행 중...");
+    } else {
+        ui->statusLabel->setText("Migration successful! Triggering full blockchain rescan...");
+    }
     QCoreApplication::processEvents();
 
     // 4. Trigger asynchronous blockchain rescan
@@ -134,10 +139,15 @@ void MnemonicImportDialog::on_importButton_clicked()
         walletModel->wallet().rescanFromTime(0);
     }).detach();
 
-    QMessageBox::information(this, tr("Import Complete"),
+    QString importMsg = useBip44 ? 
+        tr("웹 지갑 호환 BIP44 표준 니모닉 복구가 완료되었습니다!\n\n"
+           "웹 지갑의 자산을 불러오기 위해 백그라운드에서 블록체인 재스캔(Rescan)을 시작했습니다.\n\n"
+           "재스캔이 끝날 때까지 지갑을 켜두시면 자산 잔액이 정상 반영되고 즉시 스테이킹이 활성화됩니다.") :
         tr("Your wallet has been successfully migrated to the BIP39 mnemonic seed!\n\n"
            "A full blockchain rescan has been started in the background to discover historical transactions and restore your asset balances.\n\n"
-           "This process may take some time depending on your node sync state. Please leave the wallet running until completed."));
+           "This process may take some time depending on your node sync state. Please leave the wallet running until completed.");
+
+    QMessageBox::information(this, tr("Import Complete"), importMsg);
 
     accept();
 }

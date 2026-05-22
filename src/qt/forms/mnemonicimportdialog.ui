@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>380</height>
+    <height>410</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,6 +19,9 @@ QLabel { color: #e0e0e0; font-size: 13px; }
 QPlainTextEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #3d3d3d; border-radius: 4px; padding: 6px; font-family: monospace; font-size: 13px; }
 QLineEdit { background-color: #2b2b2b; color: #ffffff; border: 1px solid #3d3d3d; border-radius: 4px; padding: 6px; font-size: 13px; }
 QPlainTextEdit:focus, QLineEdit:focus { border: 1px solid #106ba3; }
+QCheckBox { color: #e0e0e0; font-size: 13px; spacing: 5px; }
+QCheckBox::indicator { width: 16px; height: 16px; border: 1px solid #3d3d3d; border-radius: 3px; background-color: #2b2b2b; }
+QCheckBox::indicator:checked { background-color: #106ba3; border: 1px solid #106ba3; }
 QPushButton { background-color: #2b2b2b; color: #ffffff; border: 1px solid #3d3d3d; border-radius: 4px; padding: 6px 16px; min-width: 80px; }
 QPushButton:hover { background-color: #106ba3; border: 1px solid #106ba3; color: #ffffff; font-weight: bold; }
 QPushButton:pressed { background-color: #0d4f7a; }
@@ -103,6 +106,16 @@ QPushButton:pressed { background-color: #0d4f7a; }
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="bip44CheckBox">
+     <property name="text">
+      <string>웹 지갑 호환 복구 (BIP44 표준)</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QLabel" name="statusLabel">
