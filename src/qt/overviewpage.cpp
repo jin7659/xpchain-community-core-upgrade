@@ -326,7 +326,7 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
                 int typeVal = idxType.data(TransactionTableModel::TypeRole).toInt();
                 qint64 timeVal = idxDate.data(TransactionTableModel::DateRole).toDateTime().toSecsSinceEpoch();
-                double amountVal = idxAmount.data(TransactionTableModel::AmountRole).toDouble() / 100000000.0;
+                double amountVal = idxAmount.data(TransactionTableModel::AmountRole).toDouble() / 10000.0;
                 QString txidVal = idxType.data(TransactionTableModel::TxHashRole).toString();
                 QString addressVal = idxAddress.data(Qt::DisplayRole).toString();
 
