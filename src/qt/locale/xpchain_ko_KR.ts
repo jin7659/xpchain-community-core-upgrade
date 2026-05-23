@@ -4067,4 +4067,54 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
         <translation>지갑 %s 로딩 오류. %s</translation>
     </message>
 </context>
+<context>
+    <name>MnemonicImportDialog</name>
+    <message>
+        <source>Restore Wallet from Mnemonic</source>
+        <translation>니모닉으로 지갑 복구</translation>
+    </message>
+    <message>
+        <source>Please enter your mnemonic phrase.</source>
+        <translation>니모닉 문구를 입력해주세요.</translation>
+    </message>
+    <message>
+        <source>Mnemonic valid! Preparing migration and wallet backup...</source>
+        <translation>니모닉 유효성 검사 성공! 지갑 백업 및 이전을 준비 중...</translation>
+    </message>
+    <message>
+        <source>웹 지갑 호환 복구 (BIP44 표준)</source>
+        <translation>웹 지갑 호환 복구 (BIP44 표준)</translation>
+    </message>
+    <message>
+        <source>Save Backup Wallet</source>
+        <translation>백업 지갑 저장</translation>
+    </message>
+    <message>
+        <source>Backup Failed</source>
+        <translation>백업 실패</translation>
+    </message>
+</context>
+<context>
+    <name>WatchAddressDialog</name>
+    <message>
+        <source>Web Wallet Settings</source>
+        <translation>웹 지갑 관리 설정</translation>
+    </message>
+    <message>
+        <source>Watch-only Address List</source>
+        <translation>관찰 전용(Watch-only) 주소 목록</translation>
+    </message>
+    <message>
+        <source>Add Watch Address</source>
+        <translation>관찰 주소 추가</translation>
+    </message>
+    <message>
+        <source>Address:</source>
+        <translation>주소:</translation>
+    </message>
+    <message>
+        <source>Label:</source>
+        <translation>라벨:</translation>
+    </message>
+</context>
 </TS>

@@ -27,6 +27,7 @@
 #include <QScrollBar>
 #include <QSettings>
 #include <QTextDocument>
+#include <QLabel>
 
 static const std::array<int, 9> confTargets = { {2, 4, 6, 12, 24, 48, 144, 504, 1008} };
 int getConfTargetForIndex(int index) {
@@ -122,6 +123,12 @@ SendCoinsDialog::SendCoinsDialog(const PlatformStyle *_platformStyle, QWidget *p
     ui->groupFee->button((int)std::max(0, std::min(1, settings.value("nFeeRadio").toInt())))->setChecked(true);
     ui->customFee->setValue(settings.value("nTransactionFee").toLongLong());
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
+    
+    // 동적 스마트 수수료 상태 가이드 라벨 초기화
+    labelFeeStatusGuide = new QLabel(this);
+    labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; border-radius: 4px; margin-top: 4px;");
+    ui->verticalLayoutFee2->addWidget(labelFeeStatusGuide);
+
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
 }
 
@@ -650,6 +657,8 @@ void SendCoinsDialog::updateFeeSectionControls()
     ui->labelMinFeeWarning      ->setEnabled(ui->radioCustomFee->isChecked());
     ui->labelCustomPerKilobyte  ->setEnabled(ui->radioCustomFee->isChecked() && !ui->checkBoxMinimumFee->isChecked());
     ui->customFee               ->setEnabled(ui->radioCustomFee->isChecked() && !ui->checkBoxMinimumFee->isChecked());
+    
+    updateSmartFeeLabel();
 }
 
 void SendCoinsDialog::updateFeeMinimizedLabel()
@@ -712,6 +721,35 @@ void SendCoinsDialog::updateSmartFeeLabel()
         ui->labelSmartFee2->hide();
         ui->labelFeeEstimation->setText(tr("Estimated to begin confirmation within %n block(s).", "", returned_target));
         ui->fallbackFeeWarningLabel->setVisible(false);
+    }
+
+    // 동적 수수료 가이드 업데이트
+    if (labelFeeStatusGuide) {
+        if (ui->radioCustomFee->isChecked()) {
+            if (ui->checkBoxMinimumFee->isChecked()) {
+                labelFeeStatusGuide->setText(tr("네트워크 수수료 가이드: 사용자 지정 최소 수수료 (Eco Mode)"));
+                labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
+            } else {
+                labelFeeStatusGuide->setText(tr("네트워크 수수료 가이드: 사용자 지정 수수료 적용 중"));
+                labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #0d4f7a; border-radius: 4px; margin-top: 4px;");
+            }
+        } else {
+            if (reason == FeeReason::FALLBACK) {
+                labelFeeStatusGuide->setText(tr("네트워크 수수료 가이드: 초기 분석 중 (Eco Mode)"));
+                labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
+            } else {
+                if (returned_target <= 10) {
+                    labelFeeStatusGuide->setText(tr("네트워크 혼잡도: 신속 (Fast) - 10분 내 승인 예상"));
+                    labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #106ba3; border-radius: 4px; margin-top: 4px;");
+                } else if (returned_target <= 48) {
+                    labelFeeStatusGuide->setText(tr("네트워크 혼잡도: 보통 (Normal) - 2시간 내 승인 예상"));
+                    labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #2b6f9a; border-radius: 4px; margin-top: 4px;");
+                } else {
+                    labelFeeStatusGuide->setText(tr("네트워크 혼잡도: 친환경 (Eco) - 24시간 내 승인 예상"));
+                    labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
+                }
+            }
+        }
     }
 
     updateFeeMinimizedLabel();

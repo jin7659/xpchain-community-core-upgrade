@@ -612,9 +612,19 @@ void OverviewPage::onWatchAddressBalanceReceived(QNetworkReply* reply)
             }
         } else {
             qWarning() << "Failed to parse balance from explorer API for address:" << address << "Response:" << responseStr;
+            m_watchOnlyWebWalletBalance = TxAnalytics::getInstance().getWatchAddressesTotalBalance();
+            if (walletModel && walletModel->getOptionsModel()) {
+                updateWatchOnlyLabels(walletModel->wallet().haveWatchOnly());
+                setBalance(m_balances);
+            }
         }
     } else {
         qWarning() << "Explorer API network error for address:" << address << ":" << reply->errorString();
+        m_watchOnlyWebWalletBalance = TxAnalytics::getInstance().getWatchAddressesTotalBalance();
+        if (walletModel && walletModel->getOptionsModel()) {
+            updateWatchOnlyLabels(walletModel->wallet().haveWatchOnly());
+            setBalance(m_balances);
+        }
     }
 
     reply->deleteLater();

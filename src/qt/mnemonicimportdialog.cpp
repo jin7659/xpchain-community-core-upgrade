@@ -41,6 +41,22 @@ void MnemonicImportDialog::on_cancelButton_clicked()
     reject();
 }
 
+static void rotateBackups(const QString& backupDirAbsPath)
+{
+    QDir dir(backupDirAbsPath);
+    if (!dir.exists()) return;
+
+    QStringList filters;
+    filters << "backup_before_mnemonic_*.dat";
+    QFileInfoList fileList = dir.entryInfoList(filters, QDir::Files, QDir::Time);
+
+    if (fileList.size() > 10) {
+        for (int i = 10; i < fileList.size(); ++i) {
+            QFile::remove(fileList.at(i).absoluteFilePath());
+        }
+    }
+}
+
 void MnemonicImportDialog::on_importButton_clicked()
 {
     if (!model) {
@@ -104,6 +120,9 @@ void MnemonicImportDialog::on_importButton_clicked()
             ui->statusLabel->setText("Wallet backup failed. Aborting import for security.");
             return;
         }
+    } else {
+        // 백업 성공 시 백업 순환(10개 제한) 실행
+        rotateBackups(dataDir + "/" + backupDirName);
     }
 
 
