@@ -527,10 +527,6 @@ xpchain_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 if BUILD_XPCHAIN_LIBS
 include_HEADERS = script/xpchainconsensus.h
 libxpchainconsensus_la_SOURCES = \
-  crypto/hmac_sha512.cpp \
-  crypto/sha512.cpp \
-  crypto/sha256.cpp \
-  crypto/ripemd160.cpp \
   $(crypto_libxpchain_crypto_base_a_SOURCES) \
   $(libxpchain_consensus_a_SOURCES)
 

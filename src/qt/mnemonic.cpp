@@ -50,7 +50,7 @@ bool Validate(const std::string& mnemonic, std::string& error_msg) {
 }
 
 bool Validate(const SecureString& mnemonic, std::string& error_msg) {
-    std::vector<std::string> words = SplitWords(mnemonic);
+    std::vector<std::string> words = SplitWords(std::string(mnemonic.begin(), mnemonic.end()));
     if (words.size() != 12 && words.size() != 24) {
         error_msg = "Mnemonic must be exactly 12 or 24 words.";
         return false;
@@ -126,7 +126,9 @@ std::vector<unsigned char> DeriveSeed(const SecureString& mnemonic, const Secure
     // - Iteration count: 2048
     // - Output size: 64 bytes (512 bits)
     
-    std::string salt = "mnemonic" + passphrase;
+    SecureString salt;
+    salt.append("mnemonic");
+    salt.append(passphrase);
     
     // We derive 64 bytes
     std::vector<unsigned char> derived_seed(64, 0);

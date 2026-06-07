@@ -96,8 +96,10 @@ void MnemonicImportDialog::on_importButton_clicked()
         return;
     }
 
-    SecureString mnemonicSec = ui->mnemonicEdit->toPlainText().trimmed().toStdString();
-    SecureString passphraseSec = ui->passphraseEdit->text().toStdString();
+    QByteArray mnemonicBytes = ui->mnemonicEdit->toPlainText().trimmed().toUtf8();
+    QByteArray passphraseBytes = ui->passphraseEdit->text().toUtf8();
+    SecureString mnemonicSec(mnemonicBytes.constData(), mnemonicBytes.constData() + mnemonicBytes.size());
+    SecureString passphraseSec(passphraseBytes.constData(), passphraseBytes.constData() + passphraseBytes.size());
 
     if (mnemonicSec.empty()) {
         ui->statusLabel->setStyleSheet("color: #ff4500;");

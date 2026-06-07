@@ -76,6 +76,10 @@ int main(int argc, char *argv[])
         fInvalid = true;
     }
 #ifdef ENABLE_WALLET
+    MnemonicTests testMnemonic;
+    if (QTest::qExec(&testMnemonic) != 0) {
+        fInvalid = true;
+    }
     PaymentServerTests test2;
     if (QTest::qExec(&test2) != 0) {
         fInvalid = true;
@@ -96,10 +100,6 @@ int main(int argc, char *argv[])
     }
     AddressBookTests test6;
     if (QTest::qExec(&test6) != 0) {
-        fInvalid = true;
-    }
-    MnemonicTests test7;
-    if (QTest::qExec(&test7) != 0) {
         fInvalid = true;
     }
 #endif
