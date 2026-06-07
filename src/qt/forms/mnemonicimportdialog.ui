@@ -57,17 +57,17 @@ QPushButton:pressed { background-color: #0d4f7a; }
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="warningLabel">
-     <property name="styleSheet">
-      <string notr="true">color: #ff4500; font-weight: bold;</string>
-     </property>
-     <property name="text">
-      <string>WARNING: Importing a new mnemonic will override your current wallet's active HD seed! The current wallet.dat will be backed up as wallets/backup_before_mnemonic.dat.</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
+     <widget class="QLabel" name="warningLabel">
+      <property name="styleSheet">
+       <string notr="true">color: #ff4500; font-weight: bold;</string>
+      </property>
+      <property name="text">
+       <string>WARNING: Importing keys merges them into the current wallet. Your wallet is backed up automatically to wallet_backups/backup_before_mnemonic_*.dat before import. For a clean recovery, create a new empty wallet first.</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
    </item>
    <item>
     <widget class="QLabel" name="instructionLabel">
@@ -110,10 +110,20 @@ QPushButton:pressed { background-color: #0d4f7a; }
    <item>
     <widget class="QCheckBox" name="bip44CheckBox">
      <property name="text">
-      <string>웹 지갑 호환 복구 (BIP44 표준)</string>
+      <string>Web wallet compatible recovery (BIP44)</string>
      </property>
      <property name="checked">
-      <bool>false</bool>
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="legacyCoinTypeCheckBox">
+     <property name="text">
+      <string>Legacy web wallet path (coin_type 398)</string>
+     </property>
+     <property name="enabled">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

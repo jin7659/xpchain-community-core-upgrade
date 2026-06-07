@@ -287,22 +287,25 @@ void OverviewPage::setBalance(const interfaces::WalletBalances& balances)
     ui->labelBalance->setText(XPChainUnits::formatWithUnit(unit, balances.balance, false, XPChainUnits::separatorAlways));
     ui->labelUnconfirmed->setText(XPChainUnits::formatWithUnit(unit, balances.unconfirmed_balance, false, XPChainUnits::separatorAlways));
     ui->labelImmature->setText(XPChainUnits::formatWithUnit(unit, balances.immature_balance, false, XPChainUnits::separatorAlways));
-    
-    qint64 watchOnlySatoshi = (qint64)(m_watchOnlyWebWalletBalance * 10000.0);
-    qint64 totalCombined = balances.balance + balances.unconfirmed_balance + balances.immature_balance + watchOnlySatoshi;
 
-    ui->labelTotal->setText(XPChainUnits::formatWithUnit(unit, totalCombined, false, XPChainUnits::separatorAlways));
-    
+    qint64 walletTotal = balances.balance + balances.unconfirmed_balance + balances.immature_balance;
+    ui->labelTotal->setText(XPChainUnits::formatWithUnit(unit, walletTotal, false, XPChainUnits::separatorAlways));
+    ui->labelTotal->setToolTip(tr("Spendable wallet balance (does not include external web wallet watch addresses)"));
+
+    qint64 watchOnlySatoshi = static_cast<qint64>(m_watchOnlyWebWalletBalance * 10000.0);
+    qint64 coreWatchOnly = balances.watch_only_balance + balances.unconfirmed_watch_only_balance + balances.immature_watch_only_balance;
+
     if (pieChart) {
-        QString totalStr = XPChainUnits::formatWithUnit(unit, totalCombined, false, XPChainUnits::separatorAlways);
-        pieChart->setBalances(balances.balance, balances.unconfirmed_balance, balances.immature_balance, watchOnlySatoshi, totalStr);
+        QString walletTotalStr = XPChainUnits::formatWithUnit(unit, walletTotal, false, XPChainUnits::separatorAlways);
+        pieChart->setBalances(balances.balance, balances.unconfirmed_balance, balances.immature_balance, coreWatchOnly + watchOnlySatoshi, walletTotalStr);
     }
 
-    qint64 totalWatchOnly = balances.watch_only_balance + watchOnlySatoshi;
-    ui->labelWatchAvailable->setText(XPChainUnits::formatWithUnit(unit, totalWatchOnly, false, XPChainUnits::separatorAlways));
+    ui->labelWatchAvailable->setText(XPChainUnits::formatWithUnit(unit, balances.watch_only_balance + watchOnlySatoshi, false, XPChainUnits::separatorAlways));
+    ui->labelWatchAvailable->setToolTip(tr("Watch-only balances including linked web wallet addresses (not spendable from this node)"));
     ui->labelWatchPending->setText(XPChainUnits::formatWithUnit(unit, balances.unconfirmed_watch_only_balance, false, XPChainUnits::separatorAlways));
     ui->labelWatchImmature->setText(XPChainUnits::formatWithUnit(unit, balances.immature_watch_only_balance, false, XPChainUnits::separatorAlways));
-    ui->labelWatchTotal->setText(XPChainUnits::formatWithUnit(unit, totalWatchOnly + balances.unconfirmed_watch_only_balance + balances.immature_watch_only_balance, false, XPChainUnits::separatorAlways));
+    ui->labelWatchTotal->setText(XPChainUnits::formatWithUnit(unit, coreWatchOnly + watchOnlySatoshi, false, XPChainUnits::separatorAlways));
+    ui->labelWatchTotal->setToolTip(tr("Combined watch-only total (core watch addresses + web wallet API balances)"));
 
     // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
     // for the non-mining users
@@ -314,7 +317,7 @@ void OverviewPage::setBalance(const interfaces::WalletBalances& balances)
     ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
 
-    double totalXPC = (balances.balance + balances.unconfirmed_balance + balances.immature_balance) / 10000.0;
+    double totalXPC = walletTotal / 10000.0;
     updateAssetBadge(totalXPC);
 }
 
@@ -377,7 +380,6 @@ void OverviewPage::setWalletModel(WalletModel *model)
         // Phase 3: SQLite 데이터베이스 초기화 및 히스토리 적재
         QString dataDir = QString::fromStdString(GetDataDir().string());
         if (TxAnalytics::getInstance().init(dataDir)) {
-            TxAnalytics::getInstance().clearHistory();
             int rows = model->getTransactionTableModel()->rowCount(QModelIndex());
             for (int i = 0; i < rows; ++i) {
                 QModelIndex idxType = model->getTransactionTableModel()->index(i, TransactionTableModel::Type, QModelIndex());
@@ -484,29 +486,28 @@ void OverviewPage::updateStakingTime(double networkWeight)
     double myWeight = (m_balances.balance + m_balances.immature_balance) / 10000.0;
 
     if (myWeight <= 0.0) {
-        labelStakingTimeCorrection->setText(tr("정밀 채굴 예상 시간: XPC 잔고가 필요합니다."));
+        labelStakingTimeCorrection->setText(tr("Staking estimate: wallet balance required."));
         return;
     }
 
     if (networkWeight <= 0.0) {
-        networkWeight = 10000000.0; // fallback
+        networkWeight = 10000000.0;
     }
 
-    // 포아송 분포 기반 예상 채굴 시간 (분)
     double expectedTimeMinutes = (networkWeight / myWeight) * 1.0;
 
     QString timeText;
     if (expectedTimeMinutes < 60.0) {
-        timeText = QString(tr("정밀 채굴 예상 시간: 약 %1분")).arg(expectedTimeMinutes, 0, 'f', 1);
+        timeText = QString(tr("Staking estimate: ~%1 min (indicative only)")).arg(expectedTimeMinutes, 0, 'f', 1);
     } else if (expectedTimeMinutes < 1440.0) {
         double hours = expectedTimeMinutes / 60.0;
-        timeText = QString(tr("정밀 채굴 예상 시간: 약 %1시간")).arg(hours, 0, 'f', 1);
+        timeText = QString(tr("Staking estimate: ~%1 hours (indicative only)")).arg(hours, 0, 'f', 1);
     } else {
         double days = expectedTimeMinutes / 1440.0;
-        timeText = QString(tr("정밀 채굴 예상 시간: 약 %1일")).arg(days, 0, 'f', 1);
+        timeText = QString(tr("Staking estimate: ~%1 days (indicative only)")).arg(days, 0, 'f', 1);
     }
 
-    timeText += QString(" (온체인 가중치: %1 XPC)").arg(networkWeight, 0, 'f', 0);
+    timeText += tr(" — coins must mature ~3 days before staking");
     labelStakingTimeCorrection->setText(timeText);
 }
 

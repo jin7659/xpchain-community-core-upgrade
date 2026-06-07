@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cstring>
 #include <vector>
+#include <unordered_map>
 
 namespace Mnemonic {
 
@@ -28,15 +29,27 @@ static std::vector<std::string> SplitWords(const std::string& sentence) {
 
 // Find word index in BIP39_WORDS
 static int GetWordIndex(const std::string& word) {
-    for (int i = 0; i < 2048; ++i) {
-        if (word == BIP39_WORDS[i]) {
-            return i;
+    static const std::unordered_map<std::string, int> word_map = []() {
+        std::unordered_map<std::string, int> map;
+        map.reserve(2048);
+        for (int i = 0; i < 2048; ++i) {
+            map.emplace(BIP39_WORDS[i], i);
         }
+        return map;
+    }();
+    const auto it = word_map.find(word);
+    if (it == word_map.end()) {
+        return -1;
     }
-    return -1;
+    return it->second;
 }
 
 bool Validate(const std::string& mnemonic, std::string& error_msg) {
+    SecureString secure(mnemonic.begin(), mnemonic.end());
+    return Validate(secure, error_msg);
+}
+
+bool Validate(const SecureString& mnemonic, std::string& error_msg) {
     std::vector<std::string> words = SplitWords(mnemonic);
     if (words.size() != 12 && words.size() != 24) {
         error_msg = "Mnemonic must be exactly 12 or 24 words.";
@@ -101,6 +114,12 @@ bool Validate(const std::string& mnemonic, std::string& error_msg) {
 }
 
 std::vector<unsigned char> DeriveSeed(const std::string& mnemonic, const std::string& passphrase) {
+    SecureString mnemonicSec(mnemonic.begin(), mnemonic.end());
+    SecureString passphraseSec(passphrase.begin(), passphrase.end());
+    return DeriveSeed(mnemonicSec, passphraseSec);
+}
+
+std::vector<unsigned char> DeriveSeed(const SecureString& mnemonic, const SecureString& passphrase) {
     // BIP39 Master Seed PBKDF2 parameters:
     // - Password: the mnemonic sentence
     // - Salt: "mnemonic" + passphrase

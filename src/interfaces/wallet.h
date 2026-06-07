@@ -39,6 +39,17 @@ struct WalletTx;
 struct WalletTxOut;
 struct WalletTxStatus;
 
+//! Options controlling BIP39 mnemonic import behaviour.
+struct MnemonicImportOptions
+{
+    //! Use BIP44 derivation (web wallet compatible) instead of Core HD (m/0'/...).
+    bool use_bip44 = false;
+    //! BIP44 coin_type hardened index (0 = current web wallet, 398 = legacy path).
+    uint32_t bip44_coin_type = 0;
+    //! Number of consecutive unused addresses to derive per external/internal chain.
+    uint32_t gap_limit = 1000;
+};
+
 using WalletOrderForm = std::vector<std::pair<std::string, std::string>>;
 using WalletValueMap = std::map<std::string, std::string>;
 
@@ -71,10 +82,14 @@ public:
     virtual void abortRescan() = 0;
 
     //! Import BIP39 mnemonic seed into wallet.
-    virtual bool importMnemonicSeed(const std::vector<unsigned char>& seed_bytes, bool useBip44) = 0;
+    virtual bool importMnemonicSeed(const std::vector<unsigned char>& seed_bytes, const MnemonicImportOptions& options) = 0;
 
     //! Rescan blockchain from startTime.
     virtual int64_t rescanFromTime(int64_t start_time) = 0;
+
+    //! Rescan blockchain from start_height to stop_height (inclusive). stop_height < 0 scans to chain tip.
+    //! Returns false if a rescan is already in progress or the scan could not complete.
+    virtual bool rescanBlockchain(int start_height = 0, int stop_height = -1) = 0;
 
     //! Back up wallet.
     virtual bool backupWallet(const std::string& filename) = 0;

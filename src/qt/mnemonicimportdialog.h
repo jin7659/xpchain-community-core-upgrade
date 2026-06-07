@@ -6,6 +6,7 @@
 #define XPCHAIN_QT_MNEMONICIMPORTDIALOG_H
 
 #include <QDialog>
+#include <QRunnable>
 
 class WalletModel;
 
@@ -24,6 +25,7 @@ public:
 private Q_SLOTS:
     void on_importButton_clicked();
     void on_cancelButton_clicked();
+    void onRescanFinished(bool success);
 
 private:
     Ui::MnemonicImportDialog *ui;

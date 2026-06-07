@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - 'cursor/**'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  linux-unit-tests:
+    name: Linux unit tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libtool autotools-dev automake pkg-config bsdmainutils \
+            curl git python3 libssl-dev libboost-all-dev libevent-dev \
+            libdb-dev libdb++-dev libzmq3-dev libqrencode-dev libprotobuf-dev \
+            protobuf-compiler qtbase5-dev qttools5-dev-tools
+
+      - name: Build
+        run: |
+          ./autogen.sh
+          ./configure --with-gui=qt5 --enable-tests
+          make -j"$(nproc)"
+
+      - name: Run unit tests
+        run: make check

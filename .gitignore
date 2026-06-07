@@ -1,3 +1,7 @@
+configure~
+configure.ac~
+**/configure~
+
 *.tar.gz
 
 *.exe

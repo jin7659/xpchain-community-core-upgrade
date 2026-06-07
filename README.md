@@ -1,7 +1,7 @@
 XPChain Core integration/staging tree
 =====================================
 
-[![Build Status](https://travis-ci.org/xpc-wg/xpchain.svg?branch=master)](https://travis-ci.org/xpc-wg/xpchain)
+[![Build Status](https://github.com/jin7659/xpchain-community-core-upgrade/actions/workflows/ci.yml/badge.svg)](https://github.com/jin7659/xpchain-community-core-upgrade/actions/workflows/ci.yml)
 
 https://www.xpchain.co.kr/
 

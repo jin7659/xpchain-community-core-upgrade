@@ -14,7 +14,8 @@ if ENABLE_WALLET
 TEST_QT_MOC_CPP += \
   qt/test/moc_addressbooktests.cpp \
   qt/test/moc_paymentservertests.cpp \
-  qt/test/moc_wallettests.cpp
+  qt/test/moc_wallettests.cpp \
+  qt/test/moc_mnemonictests.cpp
 endif
 
 TEST_QT_H = \
@@ -25,7 +26,8 @@ TEST_QT_H = \
   qt/test/util.h \
   qt/test/paymentrequestdata.h \
   qt/test/paymentservertests.h \
-  qt/test/wallettests.h
+  qt/test/wallettests.h \
+  qt/test/mnemonictests.h
 
 TEST_XPCHAIN_CPP = \
   test/test_xpchain.cpp
@@ -50,6 +52,7 @@ qt_test_test_xpchain_qt_SOURCES += \
   qt/test/addressbooktests.cpp \
   qt/test/paymentservertests.cpp \
   qt/test/wallettests.cpp \
+  qt/test/mnemonictests.cpp \
   wallet/test/wallet_test_fixture.cpp
 endif
 

@@ -4,11 +4,14 @@
 
 #include <interfaces/wallet.h>
 
+#include <algorithm>
 #include <amount.h>
 #include <chain.h>
 #include <consensus/validation.h>
 #include <interfaces/handler.h>
 #include <net.h>
+#include <key_io.h>
+#include <outputtype.h>
 #include <policy/feerate.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
@@ -136,11 +139,11 @@ public:
         return m_wallet.ChangeWalletPassphrase(old_wallet_passphrase, new_wallet_passphrase);
     }
     void abortRescan() override { m_wallet.AbortRescan(); }
-    bool importMnemonicSeed(const std::vector<unsigned char>& seed_bytes, bool useBip44) override
+    bool importMnemonicSeed(const std::vector<unsigned char>& seed_bytes, const MnemonicImportOptions& options) override
     {
         LOCK2(cs_main, m_wallet.cs_wallet);
 
-        // 레거시 지갑(non-HD)인 경우 FEATURE_HD로 먼저 업그레이드
+        // Legacy wallets (non-HD) must be upgraded before importing an HD seed.
         if (!m_wallet.IsHDEnabled()) {
             if (!m_wallet.CanSupportFeature(FEATURE_HD)) {
                 LogPrintf("importMnemonicSeed: wallet does not support HD feature\n");
@@ -153,12 +156,11 @@ public:
         CExtKey masterKey;
         masterKey.SetSeed(seed_bytes.data(), seed_bytes.size());
 
-        if (useBip44) {
+        if (options.use_bip44) {
             try {
                 WalletBatch batch(m_wallet.GetDatabase());
                 CKeyID seed_id = masterKey.key.GetPubKey().GetID();
 
-                // Derive m/44'/0'/0' (웹 지갑과 동일: coin_type=0, Bitcoin 경로)
                 CExtKey purposeKey;
                 if (!masterKey.Derive(purposeKey, 44 | BIP32_HARDENED_KEY_LIMIT)) {
                     LogPrintf("importMnemonicSeed: BIP44 purpose key derivation failed\n");
@@ -166,7 +168,7 @@ public:
                 }
 
                 CExtKey coinTypeKey;
-                if (!purposeKey.Derive(coinTypeKey, 0 | BIP32_HARDENED_KEY_LIMIT)) {
+                if (!purposeKey.Derive(coinTypeKey, options.bip44_coin_type | BIP32_HARDENED_KEY_LIMIT)) {
                     LogPrintf("importMnemonicSeed: BIP44 coin type key derivation failed\n");
                     return false;
                 }
@@ -177,8 +179,10 @@ public:
                     return false;
                 }
 
+                const uint32_t gap_limit = std::max<uint32_t>(1, std::min(options.gap_limit, 2000u));
                 int imported = 0;
-                // change: 0 (external), 1 (internal)
+                int new_keys = 0;
+
                 for (int change = 0; change <= 1; ++change) {
                     CExtKey changeKey;
                     if (!accountKey.Derive(changeKey, change)) {
@@ -186,42 +190,51 @@ public:
                         continue;
                     }
 
-                    // address_index: 0 to 99
-                    for (int i = 0; i < 100; ++i) {
+                    for (uint32_t i = 0; i < gap_limit; ++i) {
                         CExtKey childKey;
                         if (!changeKey.Derive(childKey, i)) {
-                            LogPrintf("importMnemonicSeed: BIP44 child key derivation failed for index=%d\n", i);
+                            LogPrintf("importMnemonicSeed: BIP44 child key derivation failed for index=%u\n", i);
                             continue;
                         }
 
                         CKey key = childKey.key;
                         CPubKey pubkey = key.GetPubKey();
 
-                        // 이미 존재하는 키는 건너뜀
+                        CKeyMetadata metadata;
+                        metadata.nCreateTime = 1;
+                        metadata.hd_seed_id = seed_id;
+                        metadata.hdKeypath = "m/44'/" + std::to_string(options.bip44_coin_type) + "'/0'/" +
+                            std::to_string(change) + "/" + std::to_string(i);
+
                         if (m_wallet.HaveKey(pubkey.GetID())) {
-                            LogPrintf("importMnemonicSeed: key already exists, skipping %s/%d/%d\n",
-                                      "m/44'/0'/0'", change, i);
+                            m_wallet.LearnAllRelatedScripts(pubkey);
                             ++imported;
                             continue;
                         }
 
-                        CKeyMetadata metadata;
-                        metadata.nCreateTime = GetTime();
-                        metadata.hd_seed_id = seed_id;
-                        metadata.hdKeypath = "m/44'/0'/0'/" + std::to_string(change) + "/" + std::to_string(i);
-
                         m_wallet.LoadKeyMetadata(pubkey.GetID(), metadata);
 
-                        if (m_wallet.AddKeyPubKeyWithDB(batch, key, pubkey)) {
-                            ++imported;
-                        } else {
-                            LogPrintf("importMnemonicSeed: AddKeyPubKeyWithDB failed for %s (skipping)\n",
-                                      metadata.hdKeypath);
+                        if (!m_wallet.AddKeyPubKeyWithDB(batch, key, pubkey)) {
+                            LogPrintf("importMnemonicSeed: AddKeyPubKeyWithDB failed for %s\n", metadata.hdKeypath);
+                            continue;
                         }
+
+                        m_wallet.LearnAllRelatedScripts(pubkey);
+                        for (const auto& dest : GetAllDestinationsForKey(pubkey)) {
+                            m_wallet.SetAddressBook(dest, "", "receive");
+                        }
+                        ++imported;
+                        ++new_keys;
                     }
                 }
 
-                LogPrintf("importMnemonicSeed: BIP44 import complete — %d keys processed\n", imported);
+                if (new_keys == 0) {
+                    LogPrintf("importMnemonicSeed: BIP44 import did not add any new keys\n");
+                    return false;
+                }
+
+                m_wallet.MarkDirty();
+                LogPrintf("importMnemonicSeed: BIP44 import complete — %d keys processed (%d new)\n", imported, new_keys);
             } catch (const std::exception& e) {
                 LogPrintf("importMnemonicSeed (BIP44): unexpected error — %s\n", e.what());
                 return false;
@@ -235,6 +248,7 @@ public:
             CPubKey master_pub_key = m_wallet.DeriveNewSeed(key);
             m_wallet.SetHDSeed(master_pub_key);
             m_wallet.NewKeyPool();
+            m_wallet.MarkDirty();
         } catch (const std::runtime_error& e) {
             LogPrintf("importMnemonicSeed: failed — %s\n", e.what());
             return false;
@@ -251,6 +265,69 @@ public:
             return 0;
         }
         return m_wallet.RescanFromTime(start_time, reserver, true /* update */);
+    }
+    bool rescanBlockchain(int start_height, int stop_height) override
+    {
+        WalletRescanReserver reserver(&m_wallet);
+        if (!reserver.reserve()) {
+            LogPrintf("rescanBlockchain: wallet rescan already in progress\n");
+            return false;
+        }
+
+        CBlockIndex* pindexStart = nullptr;
+        CBlockIndex* pindexStop = nullptr;
+        CBlockIndex* pChainTip = nullptr;
+        {
+            LOCK(cs_main);
+            pindexStart = chainActive.Genesis();
+            pChainTip = chainActive.Tip();
+            if (!pindexStart || !pChainTip) {
+                return false;
+            }
+
+            if (start_height > 0) {
+                pindexStart = chainActive[start_height];
+                if (!pindexStart) {
+                    LogPrintf("rescanBlockchain: invalid start_height %d\n", start_height);
+                    return false;
+                }
+            }
+
+            if (stop_height >= 0) {
+                pindexStop = chainActive[stop_height];
+                if (!pindexStop) {
+                    LogPrintf("rescanBlockchain: invalid stop_height %d\n", stop_height);
+                    return false;
+                }
+                if (pindexStop->nHeight < pindexStart->nHeight) {
+                    LogPrintf("rescanBlockchain: stop_height before start_height\n");
+                    return false;
+                }
+            }
+        }
+
+        if (fPruneMode) {
+            LOCK(cs_main);
+            CBlockIndex* block = pindexStop ? pindexStop : pChainTip;
+            while (block && block->nHeight >= pindexStart->nHeight) {
+                if (!(block->nStatus & BLOCK_HAVE_DATA)) {
+                    LogPrintf("rescanBlockchain: cannot rescan beyond pruned blocks\n");
+                    return false;
+                }
+                block = block->pprev;
+            }
+        }
+
+        CBlockIndex* stopBlock = m_wallet.ScanForWalletTransactions(pindexStart, pindexStop, reserver, true);
+        if (m_wallet.IsAbortingRescan()) {
+            LogPrintf("rescanBlockchain: rescan aborted by user\n");
+            return false;
+        }
+        if (stopBlock) {
+            LogPrintf("rescanBlockchain: rescan stopped early at height %d\n", stopBlock->nHeight);
+            return false;
+        }
+        return true;
     }
     bool backupWallet(const std::string& filename) override { return m_wallet.BackupWallet(filename); }
     std::string getWalletName() override { return m_wallet.GetName(); }
