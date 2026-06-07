@@ -22,15 +22,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential libtool autotools-dev automake pkg-config bsdmainutils \
-            curl git python3 libssl-dev libboost-all-dev libevent-dev \
-            libdb-dev libdb++-dev libzmq3-dev libqrencode-dev libprotobuf-dev \
-            protobuf-compiler qtbase5-dev qttools5-dev-tools
+            curl git python3
 
-      - name: Build
+      - name: Build depends (x86_64-linux-gnu)
+        run: |
+          cd depends
+          make HOST=x86_64-linux-gnu FALLBACK_DOWNLOAD_PATH=https://bitcoincore.org/depends-sources -j"$(nproc)"
+
+      - name: Build and test
         run: |
           ./autogen.sh
-          ./configure --with-gui=qt5 --enable-tests
+          CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=qt5
           make -j"$(nproc)"
-
-      - name: Run unit tests
-        run: make check
+          QT_QPA_PLATFORM=minimal make check
