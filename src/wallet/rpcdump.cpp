@@ -15,6 +15,9 @@
 #include <merkleblock.h>
 #include <core_io.h>
 
+#include <support/cleanse.h>
+#include <interfaces/wallet.h>
+#include <wallet/mnemonic.h>
 #include <wallet/rpcwallet.h>
 
 #include <fstream>
@@ -1274,4 +1277,121 @@ UniValue importmulti(const JSONRPCRequest& mainRequest)
     }
 
     return response;
+}
+
+UniValue importmnemonic(const JSONRPCRequest& request)
+{
+    std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+    CWallet* const pwallet = wallet.get();
+
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2) {
+        throw std::runtime_error(
+            "importmnemonic \"mnemonic\" ( options )\n"
+            "\nImport a BIP39 mnemonic seed into the wallet.\n"
+            "\nArguments:\n"
+            "1. \"mnemonic\"           (string, required) Space-separated 12 or 24 word BIP39 mnemonic.\n"
+            "2. options               (object, optional)\n"
+            "    {\n"
+            "      \"passphrase\": \"\",       (string, optional) BIP39 passphrase extension.\n"
+            "      \"bip44\": true|false,     (boolean, optional, default=false) Use BIP44 derivation (web wallet compatible).\n"
+            "      \"bip44_coin_type\": n,    (numeric, optional, default=0) BIP44 coin type (0=current web wallet, 398=legacy).\n"
+            "      \"gap_limit\": n,          (numeric, optional, default=1000) Number of addresses to derive per chain.\n"
+            "      \"rescan\": true|false     (boolean, optional, default=true) Rescan the blockchain after import.\n"
+            "    }\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"success\": true|false, (boolean)\n"
+            "  \"bip44\": true|false,   (boolean) Whether BIP44 derivation was used.\n"
+            "  \"bip44_coin_type\": n,  (numeric) Coin type used for BIP44 import.\n"
+            "  \"rescan\": true|false   (boolean) Whether a rescan was performed.\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("importmnemonic", "\"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about\" '{\"bip44\":true,\"bip44_coin_type\":0}'")
+            + HelpExampleRpc("importmnemonic", "\"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about\", {\"bip44\":true}")
+            );
+    }
+
+    if (pwallet->IsLocked()) {
+        throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
+    }
+
+    SecureString mnemonicSec(request.params[0].get_str().begin(), request.params[0].get_str().end());
+    SecureString passphraseSec;
+    bool use_bip44 = false;
+    uint32_t bip44_coin_type = 0;
+    uint32_t gap_limit = 1000;
+    bool rescan = true;
+
+    UniValue options(UniValue::VOBJ);
+    if (request.params.size() > 1) {
+        if (request.params[1].isStr()) {
+            if (!options.read(request.params[1].get_str())) {
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid options JSON");
+            }
+        } else {
+            options = request.params[1];
+        }
+        if (options.exists("passphrase") && !options["passphrase"].isNull()) {
+            const std::string passphrase = options["passphrase"].get_str();
+            passphraseSec.assign(passphrase.begin(), passphrase.end());
+        }
+        if (options.exists("bip44") && !options["bip44"].isNull()) {
+            use_bip44 = options["bip44"].get_bool();
+        }
+        if (options.exists("bip44_coin_type") && !options["bip44_coin_type"].isNull()) {
+            bip44_coin_type = options["bip44_coin_type"].get_int();
+        }
+        if (options.exists("gap_limit") && !options["gap_limit"].isNull()) {
+            gap_limit = options["gap_limit"].get_int();
+        }
+        if (options.exists("rescan") && !options["rescan"].isNull()) {
+            rescan = options["rescan"].get_bool();
+        }
+    }
+
+    std::string error_msg;
+    if (!Mnemonic::Validate(mnemonicSec, error_msg)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, error_msg);
+    }
+
+    std::vector<unsigned char> seed = Mnemonic::DeriveSeed(mnemonicSec, passphraseSec);
+    memory_cleanse(mnemonicSec.data(), mnemonicSec.size());
+    memory_cleanse(passphraseSec.data(), passphraseSec.size());
+
+    interfaces::MnemonicImportOptions import_options;
+    import_options.use_bip44 = use_bip44;
+    import_options.bip44_coin_type = bip44_coin_type;
+    import_options.gap_limit = gap_limit;
+
+    auto wallet_interface = interfaces::MakeWallet(wallet);
+    if (!wallet_interface->importMnemonicSeed(seed, import_options)) {
+        memory_cleanse(seed.data(), seed.size());
+        throw JSONRPCError(RPC_WALLET_ERROR, "Mnemonic import failed");
+    }
+    memory_cleanse(seed.data(), seed.size());
+
+    bool did_rescan = false;
+    if (rescan) {
+        WalletRescanReserver reserver(pwallet);
+        if (!reserver.reserve()) {
+            throw JSONRPCError(RPC_WALLET_ERROR, "Wallet is currently rescanning. Abort existing rescan or wait.");
+        }
+        pwallet->RescanFromTime(1, reserver, true /* update */);
+        pwallet->ReacceptWalletTransactions();
+        if (pwallet->IsAbortingRescan()) {
+            throw JSONRPCError(RPC_MISC_ERROR, "Rescan aborted by user.");
+        }
+        did_rescan = true;
+    }
+
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("success", true);
+    result.pushKV("bip44", use_bip44);
+    result.pushKV("bip44_coin_type", (int)bip44_coin_type);
+    result.pushKV("rescan", did_rescan);
+    return result;
 }

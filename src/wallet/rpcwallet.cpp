@@ -4981,6 +4981,7 @@ extern UniValue importwallet(const JSONRPCRequest& request);
 extern UniValue importprunedfunds(const JSONRPCRequest& request);
 extern UniValue removeprunedfunds(const JSONRPCRequest& request);
 extern UniValue importmulti(const JSONRPCRequest& request);
+extern UniValue importmnemonic(const JSONRPCRequest& request);
 extern UniValue rescanblockchain(const JSONRPCRequest& request);
 extern UniValue getdescriptorinfo(const JSONRPCRequest& request);
 
@@ -5009,6 +5010,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "gettransaction",                   &gettransaction,                {"txid","include_watchonly"} },
     { "wallet",             "getunconfirmedbalance",            &getunconfirmedbalance,         {} },
     { "wallet",             "getwalletinfo",                    &getwalletinfo,                 {} },
+    { "wallet",             "importmnemonic",                   &importmnemonic,                {"mnemonic","options"} },
     { "wallet",             "importmulti",                      &importmulti,                   {"requests","options"} },
     { "wallet",             "importprivkey",                    &importprivkey,                 {"privkey","label","rescan"} },
     { "wallet",             "importwallet",                     &importwallet,                  {"filename"} },

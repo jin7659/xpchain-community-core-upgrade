@@ -265,7 +265,6 @@ XPCHAIN_QT_H = \
   qt/winshutdownmonitor.h \
   qt/txanalytics.h \
   qt/transactionanalyticswidget.h \
-  qt/mnemonic.h \
   qt/mnemonicimportdialog.h \
   qt/watchaddressdialog.h \
   qt/res/bip39_words.h
@@ -392,7 +391,6 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/walletview.cpp \
   qt/txanalytics.cpp \
   qt/transactionanalyticswidget.cpp \
-  qt/mnemonic.cpp \
   qt/mnemonicimportdialog.cpp \
   qt/watchaddressdialog.cpp
 

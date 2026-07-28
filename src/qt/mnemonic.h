@@ -5,17 +5,6 @@
 #ifndef XPCHAIN_QT_MNEMONIC_H
 #define XPCHAIN_QT_MNEMONIC_H
 
-#include <string>
-#include <vector>
-
-#include <support/allocators/secure.h>
-
-namespace Mnemonic {
-    bool Validate(const SecureString& mnemonic, std::string& error_msg);
-    bool Validate(const std::string& mnemonic, std::string& error_msg);
-
-    std::vector<unsigned char> DeriveSeed(const SecureString& mnemonic, const SecureString& passphrase = SecureString());
-    std::vector<unsigned char> DeriveSeed(const std::string& mnemonic, const std::string& passphrase = "");
-}
+#include <wallet/mnemonic.h>
 
 #endif // XPCHAIN_QT_MNEMONIC_H
