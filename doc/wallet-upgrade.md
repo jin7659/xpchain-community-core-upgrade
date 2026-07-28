@@ -121,6 +121,46 @@ Manual rescan:
 xpchain-cli rescanblockchain 0
 ```
 
+## Migrating Berkeley DB to SQLite
+
+Legacy wallets created with names other than `wallet.dat` use the **Berkeley DB** backend. New default wallets (`wallet.dat`) use **SQLite**. To migrate a legacy BDB wallet:
+
+### CLI
+
+```bash
+# On the wallet to migrate (use -rpcwallet=<name> if not default)
+xpchain-cli migratewallet '{"backup":true,"load_new":true}'
+```
+
+Options:
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `destination` | `<name>.sqlite` | Output SQLite wallet path (must end with `.sqlite`) |
+| `backup` | `true` | Copy source wallet to `<source>.pre_migrate_<timestamp>.bak` |
+| `load_new` | `false` | Unload BDB wallet and load the migrated SQLite wallet |
+
+Example with explicit destination:
+
+```bash
+xpchain-cli -rpcwallet=legacy_bdb migratewallet \
+  '{"destination":"legacy_bdb.sqlite","backup":true,"load_new":true}'
+```
+
+After migration **without** `load_new`:
+
+```bash
+xpchain-cli unloadwallet "legacy_bdb"
+xpchain-cli loadwallet "legacy_bdb.sqlite"
+```
+
+### Notes
+
+- The original BDB file is **not deleted** — only copied to SQLite.
+- Encrypted wallets migrate correctly (keys remain encrypted at the application layer).
+- Descriptor wallets are already SQLite; `migratewallet` rejects non-BDB sources.
+- Always verify balance and a test transaction after migration.
+
 ## Encrypted Wallets
 
 - Unlock the wallet before mnemonic import (GUI prompts automatically; CLI requires `walletpassphrase`).
@@ -152,12 +192,14 @@ The following functional tests cover mnemonic recovery behaviour:
 
 - `test/functional/wallet_mnemonic_bip44.py` — BIP44 import, coin_type 0 vs 398
 - `test/functional/wallet_mnemonic_rescan.py` — rescan and balance recovery
+- `test/functional/wallet_migrate_sqlite.py` — BDB to SQLite migration
 
 Run them after building:
 
 ```bash
 test/functional/wallet_mnemonic_bip44.py
 test/functional/wallet_mnemonic_rescan.py
+test/functional/wallet_migrate_sqlite.py
 ```
 
 ## Getting Help

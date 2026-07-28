@@ -939,3 +939,173 @@ std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint6
     }
     return std::make_unique<BerkeleyDatabase>(path);
 }
+
+bool BerkeleyDatabase::CopyRecordsTo(WalletDatabase& dest, std::string& error)
+{
+#ifndef USE_SQLITE
+    error = "SQLite support is not enabled";
+    return false;
+#else
+    if (dest.Format() != "sqlite") {
+        error = "Destination database must be SQLite format";
+        return false;
+    }
+    if (IsDummy() || !env) {
+        error = "Source database is not open";
+        return false;
+    }
+
+    dest.Open();
+    auto dest_batch = dest.MakeBatch(true);
+    if (!dest_batch) {
+        error = "Failed to open destination database batch";
+        return false;
+    }
+    if (!dest_batch->TxnBegin()) {
+        error = "Failed to begin destination transaction";
+        return false;
+    }
+
+    BerkeleyBatch src_batch(*this, "r", false);
+    std::unique_ptr<DatabaseCursor> pcursor = src_batch.GetCursor();
+    if (!pcursor) {
+        error = "Failed to create source database cursor";
+        dest_batch->TxnAbort();
+        return false;
+    }
+
+    int count = 0;
+    while (true) {
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        int ret = pcursor->Read(ssKey, ssValue);
+        if (ret == DB_NOTFOUND) {
+            break;
+        }
+        if (ret != 0) {
+            error = "Error reading source wallet database";
+            dest_batch->TxnAbort();
+            return false;
+        }
+        if (!dest_batch->WriteKey(std::move(ssKey), std::move(ssValue), false)) {
+            error = "Error writing destination wallet database";
+            dest_batch->TxnAbort();
+            return false;
+        }
+        ++count;
+    }
+
+    if (!dest_batch->TxnCommit()) {
+        error = "Failed to commit destination transaction";
+        return false;
+    }
+
+    dest.Flush();
+    LogPrintf("BerkeleyDatabase::CopyRecordsTo: copied %d records to %s\n", count, dest.Filename());
+    return count > 0;
+#endif
+}
+
+bool CopyWalletDatabase(WalletDatabase& src, WalletDatabase& dest, std::string& error)
+{
+#ifndef USE_SQLITE
+    error = "SQLite support is not enabled";
+    return false;
+#else
+    if (src.Format() == "berkeley") {
+        BerkeleyDatabase& bdb = static_cast<BerkeleyDatabase&>(src);
+        return bdb.CopyRecordsTo(dest, error);
+    }
+
+    if (dest.Format() != "sqlite") {
+        error = "Destination database must be SQLite format";
+        return false;
+    }
+
+    src.Open();
+    dest.Open();
+
+    auto src_batch = src.MakeBatch(false);
+    auto dest_batch = dest.MakeBatch(true);
+    if (!src_batch || !dest_batch) {
+        error = "Failed to open database batch";
+        return false;
+    }
+
+    if (!dest_batch->TxnBegin()) {
+        error = "Failed to begin destination transaction";
+        return false;
+    }
+
+    std::unique_ptr<DatabaseCursor> pcursor = src_batch->GetCursor();
+    if (!pcursor) {
+        error = "Failed to create source database cursor";
+        dest_batch->TxnAbort();
+        return false;
+    }
+
+    int count = 0;
+    while (true) {
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+        int ret = pcursor->Read(ssKey, ssValue);
+        if (ret == DB_NOTFOUND) {
+            break;
+        }
+        if (ret != 0) {
+            error = "Error reading source wallet database";
+            dest_batch->TxnAbort();
+            return false;
+        }
+        if (!dest_batch->WriteKey(std::move(ssKey), std::move(ssValue), false)) {
+            error = "Error writing destination wallet database";
+            dest_batch->TxnAbort();
+            return false;
+        }
+        ++count;
+    }
+
+    if (!dest_batch->TxnCommit()) {
+        error = "Failed to commit destination transaction";
+        return false;
+    }
+
+    dest.Flush();
+    LogPrintf("CopyWalletDatabase: copied %d records from %s (%s) to %s (%s)\n",
+        count, src.Filename(), src.Format(), dest.Filename(), dest.Format());
+    return count > 0;
+#endif
+}
+
+bool CopyWalletDatabaseFile(const fs::path& src_path, const fs::path& dest_path, std::string& error)
+{
+#ifndef USE_SQLITE
+    error = "SQLite support is not enabled";
+    return false;
+#else
+    if (!fs::exists(src_path)) {
+        error = "Source wallet file not found";
+        return false;
+    }
+    if (IsSQLiteFile(src_path)) {
+        error = "Source wallet is already SQLite format";
+        return false;
+    }
+    if (!IsBerkeleyBDBFile(src_path)) {
+        error = "Source is not a Berkeley DB wallet file";
+        return false;
+    }
+    if (fs::exists(dest_path)) {
+        error = "Destination wallet file already exists";
+        return false;
+    }
+    if (dest_path.extension() != ".sqlite") {
+        error = "Destination path must use the .sqlite extension";
+        return false;
+    }
+
+    std::unique_ptr<WalletDatabase> src_db = CreateWalletDatabase(src_path, 0);
+    std::unique_ptr<WalletDatabase> dest_db = CreateWalletDatabase(dest_path, 0);
+    return CopyWalletDatabase(*src_db, *dest_db, error);
+#endif
+}

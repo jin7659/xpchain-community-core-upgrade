@@ -197,6 +197,8 @@ public:
     std::string Format() override { return "berkeley"; }
     std::unique_ptr<DatabaseBatch> MakeBatch(bool flush_on_close = true) override;
 
+    /** Copy records using an already-open BDB handle (safe while wallet is loaded). */
+    bool CopyRecordsTo(WalletDatabase& dest, std::string& error);
 
 private:
     /** BerkeleyDB specific */
@@ -287,6 +289,12 @@ bool IsBerkeleyBDBFile(const fs::path& path);
 
 /** 지갑 경로와 플래그에 따라 적절한 데이터베이스 엔진을 생성하는 팩토리 함수 */
 std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint64_t wallet_creation_flags = 0);
+
+/** Copy all key-value records from src to dest (e.g. Berkeley DB to SQLite). */
+bool CopyWalletDatabase(WalletDatabase& src, WalletDatabase& dest, std::string& error);
+
+/** Copy wallet file at src_path to dest_path. Destination must not exist. */
+bool CopyWalletDatabaseFile(const fs::path& src_path, const fs::path& dest_path, std::string& error);
 
 /** BerkeleyDB 커서 구현체 */
 class BerkeleyCursor : public DatabaseCursor
