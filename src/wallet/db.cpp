@@ -80,6 +80,33 @@ BerkeleyEnvironment* GetWalletEnv(const fs::path& wallet_path, std::string& data
 
 void BerkeleyEnvironment::MakeMock()
 {
+    if (fDbEnvInit)
+        throw std::runtime_error("BerkeleyEnvironment::MakeMock: Already initialized");
+
+    boost::this_thread::interruption_point();
+
+    LogPrint(BCLog::DB, "BerkeleyEnvironment::MakeMock\n");
+
+    dbenv->set_cachesize(1, 0, 1);
+    dbenv->set_lg_bsize(10485760 * 4);
+    dbenv->set_lg_max(10485760);
+    dbenv->set_lk_max_locks(10000);
+    dbenv->set_lk_max_objects(10000);
+    dbenv->set_flags(DB_AUTO_COMMIT, 1);
+    dbenv->log_set_config(DB_LOG_IN_MEMORY, 1);
+    int ret = dbenv->open(nullptr,
+                         DB_CREATE |
+                             DB_INIT_LOCK |
+                             DB_INIT_LOG |
+                             DB_INIT_MPOOL |
+                             DB_INIT_TXN |
+                             DB_THREAD |
+                             DB_PRIVATE,
+                         S_IRUSR | S_IWUSR);
+    if (ret > 0)
+        throw std::runtime_error(strprintf("BerkeleyEnvironment::MakeMock: Error %d opening database environment.", ret));
+
+    fDbEnvInit = true;
     fMockDb = true;
 }
 
