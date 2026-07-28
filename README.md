@@ -22,6 +22,8 @@ the XPChain Core software, see https://bitcoincore.org/en/download/, --> read th
 
 For Exchanges
 -------
+See [doc/exchange-integration.md](doc/exchange-integration.md) for the full integration guide. Summary:
+
 - The amounts of XPChain in any transaction must be decimals to at most 4 places,
 while those of Bitcoin are ones to up to 8 places. If you try to generate a transaction,
 which contains the amount that is a decimal to more than 4 places, an error will occur.

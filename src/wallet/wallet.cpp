@@ -743,7 +743,10 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
             auto sqlite_db = static_cast<SQLiteDatabase*>(database.get());
             sqlite_db->SetKey(strWalletPassphrase);
         }
-        database->Rewrite();
+        if (!database->Rewrite()) {
+            WalletLogPrintf("%s: SQLite database encryption rewrite failed!\n", __func__);
+            return false;
+        }
 
     }
     NotifyStatusChanged(this);
@@ -4138,6 +4141,17 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
     if (wallet_creation_flags != 0) {
         walletInstance->SetWalletFlags(wallet_creation_flags, true);
     }
+
+#ifdef USE_SQLCIPHER
+    if (walletInstance->database->Format() == "sqlite" && IsSqlcipherEncryptedFile(path)) {
+        auto sqlite_db = static_cast<SQLiteDatabase*>(walletInstance->database.get());
+        if (!gArgs.IsArgSet("-walletdbpassphrase")) {
+            InitError(strprintf(_("SQLCipher encrypted wallet \"%s\" requires -walletdbpassphrase to open"), name));
+            return nullptr;
+        }
+        sqlite_db->SetKey(SecureString(gArgs.GetArg("-walletdbpassphrase", "")));
+    }
+#endif
 
     // Initialize the SPKM framework.
     if (walletInstance->IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS)) {

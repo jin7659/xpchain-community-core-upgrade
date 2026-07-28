@@ -175,6 +175,18 @@ When running a custodial or exchange wallet:
 - Understand **immature rewards** (~100 blocks) and **coinstake** transactions — see the main [README](../README.md) exchange section.
 - Use **native Segwit (bech32)** addresses for deposits and withdrawals.
 
+For a full integration guide (deposit monitoring, decimals, common mistakes), see [exchange-integration.md](exchange-integration.md).
+
+## SQLCipher and Wallet Encryption
+
+Official **depends** builds include **SQLCipher** for SQLite wallet at-rest encryption. When SQLCipher is enabled:
+
+- `encryptwallet` rewrites the SQLite file with a database-level key (in addition to application-layer key encryption).
+- `getwalletinfo` reports `"sqlcipher": true` and `"databaseformat": "sqlite"`.
+- After restart, pass the same passphrase with `-walletdbpassphrase` so the node can open the encrypted wallet file (application keys remain locked until `walletpassphrase`).
+
+If your build shows `"sqlcipher": false`, install `libsqlcipher-dev` (or build via `depends/`) before deploying custodial wallets.
+
 ## Wallet File Locations
 
 | File / directory | Purpose |
@@ -193,6 +205,7 @@ The following functional tests cover mnemonic recovery behaviour:
 - `test/functional/wallet_mnemonic_bip44.py` — BIP44 import, coin_type 0 vs 398
 - `test/functional/wallet_mnemonic_rescan.py` — rescan and balance recovery
 - `test/functional/wallet_migrate_sqlite.py` — BDB to SQLite migration
+- `test/functional/wallet_sqlite_encryption.py` — SQLCipher at-rest encryption (when enabled)
 
 Run them after building:
 
@@ -200,6 +213,7 @@ Run them after building:
 test/functional/wallet_mnemonic_bip44.py
 test/functional/wallet_mnemonic_rescan.py
 test/functional/wallet_migrate_sqlite.py
+test/functional/wallet_sqlite_encryption.py
 ```
 
 ## Getting Help

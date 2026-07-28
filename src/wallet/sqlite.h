@@ -18,6 +18,9 @@
 /** 파일이 SQLite 데이터베이스인지 확인 */
 bool IsSQLiteFile(const fs::path& path);
 
+/** 파일이 SQLCipher로 암호화되어 있는지 확인 (평문 SQLite 헤더가 아님) */
+bool IsSqlcipherEncryptedFile(const fs::path& path);
+
 
 /** RAII 기반의 SQLite3 데이터베이스 핸들 관리 클래스 */
 class SQLiteDatabase : public WalletDatabase

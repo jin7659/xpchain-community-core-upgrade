@@ -12,6 +12,76 @@
 #include <support/cleanse.h>
 #include <sys/stat.h>
 
+namespace {
+
+std::string SqlQuote(const std::string& value)
+{
+    std::string quoted = "'";
+    for (char c : value) {
+        if (c == '\'') {
+            quoted += "''";
+        } else {
+            quoted += c;
+        }
+    }
+    quoted += "'";
+    return quoted;
+}
+
+bool IsPlaintextSQLiteHeader(const fs::path& path)
+{
+    if (!fs::exists(path) || fs::is_directory(path)) {
+        return false;
+    }
+
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+        return false;
+    }
+
+    char header[16] = {};
+    file.read(header, sizeof(header));
+    return std::string(header, 15) == "SQLite format 3";
+}
+
+bool ExecSql(sqlite3* db, const std::string& sql)
+{
+    char* errmsg = nullptr;
+    if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errmsg) != SQLITE_OK) {
+        LogPrintf("SQLiteDatabase: SQL failed (%s): %s\n", sql, errmsg ? errmsg : sqlite3_errmsg(db));
+        sqlite3_free(errmsg);
+        return false;
+    }
+    sqlite3_free(errmsg);
+    return true;
+}
+
+bool PrepareForSqlcipherRewrite(sqlite3* db)
+{
+    if (!ExecSql(db, "PRAGMA journal_mode=DELETE;")) {
+        return false;
+    }
+    if (!ExecSql(db, "VACUUM;")) {
+        return false;
+    }
+    return true;
+}
+
+void RemoveWalShmFiles(const std::string& db_path)
+{
+    fs::remove(db_path + "-wal");
+    fs::remove(db_path + "-shm");
+}
+
+} // namespace
+
+bool IsSqlcipherEncryptedFile(const fs::path& path)
+{
+    if (!fs::exists(path) || fs::is_directory(path)) {
+        return false;
+    }
+    return !IsPlaintextSQLiteHeader(path);
+}
 
 SQLiteDatabase::SQLiteDatabase(const std::string& path, bool writable)
     : m_path(path), m_writable(writable)
@@ -21,6 +91,10 @@ SQLiteDatabase::SQLiteDatabase(const std::string& path, bool writable)
 SQLiteDatabase::~SQLiteDatabase()
 {
     Close();
+    if (!m_key.empty()) {
+        memory_cleanse(m_key.data(), m_key.size());
+        m_key.clear();
+    }
 }
 
 void SQLiteDatabase::Open()
@@ -48,13 +122,6 @@ void SQLiteDatabase::Open()
             sqlite3_close(m_db);
             m_db = nullptr;
             throw std::runtime_error("SQLiteDatabase: Invalid encryption key");
-        }
-
-        // 지갑 복호화 구동 속도를 비약적으로 향상시키기 위한 KDF 반복 횟수 최적화
-        char* errmsg_kdf = nullptr;
-        if (sqlite3_exec(m_db, "PRAGMA kdf_iter=64000;", nullptr, nullptr, &errmsg_kdf) != SQLITE_OK) {
-            LogPrintf("SQLiteDatabase: Failed to set kdf_iter: %s\n", errmsg_kdf ? errmsg_kdf : "unknown");
-            sqlite3_free(errmsg_kdf);
         }
 #else
         sqlite3_close(m_db);
@@ -139,11 +206,6 @@ void SQLiteDatabase::Close()
     if (m_db) {
         sqlite3_close(m_db);
         m_db = nullptr;
-    }
-    // 암호화 마스터 키가 적재되었던 메모리 영역 즉각 강제 세정 및 소거
-    if (!m_key.empty()) {
-        memory_cleanse(m_key.data(), m_key.size());
-        m_key.clear();
     }
 }
 
@@ -388,20 +450,68 @@ bool SQLiteDatabase::Rewrite(const char* pszSkip)
 {
     if (!m_db) return false;
 
-    // 만약 키가 설정되어 있다면, 기존 DB를 암호화된 상태로 변환(Rekey)하거나 암호를 변경합니다.
-    if (!m_key.empty()) {
 #ifdef USE_SQLCIPHER
-        if (sqlite3_rekey(m_db, m_key.data(), m_key.size()) != SQLITE_OK) {
-            LogPrintf("SQLiteDatabase: Failed to rekey/encrypt database: %s\n", sqlite3_errmsg(m_db));
+    if (!m_key.empty()) {
+        if (!PrepareForSqlcipherRewrite(m_db)) {
             return false;
         }
-        LogPrintf("SQLiteDatabase: Database encryption/rekey successful for %s\n", m_path);
-#else
-        LogPrintf("SQLiteDatabase: Database encryption is not supported (SQLCipher is missing)\n");
-        return false;
-#endif
+
+        const bool plaintext = IsPlaintextSQLiteHeader(m_path);
+        if (plaintext) {
+            const std::string temp_path = m_path + ".encrypt.tmp";
+            const std::string passphrase(m_key.begin(), m_key.end());
+            RemoveWalShmFiles(temp_path);
+            fs::remove(temp_path);
+
+            const std::string attach_sql = strprintf(
+                "ATTACH DATABASE %s AS encrypted KEY %s;",
+                SqlQuote(temp_path).c_str(),
+                SqlQuote(passphrase).c_str());
+            if (!ExecSql(m_db, attach_sql)) {
+                return false;
+            }
+
+            bool export_ok = ExecSql(m_db, "SELECT sqlcipher_export('encrypted');");
+            ExecSql(m_db, "DETACH DATABASE encrypted;");
+            if (!export_ok) {
+                fs::remove(temp_path);
+                return false;
+            }
+
+            Close();
+            RemoveWalShmFiles(m_path);
+
+            const std::string backup_path = m_path + ".plain.bak";
+            try {
+                fs::remove(backup_path);
+                fs::rename(m_path, backup_path);
+                fs::rename(temp_path, m_path);
+                fs::remove(backup_path);
+            } catch (const fs::filesystem_error& e) {
+                LogPrintf("SQLiteDatabase: Failed to replace wallet file during encryption: %s\n", e.what());
+                return false;
+            }
+
+            RemoveWalShmFiles(m_path);
+            Open();
+            LogPrintf("SQLiteDatabase: Encrypted plaintext database %s with SQLCipher\n", m_path);
+            return true;
+        }
+
+        if (sqlite3_rekey(m_db, m_key.data(), m_key.size()) != SQLITE_OK) {
+            LogPrintf("SQLiteDatabase: Failed to rekey database: %s\n", sqlite3_errmsg(m_db));
+            return false;
+        }
+
+        RemoveWalShmFiles(m_path);
+        if (!ExecSql(m_db, "PRAGMA journal_mode=WAL;")) {
+            LogPrintf("SQLiteDatabase: Failed to restore WAL journal mode after rekey\n");
+        }
+        LogPrintf("SQLiteDatabase: Database rekey successful for %s\n", m_path);
+        return true;
     }
-    
+#endif
+
     // VACUUM을 통해 보안상 남아있을 수 있는 평문 데이터를 완전히 제거하고 파일을 정리합니다.
     char* errmsg = nullptr;
     if (sqlite3_exec(m_db, "VACUUM;", nullptr, nullptr, &errmsg) != SQLITE_OK) {

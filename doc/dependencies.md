@@ -27,4 +27,6 @@ These are the dependencies currently used by XPChain Core. You can find instruct
 | XCB |  |  |  |  | [Yes](https://github.com/xpc-wg/xpchain/blob/master/depends/packages/qt.mk#L87) (Linux only) |
 | xkbcommon |  |  |  |  | [Yes](https://github.com/xpc-wg/xpchain/blob/master/depends/packages/qt.mk#L86) (Linux only) |
 | ZeroMQ | [4.2.3](https://github.com/zeromq/libzmq/releases) |  | No |  |  |
+| SQLCipher | [4.5.6](https://github.com/sqlcipher/sqlcipher) | 3.24.0 | No |  | Wallet at-rest encryption (preferred over plain SQLite) |
+| SQLite | [3.24.0+](https://www.sqlite.org/) | 3.24.0 | No |  | Fallback when SQLCipher is unavailable |
 | zlib | [1.2.11](https://zlib.net/) |  |  |  | No |

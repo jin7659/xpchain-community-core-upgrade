@@ -3215,6 +3215,12 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
     size_t kpExternalSize = pwallet->KeypoolCountExternalKeys();
     obj.pushKV("walletname", pwallet->GetName());
     obj.pushKV("walletversion", pwallet->GetVersion());
+    obj.pushKV("databaseformat", pwallet->GetDatabase().Format());
+#ifdef USE_SQLCIPHER
+    obj.pushKV("sqlcipher", true);
+#else
+    obj.pushKV("sqlcipher", false);
+#endif
     obj.pushKV("balance",       ValueFromAmount(pwallet->GetBalance()));
     obj.pushKV("unconfirmed_balance", ValueFromAmount(pwallet->GetUnconfirmedBalance()));
     obj.pushKV("immature_balance",    ValueFromAmount(pwallet->GetImmatureBalance()));
