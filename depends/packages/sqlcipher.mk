@@ -9,7 +9,7 @@ define $(package)_set_vars
 $(package)_cflags=-DSQLITE_HAS_CODEC -DSQLITE_TEMP_STORE=2 -DSQLITE_EXTRA_INIT=sqlcipher_extra_init -DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown
 $(package)_config_opts=--disable-shared --enable-static --enable-tempstore=yes
 $(package)_config_opts+=--disable-shell --disable-readline
-$(package)_config_opts+=--with-crypto-lib=none
+$(package)_config_opts+=--with-crypto-lib=openssl
 $(package)_config_opts_linux=--with-pic
 endef
 
