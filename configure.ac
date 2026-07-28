@@ -1075,14 +1075,19 @@ if test x$use_pkgconfig = xyes; then
       fi
 
       if test x$enable_wallet != xno; then
-        dnl Check for SQLCipher (preferred for encrypted SQLite wallet)
+        have_sqlcipher=no
+        dnl Check for SQLCipher (preferred for encrypted SQLite wallet at rest)
         PKG_CHECK_MODULES([SQLITE3], [sqlcipher >= 3.24.0], [
             have_sqlite3=yes
+            have_sqlcipher=yes
             AC_DEFINE([USE_SQLCIPHER], [1], [Define to 1 to enable SQLCipher encryption support])
             AC_DEFINE([SQLITE_HAS_CODEC], [1], [Define to 1 to enable SQLCipher encryption API])
         ], [
             dnl Fallback to standard sqlite3 if sqlcipher is not found
             PKG_CHECK_MODULES([SQLITE3], [sqlite3 >= 3.24.0], [have_sqlite3=yes], [have_sqlite3=no])
+            if test x$have_sqlite3 = xyes; then
+              AC_MSG_WARN([SQLCipher not found; wallet will use plain SQLite without database file encryption.])
+            fi
         ])
         if test x$have_sqlite3 = xyes; then
           AC_DEFINE([USE_SQLITE], [1], [Define to 1 to enable SQLite wallet support])
