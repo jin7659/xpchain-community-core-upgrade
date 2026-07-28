@@ -60,9 +60,9 @@ case $host in
      lt_cv_deplibs_check_method="pass_all"
   ;;
 esac
-dnl Require C++20 compiler (no GNU extensions)
-AX_CXX_COMPILE_STDCXX([20], [noext], [mandatory])
-CXXFLAGS="$CXXFLAGS -std=c++20"
+dnl Require C++17 compiler (no GNU extensions)
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+CXXFLAGS="$CXXFLAGS -std=c++17"
 dnl Check if -latomic is required for <std::atomic>
 CHECK_ATOMIC
 

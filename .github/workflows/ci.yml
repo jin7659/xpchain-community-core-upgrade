@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential libtool autotools-dev automake pkg-config bsdmainutils \
-            curl git python3
+            curl git python3 bison
 
       - name: Build depends (x86_64-linux-gnu)
         run: |
@@ -32,6 +32,6 @@ jobs:
       - name: Build and test
         run: |
           ./autogen.sh
-          CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=qt5
+          CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=qt5 --enable-reduce-exports
           make -j"$(nproc)"
           QT_QPA_PLATFORM=minimal make check
