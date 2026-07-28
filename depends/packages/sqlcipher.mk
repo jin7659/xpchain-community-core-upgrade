@@ -6,7 +6,7 @@ $(package)_sha256_hash=e4a527e38e67090c1d2dc41df28270d16c15f7ca5210a3e7ec4c4b8fd
 $(package)_dependencies=openssl
 
 define $(package)_set_vars
-$(package)_cflags=-DSQLITE_HAS_CODEC -DSQLITE_TEMP_STORE=2 -DSQLITE_EXTRA_INIT=sqlcipher_extra_init -DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown
+$(package)_cflags=-DSQLITE_HAS_CODEC -DSQLITE_TEMP_STORE=2
 $(package)_config_opts=--disable-shared --enable-static --enable-tempstore=yes
 $(package)_config_opts+=--disable-shell --disable-readline
 $(package)_config_opts+=--with-crypto-lib=openssl
