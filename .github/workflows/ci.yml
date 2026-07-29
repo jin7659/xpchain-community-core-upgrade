@@ -24,6 +24,13 @@ jobs:
             build-essential libtool autotools-dev automake pkg-config bsdmainutils \
             curl git python3 bison
 
+      - name: Cache depends
+        uses: actions/cache@v4
+        with:
+          path: depends/built
+          key: depends-${{ runner.os }}-${{ hashFiles('depends/packages/*.mk') }}
+          restore-keys: depends-${{ runner.os }}-
+
       - name: Build depends (x86_64-linux-gnu)
         run: |
           cd depends
@@ -45,3 +52,49 @@ jobs:
           export QT_DEBUG_PLUGINS=1
           ./src/qt/test/test_xpchain-qt -v2
         continue-on-error: false
+
+  linux-functional-tests:
+    name: Linux functional tests
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libtool autotools-dev automake pkg-config bsdmainutils \
+            curl git python3 bison
+
+      - name: Cache depends
+        uses: actions/cache@v4
+        with:
+          path: depends/built
+          key: depends-${{ runner.os }}-${{ hashFiles('depends/packages/*.mk') }}
+          restore-keys: depends-${{ runner.os }}-
+
+      - name: Build depends (x86_64-linux-gnu)
+        run: |
+          cd depends
+          make HOST=x86_64-linux-gnu FALLBACK_DOWNLOAD_PATH=https://bitcoincore.org/depends-sources -j"$(nproc)"
+
+      - name: Build
+        run: |
+          ./autogen.sh
+          CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=no
+          make -j"$(nproc)"
+
+      - name: Wallet functional tests
+        run: |
+          python3 test/functional/test_runner.py \
+            wallet_sqlite_encryption.py \
+            wallet_sqlite_default.py \
+            wallet_migrate_sqlite.py \
+            wallet_mnemonic_bip44.py \
+            wallet_mnemonic_rescan.py \
+            wallet_encryption.py \
+            wallet_backup.py \
+            wallet_multiwallet.py \
+            --jobs 2 --timeout-factor=4
