@@ -192,7 +192,11 @@ Official **depends** builds include **SQLCipher** for SQLite wallet at-rest encr
 
 - `encryptwallet` rewrites the SQLite file with a database-level key (in addition to application-layer key encryption).
 - `getwalletinfo` reports `"sqlcipher": true` and `"databaseformat": "sqlite"`.
-- After restart, pass the same passphrase with `-walletdbpassphrase` so the node can open the encrypted wallet file (application keys remain locked until `walletpassphrase`).
+- After restart:
+  - **GUI**: if `-walletdbpassphrase` is not set, a dialog prompts for the database passphrase (remembered for the process only; not written to disk).
+  - **xpchaind / conf**: pass the same passphrase with `-walletdbpassphrase` (or `walletdbpassphrase=` in `xpchain.conf`).
+  - Application keys remain locked until `walletpassphrase` / GUI unlock.
+- Prefer conf/`-walletdbpassphrase` for unattended daemons; never store the passphrase in Qt settings or shared docs.
 
 If your build shows `"sqlcipher": false`, install `libsqlcipher-dev` (or build via `depends/`) before deploying custodial wallets.
 

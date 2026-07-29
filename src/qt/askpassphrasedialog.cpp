@@ -18,7 +18,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 
-AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
+AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent, const QString& warningText) :
     QDialog(parent),
     ui(new Ui::AskPassphraseDialog),
     mode(_mode),
@@ -64,6 +64,16 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
             ui->passEdit3->hide();
             setWindowTitle(tr("Decrypt wallet"));
             break;
+        case DatabaseUnlock: // SQLCipher wallet file passphrase
+            ui->warningLabel->setText(warningText.isEmpty()
+                ? tr("Enter the passphrase to open the encrypted wallet database.")
+                : warningText);
+            ui->passLabel2->hide();
+            ui->passEdit2->hide();
+            ui->passLabel3->hide();
+            ui->passEdit3->hide();
+            setWindowTitle(tr("Unlock wallet database"));
+            break;
         case ChangePass: // Ask old passphrase + new passphrase x2
             setWindowTitle(tr("Change passphrase"));
             ui->warningLabel->setText(tr("Enter the old passphrase and new passphrase to the wallet."));
@@ -90,8 +100,6 @@ void AskPassphraseDialog::setModel(WalletModel *_model)
 void AskPassphraseDialog::accept()
 {
     SecureString oldpass, newpass1, newpass2;
-    if(!model)
-        return;
     oldpass.reserve(MAX_PASSPHRASE_SIZE);
     newpass1.reserve(MAX_PASSPHRASE_SIZE);
     newpass2.reserve(MAX_PASSPHRASE_SIZE);
@@ -105,7 +113,16 @@ void AskPassphraseDialog::accept()
 
     switch(mode)
     {
+    case DatabaseUnlock: {
+        if (oldpass.empty()) {
+            break;
+        }
+        m_passphrase = oldpass;
+        QDialog::accept();
+        } break;
     case Encrypt: {
+        if(!model)
+            return;
         if(newpass1.empty() || newpass2.empty())
         {
             // Cannot encrypt with empty passphrase
@@ -131,7 +148,11 @@ void AskPassphraseDialog::accept()
                                          "should be replaced with the newly generated, encrypted wallet file. "
                                          "For security reasons, previous backups of the unencrypted wallet file "
                                          "will become useless as soon as you start using the new, encrypted wallet.") +
-                                         "</b></qt>");
+                                         "</b><br><br>" +
+                                         tr("On restart, enter the same passphrase when prompted (GUI), or set "
+                                         "<code>-walletdbpassphrase</code> for <code>xpchaind</code> / xpchain.conf. "
+                                         "Keys stay locked until you unlock the wallet again.") +
+                                         "</qt>");
                     QApplication::quit();
                 }
                 else
@@ -153,6 +174,8 @@ void AskPassphraseDialog::accept()
         }
         } break;
     case Unlock:
+        if(!model)
+            return;
         if(!model->setWalletLocked(false, oldpass))
         {
             QMessageBox::critical(this, tr("Wallet unlock failed"),
@@ -164,6 +187,8 @@ void AskPassphraseDialog::accept()
         }
         break;
     case Decrypt:
+        if(!model)
+            return;
         if(!model->setWalletEncrypted(false, oldpass))
         {
             QMessageBox::critical(this, tr("Wallet decryption failed"),
@@ -175,6 +200,8 @@ void AskPassphraseDialog::accept()
         }
         break;
     case ChangePass:
+        if(!model)
+            return;
         if(newpass1 == newpass2)
         {
             if(model->changePassphrase(oldpass, newpass1))
@@ -209,6 +236,7 @@ void AskPassphraseDialog::textChanged()
         break;
     case Unlock: // Old passphrase x1
     case Decrypt:
+    case DatabaseUnlock:
         acceptable = !ui->passEdit1->text().isEmpty();
         break;
     case ChangePass: // Old passphrase x1, new passphrase x2

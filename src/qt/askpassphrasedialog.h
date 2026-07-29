@@ -5,6 +5,8 @@
 #ifndef XPCHAIN_QT_ASKPASSPHRASEDIALOG_H
 #define XPCHAIN_QT_ASKPASSPHRASEDIALOG_H
 
+#include <support/allocators/secure.h>
+
 #include <QDialog>
 
 class WalletModel;
@@ -21,24 +23,29 @@ class AskPassphraseDialog : public QDialog
 
 public:
     enum Mode {
-        Encrypt,    /**< Ask passphrase twice and encrypt */
-        Unlock,     /**< Ask passphrase and unlock */
-        ChangePass, /**< Ask old passphrase + new passphrase twice */
-        Decrypt     /**< Ask passphrase and decrypt wallet */
+        Encrypt,         /**< Ask passphrase twice and encrypt */
+        Unlock,          /**< Ask passphrase and unlock */
+        ChangePass,      /**< Ask old passphrase + new passphrase twice */
+        Decrypt,         /**< Ask passphrase and decrypt wallet */
+        DatabaseUnlock   /**< Ask passphrase to open SQLCipher wallet DB (no WalletModel) */
     };
 
-    explicit AskPassphraseDialog(Mode mode, QWidget *parent);
+    explicit AskPassphraseDialog(Mode mode, QWidget *parent, const QString& warningText = QString());
     ~AskPassphraseDialog();
 
     void accept();
 
     void setModel(WalletModel *model);
 
+    /** Passphrase collected in DatabaseUnlock mode. */
+    const SecureString& getPassphrase() const { return m_passphrase; }
+
 private:
     Ui::AskPassphraseDialog *ui;
     Mode mode;
     WalletModel *model;
     bool fCapsLock;
+    SecureString m_passphrase;
 
 private Q_SLOTS:
     void textChanged();

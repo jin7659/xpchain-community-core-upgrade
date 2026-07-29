@@ -9,6 +9,7 @@
 #include <amount.h>     // For CAmount
 #include <net.h>        // For CConnman::NumConnections
 #include <netaddress.h> // For Network
+#include <support/allocators/secure.h>
 
 #include <functional>
 #include <memory>
@@ -191,6 +192,12 @@ public:
         const std::string& caption,
         unsigned int style)>;
     virtual std::unique_ptr<Handler> handleQuestion(QuestionFn fn) = 0;
+
+    //! Register handler for wallet database passphrase prompts (SQLCipher).
+    using AskPassphraseFn = std::function<bool(const std::string& wallet_name,
+        const std::string& message,
+        SecureString& passphrase_out)>;
+    virtual std::unique_ptr<Handler> handleAskPassphrase(AskPassphraseFn fn) = 0;
 
     //! Register handler for progress messages.
     using ShowProgressFn = std::function<void(const std::string& title, int progress, bool resume_possible)>;

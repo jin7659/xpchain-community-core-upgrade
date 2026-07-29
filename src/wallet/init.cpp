@@ -78,7 +78,10 @@ void WalletInit::AddWalletOptions() const
     gArgs.AddArg("-wallet=<path>", "Specify wallet database path. Can be specified multiple times to load multiple wallets. Path is interpreted relative to <walletdir> if it is not absolute, and will be created if it does not exist (as a directory containing a wallet.dat file and log files). For backwards compatibility this will also accept names of existing data files in <walletdir>.)", false, OptionsCategory::WALLET);
     gArgs.AddArg("-walletbroadcast",  strprintf("Make the wallet broadcast transactions (default: %u)", DEFAULT_WALLETBROADCAST), false, OptionsCategory::WALLET);
     gArgs.AddArg("-walletdir=<dir>", "Specify directory to hold wallets (default: <datadir>/wallets if it exists, otherwise <datadir>)", false, OptionsCategory::WALLET);
-    gArgs.AddArg("-walletdbpassphrase=<passphrase>", "Passphrase for SQLCipher-encrypted SQLite wallet files at startup (same value used with encryptwallet)", false, OptionsCategory::WALLET);
+    gArgs.AddArg("-walletdbpassphrase=<passphrase>",
+                 "Passphrase for SQLCipher-encrypted SQLite wallet files (same value as encryptwallet). "
+                 "Required for xpchaind / conf; the GUI prompts when unset. Do not commit this value to shared configs.",
+                 false, OptionsCategory::WALLET);
     gArgs.AddArg("-walletnotify=<cmd>", "Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)", false, OptionsCategory::WALLET);
     gArgs.AddArg("-walletrbf", strprintf("Send transactions with full-RBF opt-in enabled (RPC only, default: %u)", DEFAULT_WALLET_RBF), false, OptionsCategory::WALLET);
     gArgs.AddArg("-zapwallettxes=<mode>", "Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup"
