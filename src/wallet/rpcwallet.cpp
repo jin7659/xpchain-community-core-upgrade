@@ -3328,16 +3328,18 @@ static UniValue loadwallet(const JSONRPCRequest& request)
 
 static UniValue createwallet(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 5) {
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 6) {
         throw std::runtime_error(
-            "createwallet \"wallet_name\" ( disable_private_keys descriptors \"passphrase\" load_on_startup )\n"
+            "createwallet \"wallet_name\" ( disable_private_keys descriptors \"passphrase\" load_on_startup berkeley )\n"
             "\nCreates and loads a new wallet.\n"
+            "New wallets use the SQLite backend by default. Existing Berkeley DB wallets continue to open normally.\n"
             "\nArguments:\n"
             "1. \"wallet_name\"          (string, required) The name for the new wallet. If this is a path, the wallet will be created at the path location.\n"
             "2. disable_private_keys   (boolean, optional, default: false) Disable the possibility of private keys (only watchonlys are possible in this mode).\n"
-            "3. descriptors            (boolean, optional, default: false) Create a native descriptor wallet. The wallet will use SQLite by default.\n"
+            "3. descriptors            (boolean, optional, default: false) Create a native descriptor wallet (SQLite).\n"
             "4. \"passphrase\"           (string, optional) Encrypt the wallet with this passphrase.\n"
             "5. load_on_startup        (boolean, optional) Save wallet name to config file to load on startup.\n"
+            "6. berkeley               (boolean, optional, default: false) Create a legacy Berkeley DB wallet instead of SQLite.\n"
             "\nResult:\n"
             "{\n"
             "  \"name\" :    <wallet_name>,        (string) The wallet name if created successfully. If the wallet was created using a full path, the wallet_name will be the full path.\n"
@@ -3367,15 +3369,24 @@ static UniValue createwallet(const JSONRPCRequest& request)
         flags |= (uint64_t)WALLET_FLAG_DESCRIPTORS;
     }
 
+    bool force_berkeley = false;
+    if (request.params.size() > 5 && ((request.params[5].isBool() && request.params[5].get_bool()) ||
+        (request.params[5].isStr() && request.params[5].get_str() == "true") ||
+        (request.params[5].isNum() && request.params[5].get_int() > 0))) {
+        force_berkeley = true;
+    }
+
+    if (force_berkeley && (flags & WALLET_FLAG_DESCRIPTORS)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Descriptor wallets require SQLite and cannot use berkeley=true");
+    }
+
     // Modern wallet creation logic
     fs::path wallet_path = fs::absolute(wallet_name, GetWalletDir());
     if (fs::symlink_status(wallet_path).type() != fs::file_not_found) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Wallet " + wallet_name + " already exists.");
     }
 
-    // In a modernized wallet, 'descriptors=true' implies SQLite.
-    // If wallet name doesn't have .sqlite extension, we should suggest it or handle it in CreateWalletDatabase.
-    std::shared_ptr<CWallet> const wallet = CWallet::CreateWalletFromFile(wallet_name, wallet_path, flags);
+    std::shared_ptr<CWallet> const wallet = CWallet::CreateWalletFromFile(wallet_name, wallet_path, flags, force_berkeley);
     if (!wallet) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Wallet creation failed.");
     }
@@ -5177,7 +5188,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "migratewallet",                    &migratewallet,                 {"options"} },
     { "wallet",             "backupwallet",                     &backupwallet,                  {"destination"} },
     { "wallet",             "bumpfee",                          &bumpfee,                       {"txid", "options"} },
-    { "wallet",             "createwallet",                     &createwallet,                  {"wallet_name", "disable_private_keys"} },
+    { "wallet",             "createwallet",                     &createwallet,                  {"wallet_name", "disable_private_keys", "descriptors", "passphrase", "load_on_startup", "berkeley"} },
     { "wallet",             "dumpprivkey",                      &dumpprivkey,                   {"address"}  },
     { "wallet",             "dumpwallet",                       &dumpwallet,                    {"filename"} },
     { "wallet",             "encryptwallet",                    &encryptwallet,                 {"passphrase"} },

@@ -24,7 +24,8 @@ class WalletMigrateSQLiteTest(BitcoinTestFramework):
         wallet_dir = os.path.join(node.datadir, "regtest", "wallets")
 
         self.log.info("Create legacy Berkeley DB wallet (non-wallet.dat name)")
-        node.createwallet("legacy_bdb")
+        # createwallet defaults to SQLite; pass berkeley=true for a BDB source wallet.
+        node.createwallet("legacy_bdb", False, False, "", False, True)
         legacy = node.get_wallet_rpc("legacy_bdb")
 
         self.log.info("Fund legacy BDB wallet")
@@ -35,6 +36,7 @@ class WalletMigrateSQLiteTest(BitcoinTestFramework):
 
         legacy_path = os.path.join(wallet_dir, "legacy_bdb", "wallet.dat")
         assert os.path.isfile(legacy_path), "Expected Berkeley DB wallet file"
+        assert_equal(legacy.getwalletinfo()["databaseformat"], "berkeley")
 
         self.log.info("Migrate legacy wallet to SQLite")
         result = legacy.migratewallet({"backup": True, "load_new": True})
