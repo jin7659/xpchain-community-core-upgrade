@@ -790,8 +790,9 @@ void MaybeCompactWalletDB()
 //
 bool WalletBatch::Recover(const fs::path& wallet_path, void *callbackDataIn, bool (*recoverKVcallback)(void* callbackData, CDataStream ssKey, CDataStream ssValue), std::string& out_backup_filename)
 {
-    if (IsSQLiteFile(wallet_path)) {
-        return SQLiteDatabase::Recover(wallet_path, callbackDataIn, recoverKVcallback, out_backup_filename);
+    const fs::path db_file = WalletDatabaseFilePath(wallet_path);
+    if (IsSQLiteFile(db_file)) {
+        return SQLiteDatabase::Recover(db_file, callbackDataIn, recoverKVcallback, out_backup_filename);
     }
     return BerkeleyBatch::Recover(wallet_path, callbackDataIn, recoverKVcallback, out_backup_filename);
 }
@@ -828,14 +829,29 @@ bool WalletBatch::RecoverKeysOnlyFilter(void *callbackData, CDataStream ssKey, C
 
 bool WalletBatch::VerifyEnvironment(const fs::path& wallet_path, std::string& errorStr)
 {
-    if (IsSQLiteFile(wallet_path)) return true;
+    const fs::path db_file = WalletDatabaseFilePath(wallet_path);
+    if (fs::is_regular_file(db_file)) {
+        if (IsSQLiteFile(db_file)) {
+            return true;
+        }
+        return BerkeleyBatch::VerifyEnvironment(wallet_path, errorStr);
+    }
+    // New wallet: do not open a Berkeley environment when SQLite is the default.
+#ifdef USE_SQLITE
+    return true;
+#else
     return BerkeleyBatch::VerifyEnvironment(wallet_path, errorStr);
+#endif
 }
 
 bool WalletBatch::VerifyDatabaseFile(const fs::path& wallet_path, std::string& warningStr, std::string& errorStr)
 {
-    if (IsSQLiteFile(wallet_path)) {
-        return SQLiteDatabase::Verify(wallet_path, errorStr);
+    const fs::path db_file = WalletDatabaseFilePath(wallet_path);
+    if (!fs::is_regular_file(db_file)) {
+        return true;
+    }
+    if (IsSQLiteFile(db_file)) {
+        return SQLiteDatabase::Verify(db_file, errorStr);
     }
     return BerkeleyBatch::VerifyDatabaseFile(wallet_path, warningStr, errorStr, WalletBatch::Recover);
 }

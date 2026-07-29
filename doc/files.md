@@ -13,10 +13,12 @@
 * indexes/txindex/*: optional transaction index database (LevelDB); since 0.17.0
 * mempool.dat: dump of the mempool's transactions; since 0.14.0.
 * peers.dat: peer IP address database (custom format); since 0.7.0
-* wallet.dat: personal wallet (BDB) with keys and transactions; moved to wallets/ directory on new installs since 0.16.0
-* wallets/database/*: BDB database environment; used for wallets since 0.16.0
-* wallets/db.log: wallet database log file; since 0.16.0
-* wallets/wallet.dat: personal wallet (BDB) with keys and transactions; since 0.16.0
+* wallet.dat: personal wallet with keys and transactions; moved to wallets/ directory on new installs since 0.16.0 (BDB for legacy files, SQLite for newly created wallets)
+* wallets/database/*: BDB database environment; used for Berkeley DB wallets since 0.16.0
+* wallets/db.log: wallet database log file for Berkeley DB wallets; since 0.16.0
+* wallets/wallet.dat: default wallet file; existing BDB files still open, new wallets use SQLite
+* wallets/<name>/wallet.dat: named wallet directory layout (SQLite by default)
+* wallets/*.sqlite: explicit SQLite wallet files
 * .cookie: session RPC authentication cookie (written at start when cookie authentication is used, deleted on shutdown): since 0.12.0
 * onion_private_key: cached Tor hidden service private key for `-listenonion`: since 0.12.0
 * guisettings.ini.bak: backup of former GUI settings after `-resetguisettings` is used

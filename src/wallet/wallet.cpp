@@ -4113,7 +4113,7 @@ bool CWallet::Verify(std::string wallet_file, bool salvage_wallet, std::string& 
     return WalletBatch::VerifyDatabaseFile(wallet_path, warning_string, error_string);
 }
 
-std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, const fs::path& path, uint64_t wallet_creation_flags)
+std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, const fs::path& path, uint64_t wallet_creation_flags, bool force_berkeley)
 {
     const std::string& walletFile = name;
 
@@ -4123,7 +4123,7 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
     if (gArgs.GetBoolArg("-zapwallettxes", false)) {
         uiInterface.InitMessage(_("Zapping all transactions from wallet..."));
 
-        std::unique_ptr<CWallet> tempWallet = MakeUnique<CWallet>(name, CreateWalletDatabase(path, wallet_creation_flags));
+        std::unique_ptr<CWallet> tempWallet = MakeUnique<CWallet>(name, CreateWalletDatabase(path, wallet_creation_flags, force_berkeley));
         DBErrors nZapWalletRet = tempWallet->ZapWalletTx(vWtx);
         if (nZapWalletRet != DBErrors::LOAD_OK) {
             InitError(strprintf(_("Error loading %s: Wallet corrupted"), walletFile));
@@ -4137,19 +4137,22 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
     bool fFirstRun = true;
     // TODO: Can't use std::make_shared because we need a custom deleter but
     // should be possible to use std::allocate_shared.
-    std::shared_ptr<CWallet> walletInstance(new CWallet(name, CreateWalletDatabase(path, wallet_creation_flags)), ReleaseWallet);
+    std::shared_ptr<CWallet> walletInstance(new CWallet(name, CreateWalletDatabase(path, wallet_creation_flags, force_berkeley)), ReleaseWallet);
     if (wallet_creation_flags != 0) {
         walletInstance->SetWalletFlags(wallet_creation_flags, true);
     }
 
 #ifdef USE_SQLCIPHER
-    if (walletInstance->database->Format() == "sqlite" && IsSqlcipherEncryptedFile(path)) {
-        auto sqlite_db = static_cast<SQLiteDatabase*>(walletInstance->database.get());
-        if (!gArgs.IsArgSet("-walletdbpassphrase")) {
-            InitError(strprintf(_("SQLCipher encrypted wallet \"%s\" requires -walletdbpassphrase to open"), name));
-            return nullptr;
+    if (walletInstance->database->Format() == "sqlite") {
+        const fs::path db_path = walletInstance->database->Filename();
+        if (IsSqlcipherEncryptedFile(db_path)) {
+            auto sqlite_db = static_cast<SQLiteDatabase*>(walletInstance->database.get());
+            if (!gArgs.IsArgSet("-walletdbpassphrase")) {
+                InitError(strprintf(_("SQLCipher encrypted wallet \"%s\" requires -walletdbpassphrase to open"), name));
+                return nullptr;
+            }
+            sqlite_db->SetKey(SecureString(gArgs.GetArg("-walletdbpassphrase", "")));
         }
-        sqlite_db->SetKey(SecureString(gArgs.GetArg("-walletdbpassphrase", "")));
     }
 #endif
 

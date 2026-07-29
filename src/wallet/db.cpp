@@ -951,42 +951,58 @@ bool IsBerkeleyBDBFile(const fs::path& path)
             bdb_magic == 0x00053162 || bdb_magic_le == 0x00053162);
 }
 
-std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint64_t wallet_creation_flags)
+fs::path WalletDatabaseFilePath(const fs::path& wallet_path)
 {
-    bool is_sqlite = false;
+    if (fs::is_regular_file(wallet_path)) {
+        return wallet_path;
+    }
+    const std::string ext = wallet_path.extension().string();
+    if (ext == ".sqlite" || ext == ".dat") {
+        return wallet_path;
+    }
+    // Directory-style wallet path (may not exist yet): <path>/wallet.dat
+    return wallet_path / "wallet.dat";
+}
+
+std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint64_t wallet_creation_flags, bool force_berkeley)
+{
+    const fs::path db_file = WalletDatabaseFilePath(path);
     bool is_bdb = false;
-    if (fs::is_regular_file(path)) {
-        FILE* f = fsbridge::fopen(path, "rb");
-        if (f) {
-            char magic[16];
-            if (fread(magic, 1, 16, f) == 16) {
-                if (memcmp(magic, "SQLite format 3\000", 16) == 0) {
-                    is_sqlite = true;
-                }
-            }
-            fclose(f);
-        }
-        
-        // SQLite가 아닌 경우에만 Berkeley DB 여부를 추가 판별
-        if (!is_sqlite) {
-            is_bdb = IsBerkeleyBDBFile(path);
-        }
+    bool is_sqlite = false;
+    if (fs::is_regular_file(db_file)) {
+        is_bdb = IsBerkeleyBDBFile(db_file);
+        // Any existing non-BDB file is treated as SQLite / SQLCipher.
+        is_sqlite = !is_bdb;
     }
 
-    // WALLET_FLAG_DESCRIPTORS implies SQLite. 
-    // New wallets with this flag or existing SQLite files (including encrypted ones) will use SQLiteDatabase.
-    // 단, 명시적으로 Berkeley DB 파일로 감지된 경우에는 BDB 환경으로 처리합니다.
-    if (!is_bdb && (is_sqlite || (wallet_creation_flags & WALLET_FLAG_DESCRIPTORS) || 
-        path.extension() == ".sqlite" || path.filename() == "wallet.dat")) {
-        // 만약 매직바이트는 없지만 확장자가 sqlite이거나, 
-        // 이미 sqlite로 알려진 파일이라면 암호화된 상태일 가능성이 큽니다.
+    // Existing Berkeley DB wallets must keep using BDB.
+    if (is_bdb) {
+        return std::make_unique<BerkeleyDatabase>(path);
+    }
+
 #ifdef USE_SQLITE
-        return std::make_unique<SQLiteDatabase>(path.string());
+    const bool want_sqlite =
+        is_sqlite ||
+        (wallet_creation_flags & WALLET_FLAG_DESCRIPTORS) ||
+        path.extension() == ".sqlite" ||
+        db_file.extension() == ".sqlite" ||
+        (!force_berkeley && !fs::is_regular_file(db_file));
+
+    if (want_sqlite) {
+        const fs::path parent = db_file.parent_path();
+        if (!parent.empty()) {
+            TryCreateDirectories(parent);
+        }
+        return std::make_unique<SQLiteDatabase>(db_file.string());
+    }
 #else
+    (void)force_berkeley;
+    if (wallet_creation_flags & WALLET_FLAG_DESCRIPTORS) {
         LogPrintf("CreateWalletDatabase: SQLite support not enabled but requested!\n");
         throw std::runtime_error("SQLite support not enabled");
-#endif
     }
+#endif
+
     return std::make_unique<BerkeleyDatabase>(path);
 }
 

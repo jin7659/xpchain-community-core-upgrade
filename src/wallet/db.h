@@ -287,8 +287,18 @@ public:
 /** 파일이 Berkeley DB 형식인지 확인 */
 bool IsBerkeleyBDBFile(const fs::path& path);
 
-/** 지갑 경로와 플래그에 따라 적절한 데이터베이스 엔진을 생성하는 팩토리 함수 */
-std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint64_t wallet_creation_flags = 0);
+/**
+ * Resolve the on-disk database file for a wallet path argument.
+ * Directory-style wallets use <path>/wallet.dat; .sqlite/.dat paths are files.
+ */
+fs::path WalletDatabaseFilePath(const fs::path& wallet_path);
+
+/**
+ * Create the appropriate database engine for a wallet path.
+ * Existing Berkeley DB files keep using BDB. New wallets default to SQLite
+ * when USE_SQLITE is enabled. Pass force_berkeley=true to create a legacy BDB wallet.
+ */
+std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint64_t wallet_creation_flags = 0, bool force_berkeley = false);
 
 /** Copy all key-value records from src to dest (e.g. Berkeley DB to SQLite). */
 bool CopyWalletDatabase(WalletDatabase& src, WalletDatabase& dest, std::string& error);

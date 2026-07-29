@@ -62,6 +62,7 @@ BASE_SCRIPTS = [
     'wallet_mnemonic_bip44.py',
     'wallet_mnemonic_rescan.py',
     'wallet_migrate_sqlite.py',
+    'wallet_sqlite_default.py',
     'wallet_sqlite_encryption.py',
     'wallet_backup.py',
     # vv Tests less than 5m vv

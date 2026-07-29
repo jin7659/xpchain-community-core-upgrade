@@ -123,7 +123,9 @@ xpchain-cli rescanblockchain 0
 
 ## Migrating Berkeley DB to SQLite
 
-Legacy wallets created with names other than `wallet.dat` use the **Berkeley DB** backend. New default wallets (`wallet.dat`) use **SQLite**. To migrate a legacy BDB wallet:
+**New wallets use SQLite by default.** Existing Berkeley DB wallets continue to open normally; nothing is converted automatically.
+
+Legacy BDB wallets can be migrated with `migratewallet`:
 
 ### CLI
 
@@ -145,6 +147,13 @@ Example with explicit destination:
 ```bash
 xpchain-cli -rpcwallet=legacy_bdb migratewallet \
   '{"destination":"legacy_bdb.sqlite","backup":true,"load_new":true}'
+```
+
+To create a legacy Berkeley DB wallet intentionally (for testing or special cases):
+
+```bash
+xpchain-cli createwallet "legacy_bdb" false false "" null true
+# arguments: name, disable_private_keys, descriptors, passphrase, load_on_startup, berkeley
 ```
 
 After migration **without** `load_new`:
@@ -191,8 +200,9 @@ If your build shows `"sqlcipher": false`, install `libsqlcipher-dev` (or build v
 
 | File / directory | Purpose |
 |------------------|---------|
-| `wallet.dat` | Legacy default wallet (BDB) |
-| `wallets/` | Multi-wallet directory (BDB or SQLite per wallet) |
+| `wallets/wallet.dat` | Default wallet (SQLite for new installs; existing BDB files still open) |
+| `wallets/<name>/wallet.dat` | Named wallet directory layout (SQLite by default; BDB if created with `berkeley=true` or legacy) |
+| `wallets/*.sqlite` | Explicit SQLite wallet files |
 | `wallet_backups/` | Automatic pre-mnemonic-import backups (GUI) |
 | `backups/` | Non-legacy wallet backup directory |
 
@@ -205,6 +215,7 @@ The following functional tests cover mnemonic recovery behaviour:
 - `test/functional/wallet_mnemonic_bip44.py` — BIP44 import, coin_type 0 vs 398
 - `test/functional/wallet_mnemonic_rescan.py` — rescan and balance recovery
 - `test/functional/wallet_migrate_sqlite.py` — BDB to SQLite migration
+- `test/functional/wallet_sqlite_default.py` — new wallets default to SQLite; BDB still opens
 - `test/functional/wallet_sqlite_encryption.py` — SQLCipher at-rest encryption (when enabled)
 
 Run them after building:
@@ -213,6 +224,7 @@ Run them after building:
 test/functional/wallet_mnemonic_bip44.py
 test/functional/wallet_mnemonic_rescan.py
 test/functional/wallet_migrate_sqlite.py
+test/functional/wallet_sqlite_default.py
 test/functional/wallet_sqlite_encryption.py
 ```
 
