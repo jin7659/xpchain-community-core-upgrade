@@ -87,6 +87,7 @@ private:
     interfaces::Node& m_node;
     std::unique_ptr<interfaces::Handler> m_handler_message_box;
     std::unique_ptr<interfaces::Handler> m_handler_question;
+    std::unique_ptr<interfaces::Handler> m_handler_ask_passphrase;
     ClientModel* clientModel = nullptr;
     WalletFrame* walletFrame = nullptr;
 
@@ -198,6 +199,9 @@ public Q_SLOTS:
     void message(const QString &title, const QString &message, unsigned int style, bool *ret = nullptr);
 
 #ifdef ENABLE_WALLET
+    /** Prompt for SQLCipher wallet database passphrase during wallet load. */
+    void askWalletDbPassphrase(const QString& wallet_name, const QString& message, QString* passphrase_out, bool* ok);
+
     bool setCurrentWallet(const QString& name);
     bool setCurrentWalletBySelectorIndex(int index);
     /** Set the UI status indicators based on the currently selected wallet.

@@ -243,6 +243,10 @@ class NodeImpl : public Node
     {
         return MakeHandler(::uiInterface.ThreadSafeQuestion.connect(fn));
     }
+    std::unique_ptr<Handler> handleAskPassphrase(AskPassphraseFn fn) override
+    {
+        return MakeHandler(::uiInterface.ThreadSafeAskPassphrase.connect(fn));
+    }
     std::unique_ptr<Handler> handleShowProgress(ShowProgressFn fn) override
     {
         return MakeHandler(::uiInterface.ShowProgress.connect(fn));

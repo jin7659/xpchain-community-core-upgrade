@@ -23,6 +23,7 @@
 #include <qt/walletview.h>
 #include <wallet/walletutil.h>
 #include <qt/mnemonicimportdialog.h>
+#include <qt/askpassphrasedialog.h>
 #endif // ENABLE_WALLET
 
 #ifdef Q_OS_MAC
@@ -32,12 +33,14 @@
 #include <chainparams.h>
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
+#include <support/allocators/secure.h>
 #include <ui_interface.h>
 #include <util.h>
 
 #include <iostream>
 
 #include <univalue.h>
+#include <boost/bind.hpp>
 #include <QAction>
 #include <QApplication>
 #include <QComboBox>
@@ -1006,6 +1009,25 @@ void XPChainGUI::message(const QString &title, const QString &message, unsigned 
         notificator->notify(static_cast<Notificator::Class>(nNotifyIcon), strTitle, message);
 }
 
+#ifdef ENABLE_WALLET
+void XPChainGUI::askWalletDbPassphrase(const QString& wallet_name, const QString& message, QString* passphrase_out, bool* ok)
+{
+    if (ok) *ok = false;
+    if (!passphrase_out) return;
+
+    QString warning = message;
+    if (!wallet_name.isEmpty()) {
+        warning = tr("Wallet: %1").arg(wallet_name) + "<br><br>" + message;
+    }
+    AskPassphraseDialog dlg(AskPassphraseDialog::DatabaseUnlock, this, warning);
+    if (dlg.exec() == QDialog::Accepted) {
+        const SecureString& pass = dlg.getPassphrase();
+        *passphrase_out = QString::fromStdString(std::string(pass.begin(), pass.end()));
+        if (ok) *ok = true;
+    }
+}
+#endif // ENABLE_WALLET
+
 void XPChainGUI::changeEvent(QEvent *e)
 {
     QMainWindow::changeEvent(e);
@@ -1300,11 +1322,35 @@ static bool ThreadSafeMessageBox(XPChainGUI *gui, const std::string& message, co
     return ret;
 }
 
+#ifdef ENABLE_WALLET
+static bool ThreadSafeAskPassphrase(XPChainGUI *gui, const std::string& wallet_name, const std::string& message, SecureString& passphrase_out)
+{
+    QString passphrase;
+    bool ok = false;
+    QMetaObject::invokeMethod(gui, "askWalletDbPassphrase",
+                              GUIUtil::blockingGUIThreadConnection(),
+                              Q_ARG(QString, QString::fromStdString(wallet_name)),
+                              Q_ARG(QString, QString::fromStdString(message)),
+                              Q_ARG(QString*, &passphrase),
+                              Q_ARG(bool*, &ok));
+    if (!ok || passphrase.isEmpty()) {
+        return false;
+    }
+    passphrase_out.assign(passphrase.toStdString().c_str());
+    passphrase.fill(QChar(' '));
+    passphrase.clear();
+    return true;
+}
+#endif
+
 void XPChainGUI::subscribeToCoreSignals()
 {
     // Connect signals to client
     m_handler_message_box = m_node.handleMessageBox(boost::bind(ThreadSafeMessageBox, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
     m_handler_question = m_node.handleQuestion(boost::bind(ThreadSafeMessageBox, this, boost::placeholders::_1, boost::placeholders::_3, boost::placeholders::_4));
+#ifdef ENABLE_WALLET
+    m_handler_ask_passphrase = m_node.handleAskPassphrase(boost::bind(ThreadSafeAskPassphrase, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
+#endif
 }
 
 void XPChainGUI::unsubscribeFromCoreSignals()
@@ -1312,6 +1358,11 @@ void XPChainGUI::unsubscribeFromCoreSignals()
     // Disconnect signals from client
     m_handler_message_box->disconnect();
     m_handler_question->disconnect();
+#ifdef ENABLE_WALLET
+    if (m_handler_ask_passphrase) {
+        m_handler_ask_passphrase->disconnect();
+    }
+#endif
 }
 
 void XPChainGUI::toggleNetworkActive()

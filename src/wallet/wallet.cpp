@@ -4147,11 +4147,29 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
         const fs::path db_path = walletInstance->database->Filename();
         if (IsSqlcipherEncryptedFile(db_path)) {
             auto sqlite_db = static_cast<SQLiteDatabase*>(walletInstance->database.get());
-            if (!gArgs.IsArgSet("-walletdbpassphrase")) {
-                InitError(strprintf(_("SQLCipher encrypted wallet \"%s\" requires -walletdbpassphrase to open"), name));
-                return nullptr;
+            SecureString db_passphrase;
+            if (gArgs.IsArgSet("-walletdbpassphrase")) {
+                db_passphrase = SecureString(gArgs.GetArg("-walletdbpassphrase", ""));
+            } else {
+                const std::string prompt = strprintf(
+                    _("Wallet \"%s\" is encrypted with SQLCipher. Enter the database passphrase to open the wallet file. "
+                      "Private keys remain locked until you unlock the wallet with the same passphrase."),
+                    name);
+                if (!uiInterface.ThreadSafeAskPassphrase.empty() &&
+                    uiInterface.ThreadSafeAskPassphrase(name, prompt, db_passphrase) &&
+                    !db_passphrase.empty()) {
+                    // Keep for this process only so multi-wallet reopen / same-session loads work.
+                    // Never written to disk from the GUI.
+                    gArgs.ForceSetArg("-walletdbpassphrase", std::string(db_passphrase.begin(), db_passphrase.end()));
+                } else {
+                    InitError(strprintf(
+                        _("SQLCipher encrypted wallet \"%s\" requires -walletdbpassphrase=<passphrase> "
+                          "(command line or xpchain.conf). The GUI will prompt if this option is not set."),
+                        name));
+                    return nullptr;
+                }
             }
-            sqlite_db->SetKey(SecureString(gArgs.GetArg("-walletdbpassphrase", "")));
+            sqlite_db->SetKey(db_passphrase);
         }
     }
 #endif

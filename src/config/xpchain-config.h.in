@@ -405,6 +405,12 @@
 /* Define to 1 to enable SQLite wallet support */
 #undef USE_SQLITE
 
+/* Define to 1 to enable SQLCipher encryption support */
+#undef USE_SQLCIPHER
+
+/* Define to 1 to enable SQLCipher encryption API */
+#undef SQLITE_HAS_CODEC
+
 /* UPnP support not compiled if undefined, otherwise value (0 or 1) determines
    default state */
 #undef USE_UPNP

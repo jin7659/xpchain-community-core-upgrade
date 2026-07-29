@@ -11,6 +11,7 @@ from test_framework.util import (
     assert_equal,
     assert_raises_rpc_error,
 )
+from test_framework.test_node import ErrorMatch
 
 
 class WalletSQLiteEncryptionTest(BitcoinTestFramework):
@@ -51,6 +52,13 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
         with open(wallet_path, "rb") as f:
             encrypted_header = f.read(16)
         assert not encrypted_header.startswith(b"SQLite format 3"), "Encrypted wallet file must not be readable as plain SQLite"
+
+        self.log.info("Restart without -walletdbpassphrase must fail (daemon cannot prompt)")
+        self.nodes[0].assert_start_raises_init_error(
+            ['-wallet=encrypted.sqlite'],
+            'requires -walletdbpassphrase',
+            match=ErrorMatch.PARTIAL_REGEX,
+        )
 
         self.log.info("Restart node and verify encrypted wallet persists")
         self.start_node(0, [

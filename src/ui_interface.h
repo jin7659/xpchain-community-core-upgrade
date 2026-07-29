@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <string>
 
+#include <support/allocators/secure.h>
+
 #include <boost/signals2/last_value.hpp>
 #include <boost/signals2/signal.hpp>
 
@@ -77,6 +79,13 @@ public:
 
     /** If possible, ask the user a question. If not, falls back to ThreadSafeMessageBox(noninteractive_message, caption, style) and returns false. */
     boost::signals2::signal<bool (const std::string& message, const std::string& noninteractive_message, const std::string& caption, unsigned int style), boost::signals2::last_value<bool> > ThreadSafeQuestion;
+
+    /**
+     * Ask for a wallet database (SQLCipher) passphrase.
+     * Returns true if the user provided a passphrase (written to passphrase_out).
+     * Daemon / noui builds return false so callers can require -walletdbpassphrase.
+     */
+    boost::signals2::signal<bool (const std::string& wallet_name, const std::string& message, SecureString& passphrase_out), boost::signals2::last_value<bool> > ThreadSafeAskPassphrase;
 
     /** Progress message during initialization. */
     boost::signals2::signal<void (const std::string &message)> InitMessage;

@@ -69,6 +69,7 @@ Q_IMPORT_PLUGIN(QCocoaIntegrationPlugin);
 
 // Declare meta types used for QMetaObject::invokeMethod
 Q_DECLARE_METATYPE(bool*)
+Q_DECLARE_METATYPE(QString*)
 Q_DECLARE_METATYPE(CAmount)
 Q_DECLARE_METATYPE(uint256)
 
