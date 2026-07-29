@@ -6,6 +6,7 @@
 #include <hash.h>
 #include <logging.h>
 #include <protocol.h>
+#include <support/cleanse.h>
 #include <utilstrencodings.h>
 #include <wallet/walletutil.h>
 
@@ -328,16 +329,38 @@ std::unique_ptr<DatabaseCursor> BerkeleyBatch::GetCursor()
 int BerkeleyCursor::Read(CDataStream& ssKey, CDataStream& ssValue)
 {
     if (!m_cursor) return -1;
+
+    // Non-empty ssKey requests a DB_SET_RANGE seek (used by ListAccountCreditDebit).
+    // Empty ssKey continues with DB_NEXT.
     Dbt datKey;
     Dbt datValue;
-    int ret = m_cursor->get(&datKey, &datValue, DB_NEXT);
-    if (ret == 0) {
-        ssKey.clear();
-        ssKey.write((char*)datKey.get_data(), datKey.get_size());
-        ssValue.clear();
-        ssValue.write((char*)datValue.get_data(), datValue.get_size());
+    unsigned int fFlags = DB_NEXT;
+    if (!ssKey.empty()) {
+        datKey.set_data(ssKey.data());
+        datKey.set_size(ssKey.size());
+        fFlags = DB_SET_RANGE;
     }
-    return ret;
+    datKey.set_flags(DB_DBT_MALLOC);
+    datValue.set_flags(DB_DBT_MALLOC);
+
+    int ret = m_cursor->get(&datKey, &datValue, fFlags);
+    if (ret != 0) {
+        return ret;
+    }
+    if (datKey.get_data() == nullptr || datValue.get_data() == nullptr) {
+        return 99999;
+    }
+
+    ssKey.clear();
+    ssKey.write((char*)datKey.get_data(), datKey.get_size());
+    ssValue.clear();
+    ssValue.write((char*)datValue.get_data(), datValue.get_size());
+
+    memory_cleanse(datKey.get_data(), datKey.get_size());
+    memory_cleanse(datValue.get_data(), datValue.get_size());
+    free(datKey.get_data());
+    free(datValue.get_data());
+    return 0;
 }
 
 bool BerkeleyBatch::Recover(const fs::path& file_path, void *callbackDataIn, bool (*recoverKVcallback)(void* callbackData, CDataStream ssKey, CDataStream ssValue), std::string& newFilename)
