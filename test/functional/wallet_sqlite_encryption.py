@@ -2,7 +2,7 @@
 # Copyright (c) 2026 The XPChain developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test SQLite wallet encryption and passphrase change (SQLCipher rekey)."""
+"""Test SQLite wallet encryption, passphrase change (SQLCipher rekey), and loadwallet."""
 
 import os
 
@@ -101,10 +101,26 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
         assert_equal(wallet.dumpprivkey(address), privkey)
 
         self.log.info("Confirm wallet file is still not plaintext SQLite")
-        self.stop_node(0)
         with open(wallet_path, "rb") as f:
             rekeyed_header = f.read(16)
         assert not rekeyed_header.startswith(b"SQLite format 3"), "Rekeyed wallet must remain encrypted"
+
+        # --- loadwallet with per-wallet dbpassphrase ---
+        self.log.info("Unload and reload encrypted wallet via loadwallet dbpassphrase")
+        wallet.unloadwallet()
+        self.stop_node(0)
+        self.start_node(0)  # no -walletdbpassphrase, no -wallet
+
+        assert_raises_rpc_error(
+            -4,
+            "requires dbpassphrase argument or -walletdbpassphrase",
+            node.loadwallet,
+            "encrypted.sqlite",
+        )
+        node.loadwallet("encrypted.sqlite", passphrase2)
+        wallet = node.get_wallet_rpc("encrypted.sqlite")
+        wallet.walletpassphrase(passphrase2, 60)
+        assert_equal(wallet.dumpprivkey(address), privkey)
 
 
 if __name__ == '__main__':
