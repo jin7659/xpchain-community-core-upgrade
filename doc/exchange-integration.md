@@ -158,6 +158,7 @@ If your build enables ZeroMQ, subscribe to `hashblock` and `rawtx` for faster de
 | Encrypt hot wallet | `encryptwallet` + `walletpassphrase` for signing only |
 | SQLCipher builds | Official depends builds include SQLCipher for SQLite at-rest encryption |
 | SQLCipher restart (daemon) | Pass `-walletdbpassphrase` at startup or set `walletdbpassphrase=` in `xpchain.conf` (same passphrase as `encryptwallet`) |
+| SQLCipher runtime load | `loadwallet "wallet" "dbpassphrase"` when not loaded at startup (per-wallet passphrase for multi-wallet) |
 | SQLCipher restart (GUI) | Prompts for the database passphrase when `-walletdbpassphrase` is unset; session-only |
 | Cold storage | Keep majority of funds offline; hot wallet holds operational float only |
 | Backup | `backupwallet` before upgrades; test restore on staging |

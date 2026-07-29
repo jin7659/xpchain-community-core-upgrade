@@ -34,6 +34,10 @@
 #include <wallet/walletdb.h>
 #include <wallet/walletutil.h>
 
+#ifdef USE_SQLCIPHER
+#include <wallet/sqlite.h>
+#endif
+
 #include <stdint.h>
 
 #include <univalue.h>
@@ -3275,14 +3279,17 @@ static UniValue listwallets(const JSONRPCRequest& request)
 
 static UniValue loadwallet(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error(
-            "loadwallet \"filename\"\n"
+            "loadwallet \"filename\" ( \"dbpassphrase\" )\n"
             "\nLoads a wallet from a wallet file or directory."
             "\nNote that all wallet command-line options used when starting xpchaind will be"
             "\napplied to the new wallet (eg -zapwallettxes, upgradewallet, rescan, etc).\n"
             "\nArguments:\n"
-            "1. \"filename\"    (string, required) The wallet directory or .dat file.\n"
+            "1. \"filename\"       (string, required) The wallet directory or .dat file.\n"
+            "2. \"dbpassphrase\"   (string, optional) Passphrase for SQLCipher-encrypted SQLite wallets.\n"
+            "                     Required at load time when -walletdbpassphrase is not set.\n"
+            "                     Use this to load encrypted wallets with different passphrases.\n"
             "\nResult:\n"
             "{\n"
             "  \"name\" :    <wallet_name>,        (string) The wallet name if loaded successfully.\n"
@@ -3290,7 +3297,9 @@ static UniValue loadwallet(const JSONRPCRequest& request)
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("loadwallet", "\"test.dat\"")
+            + HelpExampleCli("loadwallet", "\"encrypted.sqlite\" \"my db passphrase\"")
             + HelpExampleRpc("loadwallet", "\"test.dat\"")
+            + HelpExampleRpc("loadwallet", "\"encrypted.sqlite\", \"my db passphrase\"")
         );
     std::string wallet_file = request.params[0].get_str();
     std::string error;
@@ -3306,12 +3315,33 @@ static UniValue loadwallet(const JSONRPCRequest& request)
         }
     }
 
+#ifdef USE_SQLCIPHER
+    {
+        const fs::path db_path = WalletDatabaseFilePath(wallet_path);
+        if (IsSqlcipherEncryptedFile(db_path)) {
+            const bool has_rpc_pass = request.params.size() >= 2 && !request.params[1].get_str().empty();
+            if (!has_rpc_pass && !gArgs.IsArgSet("-walletdbpassphrase")) {
+                throw JSONRPCError(RPC_WALLET_ERROR,
+                    "SQLCipher encrypted wallet requires dbpassphrase argument or -walletdbpassphrase");
+            }
+        }
+    }
+#endif
+
     std::string warning;
     if (!CWallet::Verify(wallet_file, false, error, warning)) {
         throw JSONRPCError(RPC_WALLET_ERROR, _("Wallet file verification failed: ") + error);
     }
 
-    std::shared_ptr<CWallet> const wallet = CWallet::CreateWalletFromFile(wallet_file, fs::absolute(wallet_file, GetWalletDir()));
+    const SecureString* sqlcipher_pass = nullptr;
+    SecureString db_passphrase;
+    if (request.params.size() >= 2) {
+        db_passphrase.assign(request.params[1].get_str().c_str());
+        sqlcipher_pass = &db_passphrase;
+    }
+
+    std::shared_ptr<CWallet> const wallet = CWallet::CreateWalletFromFile(
+        wallet_file, fs::absolute(wallet_file, GetWalletDir()), 0, false, sqlcipher_pass);
     if (!wallet) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Wallet loading failed.");
     }
@@ -5215,7 +5245,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "listtransactions",                 &listtransactions,              {"account|dummy","count","skip","include_watchonly"} },
     { "wallet",             "listunspent",                      &listunspent,                   {"minconf","maxconf","addresses","include_unsafe","query_options"} },
     { "wallet",             "listwallets",                      &listwallets,                   {} },
-    { "wallet",             "loadwallet",                       &loadwallet,                    {"filename"} },
+    { "wallet",             "loadwallet",                       &loadwallet,                    {"filename", "dbpassphrase"} },
     { "wallet",             "lockunspent",                      &lockunspent,                   {"unlock","transactions"} },
     { "wallet",             "sendmany",                         &sendmany,                      {"fromaccount|dummy","amounts","minconf","comment","subtractfeefrom","replaceable","conf_target","estimate_mode"} },
     { "wallet",             "sendtoaddress",                    &sendtoaddress,                 {"address","amount","comment","comment_to","subtractfeefromamount","replaceable","conf_target","estimate_mode"} },

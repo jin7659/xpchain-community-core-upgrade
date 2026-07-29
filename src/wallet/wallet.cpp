@@ -4116,7 +4116,7 @@ bool CWallet::Verify(std::string wallet_file, bool salvage_wallet, std::string& 
     return WalletBatch::VerifyDatabaseFile(wallet_path, warning_string, error_string);
 }
 
-std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, const fs::path& path, uint64_t wallet_creation_flags, bool force_berkeley)
+std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, const fs::path& path, uint64_t wallet_creation_flags, bool force_berkeley, const SecureString* sqlcipher_passphrase)
 {
     const std::string& walletFile = name;
 
@@ -4151,7 +4151,9 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
         if (IsSqlcipherEncryptedFile(db_path)) {
             auto sqlite_db = static_cast<SQLiteDatabase*>(walletInstance->database.get());
             SecureString db_passphrase;
-            if (gArgs.IsArgSet("-walletdbpassphrase")) {
+            if (sqlcipher_passphrase && !sqlcipher_passphrase->empty()) {
+                db_passphrase = *sqlcipher_passphrase;
+            } else if (gArgs.IsArgSet("-walletdbpassphrase")) {
                 db_passphrase = SecureString(gArgs.GetArg("-walletdbpassphrase", ""));
             } else {
                 const std::string prompt = strprintf(
@@ -4167,7 +4169,8 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
                 } else {
                     InitError(strprintf(
                         _("SQLCipher encrypted wallet \"%s\" requires -walletdbpassphrase=<passphrase> "
-                          "(command line or xpchain.conf). The GUI will prompt if this option is not set."),
+                          "(command line or xpchain.conf), or pass dbpassphrase to loadwallet. "
+                          "The GUI will prompt if this option is not set."),
                         name));
                     return nullptr;
                 }

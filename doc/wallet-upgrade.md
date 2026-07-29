@@ -195,6 +195,7 @@ Official **depends** builds include **SQLCipher** for SQLite wallet at-rest encr
 - After restart:
   - **GUI**: if `-walletdbpassphrase` is not set, a dialog prompts for the database passphrase (remembered for the process only; not written to disk).
   - **xpchaind / conf**: pass the same passphrase with `-walletdbpassphrase` (or `walletdbpassphrase=` in `xpchain.conf`).
+  - **Runtime load**: `loadwallet "name" "dbpassphrase"` when the wallet is not loaded at startup (required if `-walletdbpassphrase` is unset).
   - Application keys remain locked until `walletpassphrase` / GUI unlock.
 - Prefer conf/`-walletdbpassphrase` for unattended daemons; never store the passphrase in Qt settings or shared docs.
 
