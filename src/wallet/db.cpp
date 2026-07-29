@@ -6,6 +6,7 @@
 #include <hash.h>
 #include <logging.h>
 #include <protocol.h>
+#include <support/cleanse.h>
 #include <utilstrencodings.h>
 #include <wallet/walletutil.h>
 
@@ -80,6 +81,33 @@ BerkeleyEnvironment* GetWalletEnv(const fs::path& wallet_path, std::string& data
 
 void BerkeleyEnvironment::MakeMock()
 {
+    if (fDbEnvInit)
+        throw std::runtime_error("BerkeleyEnvironment::MakeMock: Already initialized");
+
+    boost::this_thread::interruption_point();
+
+    LogPrint(BCLog::DB, "BerkeleyEnvironment::MakeMock\n");
+
+    dbenv->set_cachesize(1, 0, 1);
+    dbenv->set_lg_bsize(10485760 * 4);
+    dbenv->set_lg_max(10485760);
+    dbenv->set_lk_max_locks(10000);
+    dbenv->set_lk_max_objects(10000);
+    dbenv->set_flags(DB_AUTO_COMMIT, 1);
+    dbenv->log_set_config(DB_LOG_IN_MEMORY, 1);
+    int ret = dbenv->open(nullptr,
+                         DB_CREATE |
+                             DB_INIT_LOCK |
+                             DB_INIT_LOG |
+                             DB_INIT_MPOOL |
+                             DB_INIT_TXN |
+                             DB_THREAD |
+                             DB_PRIVATE,
+                         S_IRUSR | S_IWUSR);
+    if (ret > 0)
+        throw std::runtime_error(strprintf("BerkeleyEnvironment::MakeMock: Error %d opening database environment.", ret));
+
+    fDbEnvInit = true;
     fMockDb = true;
 }
 
@@ -301,16 +329,38 @@ std::unique_ptr<DatabaseCursor> BerkeleyBatch::GetCursor()
 int BerkeleyCursor::Read(CDataStream& ssKey, CDataStream& ssValue)
 {
     if (!m_cursor) return -1;
+
+    // Non-empty ssKey requests a DB_SET_RANGE seek (used by ListAccountCreditDebit).
+    // Empty ssKey continues with DB_NEXT.
     Dbt datKey;
     Dbt datValue;
-    int ret = m_cursor->get(&datKey, &datValue, DB_NEXT);
-    if (ret == 0) {
-        ssKey.clear();
-        ssKey.write((char*)datKey.get_data(), datKey.get_size());
-        ssValue.clear();
-        ssValue.write((char*)datValue.get_data(), datValue.get_size());
+    unsigned int fFlags = DB_NEXT;
+    if (!ssKey.empty()) {
+        datKey.set_data(ssKey.data());
+        datKey.set_size(ssKey.size());
+        fFlags = DB_SET_RANGE;
     }
-    return ret;
+    datKey.set_flags(DB_DBT_MALLOC);
+    datValue.set_flags(DB_DBT_MALLOC);
+
+    int ret = m_cursor->get(&datKey, &datValue, fFlags);
+    if (ret != 0) {
+        return ret;
+    }
+    if (datKey.get_data() == nullptr || datValue.get_data() == nullptr) {
+        return 99999;
+    }
+
+    ssKey.clear();
+    ssKey.write((char*)datKey.get_data(), datKey.get_size());
+    ssValue.clear();
+    ssValue.write((char*)datValue.get_data(), datValue.get_size());
+
+    memory_cleanse(datKey.get_data(), datKey.get_size());
+    memory_cleanse(datValue.get_data(), datValue.get_size());
+    free(datKey.get_data());
+    free(datValue.get_data());
+    return 0;
 }
 
 bool BerkeleyBatch::Recover(const fs::path& file_path, void *callbackDataIn, bool (*recoverKVcallback)(void* callbackData, CDataStream ssKey, CDataStream ssValue), std::string& newFilename)

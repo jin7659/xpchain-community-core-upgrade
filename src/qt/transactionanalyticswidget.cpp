@@ -193,7 +193,13 @@ void TransactionAnalyticsWidget::paintEvent(QPaintEvent* event)
         QString text = QString("%1: %2 XPC").arg(br.month).arg(br.amount, 0, 'f', 2);
         QFont tooltipFont("Inter", 8, QFont::Bold);
         QFontMetrics fm(tooltipFont);
-        int textW = fm.horizontalAdvance(text) + 20;
+        int textW =
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+            fm.horizontalAdvance(text)
+#else
+            fm.width(text)
+#endif
+            + 20;
         int textH = 28;
 
         int tooltipX = m_mousePos.x() + 15;

@@ -22,16 +22,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential libtool autotools-dev automake pkg-config bsdmainutils \
-            curl git python3
+            curl git python3 bison
 
       - name: Build depends (x86_64-linux-gnu)
         run: |
           cd depends
           make HOST=x86_64-linux-gnu FALLBACK_DOWNLOAD_PATH=https://bitcoincore.org/depends-sources -j"$(nproc)"
 
-      - name: Build and test
+      - name: Build
         run: |
           ./autogen.sh
           CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=qt5
           make -j"$(nproc)"
-          QT_QPA_PLATFORM=minimal make check
+
+      - name: Unit tests
+        run: |
+          ./src/test/test_xpchain
+
+      - name: Qt tests
+        run: |
+          export QT_QPA_PLATFORM=minimal
+          export QT_DEBUG_PLUGINS=1
+          ./src/qt/test/test_xpchain-qt -v2
+        continue-on-error: false

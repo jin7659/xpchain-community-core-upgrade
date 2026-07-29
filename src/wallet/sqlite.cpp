@@ -326,12 +326,8 @@ bool SQLiteBatch::TxnAbort()
 }
 
 // SQLiteCursor 구현
-SQLiteCursor::SQLiteCursor(SQLiteDatabase& database) : m_database(database)
+SQLiteCursor::SQLiteCursor(SQLiteDatabase& database) : m_database(database), m_stmt(nullptr)
 {
-    const char* sql = "SELECT key, value FROM main;";
-    if (sqlite3_prepare_v2(m_database.Db(), sql, -1, &m_stmt, nullptr) != SQLITE_OK) {
-        m_stmt = nullptr;
-    }
 }
 
 SQLiteCursor::~SQLiteCursor()
@@ -343,7 +339,27 @@ SQLiteCursor::~SQLiteCursor()
 
 int SQLiteCursor::Read(CDataStream& key, CDataStream& value)
 {
-    if (!m_stmt) return -1;
+    // Lazy prepare: non-empty key => seek (>= key), empty key => full ordered scan.
+    if (!m_stmt) {
+        if (!key.empty()) {
+            const char* sql = "SELECT key, value FROM main WHERE key >= ?1 ORDER BY key;";
+            if (sqlite3_prepare_v2(m_database.Db(), sql, -1, &m_stmt, nullptr) != SQLITE_OK) {
+                m_stmt = nullptr;
+                return -1;
+            }
+            if (sqlite3_bind_blob(m_stmt, 1, key.data(), key.size(), SQLITE_TRANSIENT) != SQLITE_OK) {
+                sqlite3_finalize(m_stmt);
+                m_stmt = nullptr;
+                return -1;
+            }
+        } else {
+            const char* sql = "SELECT key, value FROM main ORDER BY key;";
+            if (sqlite3_prepare_v2(m_database.Db(), sql, -1, &m_stmt, nullptr) != SQLITE_OK) {
+                m_stmt = nullptr;
+                return -1;
+            }
+        }
+    }
 
     int res = sqlite3_step(m_stmt);
     if (res == SQLITE_ROW) {
