@@ -2,7 +2,7 @@
 # Copyright (c) 2026 The XPChain developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test SQLite wallet encryption (SQLCipher at-rest when available)."""
+"""Test SQLite wallet encryption and passphrase change (SQLCipher rekey)."""
 
 import os
 
@@ -60,7 +60,7 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
             match=ErrorMatch.PARTIAL_REGEX,
         )
 
-        self.log.info("Restart node and verify encrypted wallet persists")
+        self.log.info("Restart node with correct passphrase")
         self.start_node(0, [
             '-walletdbpassphrase=' + passphrase,
             '-wallet=encrypted.sqlite',
@@ -69,6 +69,42 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
         assert_raises_rpc_error(-13, "Please enter the wallet passphrase", wallet.dumpprivkey, address)
         wallet.walletpassphrase(passphrase, 60)
         assert_equal(wallet.dumpprivkey(address), privkey)
+
+        # --- walletpassphrasechange + SQLCipher rekey ---
+        passphrase2 = "new-at-rest-passphrase"
+
+        self.log.info("Change passphrase (triggers SQLCipher rekey)")
+        wallet.walletpassphrasechange(passphrase, passphrase2)
+
+        self.log.info("Verify new passphrase works for app-layer unlock")
+        assert_raises_rpc_error(-14, "wallet passphrase entered was incorrect",
+                                wallet.walletpassphrase, passphrase, 10)
+        wallet.walletpassphrase(passphrase2, 60)
+        assert_equal(wallet.dumpprivkey(address), privkey)
+        wallet.walletlock()
+
+        self.log.info("Stop node and verify old passphrase no longer opens the DB file")
+        self.stop_node(0)
+        self.nodes[0].assert_start_raises_init_error(
+            ['-walletdbpassphrase=' + passphrase, '-wallet=encrypted.sqlite'],
+            'file is not a database',
+            match=ErrorMatch.PARTIAL_REGEX,
+        )
+
+        self.log.info("Restart with new passphrase after rekey")
+        self.start_node(0, [
+            '-walletdbpassphrase=' + passphrase2,
+            '-wallet=encrypted.sqlite',
+        ])
+        wallet = node.get_wallet_rpc("encrypted.sqlite")
+        wallet.walletpassphrase(passphrase2, 60)
+        assert_equal(wallet.dumpprivkey(address), privkey)
+
+        self.log.info("Confirm wallet file is still not plaintext SQLite")
+        self.stop_node(0)
+        with open(wallet_path, "rb") as f:
+            rekeyed_header = f.read(16)
+        assert not rekeyed_header.startswith(b"SQLite format 3"), "Rekeyed wallet must remain encrypted"
 
 
 if __name__ == '__main__':

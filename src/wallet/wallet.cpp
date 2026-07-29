@@ -467,7 +467,6 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
                     return false;
                 WalletBatch(*database).WriteMasterKey(pMasterKey.first, pMasterKey.second);
                 
-                // SQLite인 경우 SQLCipher의 rekey를 수행하여 데이터베이스 파일 암호를 새 비밀번호로 교체합니다.
                 if (database->Format() == "sqlite") {
                     auto sqlite_db = static_cast<SQLiteDatabase*>(database.get());
                     sqlite_db->SetKey(strNewWalletPassphrase);
@@ -475,6 +474,10 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
                         WalletLogPrintf("%s: SQLite database rekey/rewrite failed!\n", __func__);
                         return false;
                     }
+                    // Keep the process-level arg in sync so reloads / GUI
+                    // session ForceSetArg use the new passphrase.
+                    gArgs.ForceSetArg("-walletdbpassphrase",
+                                      std::string(strNewWalletPassphrase.begin(), strNewWalletPassphrase.end()));
                 }
 
                 if (fWasLocked)
