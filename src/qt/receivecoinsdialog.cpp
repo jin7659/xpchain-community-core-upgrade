@@ -133,6 +133,7 @@ ReceiveCoinsDialog::~ReceiveCoinsDialog()
 
 void ReceiveCoinsDialog::clear()
 {
+    ui->reqAmount->clear();
     ui->reqLabel->setText("");
     ui->reqMessage->setText("");
     // Default to wallet's default address type

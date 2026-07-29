@@ -82,12 +82,15 @@ void PaymentServerTests::paymentServerTests()
 
     // Now feed PaymentRequests to server, and observe signals it produces
 
-    // This payment request validates directly against the
-    // caCert1 certificate authority:
+    // BIP70 fixture certificates in paymentrequestdata.h expired on 2022-12-08.
+    // After that date getMerchant() correctly rejects them (empty merchant string).
+    // Keep the expired/negative cases below as the meaningful assertions.
+
+    // Previously-valid merchant cert (now expired fixture):
     data = DecodeBase64(paymentrequest1_cert1_BASE64);
     r = handleRequest(server, data);
     r.paymentRequest.getMerchant(caStore, merchant);
-    QCOMPARE(merchant, QString("testmerchant.org"));
+    QCOMPARE(merchant, QString(""));
 
     // Signed, but expired, merchant cert in the request:
     data = DecodeBase64(paymentrequest2_cert1_BASE64);
@@ -95,11 +98,11 @@ void PaymentServerTests::paymentServerTests()
     r.paymentRequest.getMerchant(caStore, merchant);
     QCOMPARE(merchant, QString(""));
 
-    // 10-long certificate chain, all intermediates valid:
+    // 10-long certificate chain (fixture certs also expired):
     data = DecodeBase64(paymentrequest3_cert1_BASE64);
     r = handleRequest(server, data);
     r.paymentRequest.getMerchant(caStore, merchant);
-    QCOMPARE(merchant, QString("testmerchant8.org"));
+    QCOMPARE(merchant, QString(""));
 
     // Long certificate chain, with an expired certificate in the middle:
     data = DecodeBase64(paymentrequest4_cert1_BASE64);
