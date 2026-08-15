@@ -1,11 +1,11 @@
 # Release validation checklist — XPChain Core v0.27.0
 
-Status: **partially validated** (Linux CI + local wallet suite green; cross-OS release artifacts not yet built)
+Status: **ready to cut tag** (Linux CI + wallet functional suite green on master; await release artifacts after `v0.27.0` tag)
 
 - Repository: `jinseob-dev/xpchain-community-core-upgrade`
 - Version in tree: `0.27.0` (`configure.ac`)
-- `_CLIENT_VERSION_IS_RELEASE`: `false` until this checklist is completed and a `v0.27.0` tag is published
-- Validation branch / PR: `cursor/v027-validation-008a` ([PR #13](https://github.com/jinseob-dev/xpchain-community-core-upgrade/pull/13))
+- `_CLIENT_VERSION_IS_RELEASE`: set `true` in the release-prep PR; tag with `doc/release-cut-v0.27.0.md`
+- Validation merged via [PR #13](https://github.com/jinseob-dev/xpchain-community-core-upgrade/pull/13)
 
 ## Scope vs 0.17.0-4
 
@@ -17,20 +17,18 @@ Prior packaging-line validation lives in
 
 | Platform | Artifact | Validated |
 |----------|----------|-----------|
-| Linux x86_64 | `xpchain-v0.27.0-linux-x86_64.tar.gz` | [ ] pending tagged release workflow |
-| Windows x64 | `xpchain-v0.27.0-win64.zip` | [ ] pending tagged release workflow |
-| Windows x86 | `xpchain-v0.27.0-win32.zip` | [ ] pending tagged release workflow |
-| macOS | `xpchain-v0.27.0-macos.tar.gz` | [ ] pending tagged release workflow |
-| macOS | `xpchain-v0.27.0-macos.dmg` | [ ] pending tagged release workflow |
+| Linux x86_64 | `xpchain-v0.27.0-linux-x86_64.tar.gz` | [ ] after tag |
+| Windows x64 | `xpchain-v0.27.0-win64.zip` | [ ] after tag |
+| Windows x86 | `xpchain-v0.27.0-win32.zip` | [ ] after tag |
+| macOS | `xpchain-v0.27.0-macos.tar.gz` | [ ] after tag |
+| macOS | `xpchain-v0.27.0-macos.dmg` | [ ] after tag |
 
 Confirm the GitHub Release publish job waited for **linux + windows64 + windows32 + macos** (fixed in PR #11).
 
-Draft-only asset today: `XPChain-Core.dmg` on the untagged draft release (not a full matrix).
-
 ## CI gates
 
-- [x] `CI` workflow `linux-unit-tests` green on the validation commit
-- [x] `CI` workflow `linux-functional-tests` green (real wallet suite; harness false-green fixed)
+- [x] `CI` workflow `linux-unit-tests` green on master (includes PR #13)
+- [x] `CI` workflow `linux-functional-tests` green (real wallet suite)
 - [ ] Manual smoke: `xpchaind -version` / `xpchain-qt -version` on each release artifact
 
 ### Functional suite covered (CI)
@@ -43,7 +41,7 @@ Draft-only asset today: `XPChain-Core.dmg` on the untagged draft release (not a 
 - `wallet_encryption.py`
 - `wallet_backup.py`
 
-`wallet_multiwallet.py` is temporarily excluded: `GetWalletDir` auto-creates `wallets/` and breaks that test’s datadir-layout assumptions.
+`wallet_multiwallet.py` remains excluded from CI (`GetWalletDir` auto-creates `wallets/`).
 
 ## Wallet upgrade checks
 
@@ -54,16 +52,9 @@ Draft-only asset today: `XPChain-Core.dmg` on the untagged draft release (not a 
 - [x] `walletpassphrasechange` rekeys SQLCipher successfully (`wallet_sqlite_encryption`)
 - [x] BIP44 mnemonic import recovers expected addresses (`wallet_mnemonic_bip44` / `wallet_mnemonic_rescan`)
 
-## Bugs fixed during validation
-
-- Functional harness never set `ENABLE_UTILS` (`@BUILD_BITCOIN_UTILS_TRUE@` leftover) → false green.
-- `IsSqlcipherEncryptedFile` treated BDB files as encrypted SQLite.
-- SQLite `Backup` allowed overwriting the source wallet path.
-- `BerkeleyEnvironment::Flush(true)` erased `g_dbenvs` while `Flush` was still running (UAF / SIGBUS/SIGSEGV on BDB shutdown); `Close()` now resets `DbEnv` for safe reopen.
-
 ## Operator / exchange checks
 
-- [ ] `-minting=0` for exchange hot wallets (documented; not re-run here)
+- [ ] `-minting=0` for exchange hot wallets (documented; confirm on deployed binary)
 - [ ] Amount precision (4 decimal places) and bech32 deposit addresses verified
 - [ ] Review `doc/exchange-integration.md` against the deployed binary
 
@@ -71,6 +62,6 @@ Draft-only asset today: `XPChain-Core.dmg` on the untagged draft release (not a 
 
 | Role | Name | Date | Notes |
 |------|------|------|-------|
-| Builder | cloud-agent | 2026-08-15 | PR #13 CI green; local wallet suite green |
-| Tester | | | Cross-OS artifacts + exchange smoke still open |
-| Releaser | | | Set `_CLIENT_VERSION_IS_RELEASE` to `true`, tag `v0.27.0` |
+| Builder | cloud-agent | 2026-08-15 | PR #13 merged; release-prep sets IS_RELEASE |
+| Tester | | | Fill after release artifacts |
+| Releaser | | | Tag `v0.27.0` per `doc/release-cut-v0.27.0.md` |
