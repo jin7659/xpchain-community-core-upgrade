@@ -38,3 +38,4 @@ git push origin v0.27.0
 - 릴리즈 노트에 변경점(합의/지갑/네트워크)을 꼭 명시
 - 파일 해시(`sha256sum`)를 릴리즈 노트에 함께 게시
 - 정식 릴리즈 시 `configure.ac`의 `_CLIENT_VERSION_IS_RELEASE`를 `true`로 되돌릴 것
+- 태그 절차는 [`doc/release-cut-v0.27.0.md`](release-cut-v0.27.0.md) 참고

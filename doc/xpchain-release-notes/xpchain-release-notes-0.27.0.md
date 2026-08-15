@@ -1,15 +1,11 @@
-XPChain Core version 0.27.0 (pre-release)
+XPChain Core version 0.27.0 is now available:
 
-  <https://github.com/jinseob-dev/xpchain-community-core-upgrade>
+  <https://github.com/jinseob-dev/xpchain-community-core-upgrade/releases/tag/v0.27.0>
 
 This is a community upgrade release relative to the 0.17.0-4 packaging line.
 It focuses on wallet storage modernization (SQLite / SQLCipher), mnemonic
 recovery, Taproot-related wallet/consensus support, CI coverage, and project
 metadata updates for the `xpchain-community-core-upgrade` repository.
-
-`_CLIENT_VERSION_IS_RELEASE` is currently `false` until a formal tagged release
-is published from this repository. Set it to `true` when cutting the official
-`v0.27.0` tag.
 
 Please report bugs using the issue tracker:
 
@@ -28,7 +24,7 @@ support. See `doc/wallet-upgrade.md` and `doc/exchange-integration.md`.
 Compatibility
 =============
 
-XPChain Core 0.27.0 is intended to provide release artifacts for:
+XPChain Core 0.27.0 provides release artifacts for:
 
 - Linux x86_64 (tar.gz)
 - macOS (dmg, tar.gz)
@@ -69,9 +65,10 @@ Build, CI, and packaging
 
 - C++17 toolchain requirement.
 - GitHub Actions CI: unit tests, Qt tests, and wallet functional tests with
-  SQLCipher coverage.
-- Release workflow publish step now depends on macOS as well as Linux/Windows
-  so macOS `.dmg` / `.tar.gz` artifacts are included.
+  SQLCipher coverage (harness fixed so the suite actually runs).
+- Release workflow publish step depends on macOS as well as Linux/Windows.
+- BDB shutdown use-after-free fixed (`Flush` no longer destroys env entries
+  while still in use; `Close` resets `DbEnv` for safe unload/load).
 
 Documentation and project metadata
 ----------------------------------
@@ -99,3 +96,4 @@ XPChain 0.27.0 change log (summary)
 - CI functional coverage for wallet encryption/migration/mnemonic paths
 - Release publish waits for macOS artifacts
 - Repository / documentation URL hygiene for the community upgrade fork
+- BDB environment lifecycle fixes for mixed SQLite/BDB shutdown
