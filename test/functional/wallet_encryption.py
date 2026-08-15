@@ -30,9 +30,10 @@ class WalletEncryptionTest(BitcoinTestFramework):
         assert_equal(privkey[:1], "c")
         assert_equal(len(privkey), 52)
 
-        # Encrypt the wallet
+        # Encrypt the wallet. For SQLite+SQLCipher this also encrypts the DB at
+        # rest with the same passphrase, so the restart must supply it.
         self.nodes[0].node_encrypt_wallet(passphrase)
-        self.start_node(0)
+        self.start_node(0, ['-walletdbpassphrase=' + passphrase])
 
         # Test that the wallet is encrypted
         assert_raises_rpc_error(-13, "Please enter the wallet passphrase with walletpassphrase first", self.nodes[0].dumpprivkey, address)

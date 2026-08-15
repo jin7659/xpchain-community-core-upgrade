@@ -260,6 +260,9 @@ void BerkeleyDatabase::Open()
 
 void BerkeleyDatabase::Close()
 {
+    // Flush(true) already closes the environment on shutdown. Calling Close on a
+    // still-valid env is idempotent (fDbEnvInit guard). Never erase g_dbenvs from
+    // here — BerkeleyDatabase holds a raw pointer into that map.
     if (env) env->Close();
 }
 
@@ -828,7 +831,10 @@ void BerkeleyEnvironment::Flush(bool fShutdown)
                 if (!fMockDb) {
                     fs::remove_all(fs::path(strPath) / "database");
                 }
-                g_dbenvs.erase(strPath);
+                // Intentionally do not g_dbenvs.erase(strPath) here: erasing would
+                // destroy *this while Flush() is still on the stack and leave
+                // BerkeleyDatabase::env dangling (SIGBUS/UAF on shutdown when a
+                // BDB wallet was loaded alongside SQLite defaults).
             }
         }
     }
