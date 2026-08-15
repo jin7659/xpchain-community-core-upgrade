@@ -97,4 +97,4 @@ jobs:
             wallet_encryption.py \
             wallet_backup.py \
             wallet_multiwallet.py \
-            --jobs 2 --timeout-factor=4
+            --jobs 2
