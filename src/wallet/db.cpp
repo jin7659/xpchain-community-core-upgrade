@@ -131,12 +131,20 @@ void BerkeleyEnvironment::Close()
             db.second = nullptr;
         }
     }
+    mapDb.clear();
+    mapFileUseCount.clear();
 
     int ret = dbenv->close(0);
     if (ret != 0)
         LogPrintf("BerkeleyEnvironment::Close: Error %d closing database environment: %s\n", ret, DbEnv::strerror(ret));
     if (!fMockDb)
         DbEnv((u_int32_t)0).remove(strPath.c_str(), 0);
+
+    // Keep the g_dbenvs map entry alive (BerkeleyDatabase holds a raw pointer into
+    // it). Recreate DbEnv so a later Open() after unloadwallet/loadwallet works
+    // without use-after-free from erasing the map entry during Flush().
+    dbenv.reset(new DbEnv(DB_CXX_NO_EXCEPTIONS));
+    fMockDb = false;
 }
 
 void BerkeleyEnvironment::Reset()
@@ -260,6 +268,9 @@ void BerkeleyDatabase::Open()
 
 void BerkeleyDatabase::Close()
 {
+    // Flush(true) already closes the environment on shutdown. Calling Close on a
+    // still-valid env is idempotent (fDbEnvInit guard). Never erase g_dbenvs from
+    // here — BerkeleyDatabase holds a raw pointer into that map.
     if (env) env->Close();
 }
 
@@ -828,7 +839,10 @@ void BerkeleyEnvironment::Flush(bool fShutdown)
                 if (!fMockDb) {
                     fs::remove_all(fs::path(strPath) / "database");
                 }
-                g_dbenvs.erase(strPath);
+                // Intentionally do not g_dbenvs.erase(strPath) here: erasing would
+                // destroy *this while Flush() is still on the stack and leave
+                // BerkeleyDatabase::env dangling (SIGBUS/UAF on shutdown when a
+                // BDB wallet was loaded alongside SQLite defaults).
             }
         }
     }

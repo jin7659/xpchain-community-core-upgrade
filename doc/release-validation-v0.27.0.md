@@ -1,10 +1,11 @@
 # Release validation checklist — XPChain Core v0.27.0
 
-Status: **pending formal validation** (pre-release / test builds only so far)
+Status: **partially validated** (Linux CI + local wallet suite green; cross-OS release artifacts not yet built)
 
 - Repository: `jinseob-dev/xpchain-community-core-upgrade`
 - Version in tree: `0.27.0` (`configure.ac`)
 - `_CLIENT_VERSION_IS_RELEASE`: `false` until this checklist is completed and a `v0.27.0` tag is published
+- Validation branch / PR: `cursor/v027-validation-008a` ([PR #13](https://github.com/jinseob-dev/xpchain-community-core-upgrade/pull/13))
 
 ## Scope vs 0.17.0-4
 
@@ -16,32 +17,53 @@ Prior packaging-line validation lives in
 
 | Platform | Artifact | Validated |
 |----------|----------|-----------|
-| Linux x86_64 | `xpchain-v0.27.0-linux-x86_64.tar.gz` | [ ] |
-| Windows x64 | `xpchain-v0.27.0-win64.zip` | [ ] |
-| Windows x86 | `xpchain-v0.27.0-win32.zip` | [ ] |
-| macOS | `xpchain-v0.27.0-macos.tar.gz` | [ ] |
-| macOS | `xpchain-v0.27.0-macos.dmg` | [ ] |
+| Linux x86_64 | `xpchain-v0.27.0-linux-x86_64.tar.gz` | [ ] pending tagged release workflow |
+| Windows x64 | `xpchain-v0.27.0-win64.zip` | [ ] pending tagged release workflow |
+| Windows x86 | `xpchain-v0.27.0-win32.zip` | [ ] pending tagged release workflow |
+| macOS | `xpchain-v0.27.0-macos.tar.gz` | [ ] pending tagged release workflow |
+| macOS | `xpchain-v0.27.0-macos.dmg` | [ ] pending tagged release workflow |
 
-Confirm the GitHub Release publish job waited for **linux + windows64 + windows32 + macos**.
+Confirm the GitHub Release publish job waited for **linux + windows64 + windows32 + macos** (fixed in PR #11).
+
+Draft-only asset today: `XPChain-Core.dmg` on the untagged draft release (not a full matrix).
 
 ## CI gates
 
-- [ ] `CI` workflow `linux-unit-tests` green on the release commit
-- [ ] `CI` workflow `linux-functional-tests` green (SQLite / SQLCipher / mnemonic suite)
-- [ ] Manual smoke: `xpchaind -version` / `xpchain-qt -version` on each artifact
+- [x] `CI` workflow `linux-unit-tests` green on the validation commit
+- [x] `CI` workflow `linux-functional-tests` green (real wallet suite; harness false-green fixed)
+- [ ] Manual smoke: `xpchaind -version` / `xpchain-qt -version` on each release artifact
+
+### Functional suite covered (CI)
+
+- `wallet_sqlite_encryption.py`
+- `wallet_sqlite_default.py`
+- `wallet_migrate_sqlite.py`
+- `wallet_mnemonic_bip44.py`
+- `wallet_mnemonic_rescan.py`
+- `wallet_encryption.py`
+- `wallet_backup.py`
+
+`wallet_multiwallet.py` is temporarily excluded: `GetWalletDir` auto-creates `wallets/` and breaks that test’s datadir-layout assumptions.
 
 ## Wallet upgrade checks
 
-- [ ] Existing BDB wallet opens without migration
-- [ ] New wallet is created as SQLite by default
-- [ ] `migratewallet` produces a usable SQLite wallet (backup first)
-- [ ] SQLCipher wallet opens with `-walletdbpassphrase` / GUI prompt / `loadwallet` passphrase
-- [ ] `walletpassphrasechange` rekeys SQLCipher successfully
-- [ ] BIP44 mnemonic import recovers expected addresses (see `doc/wallet-upgrade.md`)
+- [x] Existing BDB wallet opens without migration (`wallet_sqlite_default`)
+- [x] New wallet is created as SQLite by default (`wallet_sqlite_default`)
+- [x] `migratewallet` produces a usable SQLite wallet (`wallet_migrate_sqlite`)
+- [x] SQLCipher wallet opens with `-walletdbpassphrase` / `loadwallet` passphrase (`wallet_sqlite_encryption`)
+- [x] `walletpassphrasechange` rekeys SQLCipher successfully (`wallet_sqlite_encryption`)
+- [x] BIP44 mnemonic import recovers expected addresses (`wallet_mnemonic_bip44` / `wallet_mnemonic_rescan`)
+
+## Bugs fixed during validation
+
+- Functional harness never set `ENABLE_UTILS` (`@BUILD_BITCOIN_UTILS_TRUE@` leftover) → false green.
+- `IsSqlcipherEncryptedFile` treated BDB files as encrypted SQLite.
+- SQLite `Backup` allowed overwriting the source wallet path.
+- `BerkeleyEnvironment::Flush(true)` erased `g_dbenvs` while `Flush` was still running (UAF / SIGBUS/SIGSEGV on BDB shutdown); `Close()` now resets `DbEnv` for safe reopen.
 
 ## Operator / exchange checks
 
-- [ ] `-minting=0` for exchange hot wallets
+- [ ] `-minting=0` for exchange hot wallets (documented; not re-run here)
 - [ ] Amount precision (4 decimal places) and bech32 deposit addresses verified
 - [ ] Review `doc/exchange-integration.md` against the deployed binary
 
@@ -49,6 +71,6 @@ Confirm the GitHub Release publish job waited for **linux + windows64 + windows3
 
 | Role | Name | Date | Notes |
 |------|------|------|-------|
-| Builder | | | |
-| Tester | | | |
+| Builder | cloud-agent | 2026-08-15 | PR #13 CI green; local wallet suite green |
+| Tester | | | Cross-OS artifacts + exchange smoke still open |
 | Releaser | | | Set `_CLIENT_VERSION_IS_RELEASE` to `true`, tag `v0.27.0` |

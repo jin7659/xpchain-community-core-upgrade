@@ -80,6 +80,12 @@ bool IsSqlcipherEncryptedFile(const fs::path& path)
     if (!fs::exists(path) || fs::is_directory(path)) {
         return false;
     }
+    // Berkeley DB wallets also lack a plaintext SQLite header; do not treat them
+    // as SQLCipher-encrypted (that would incorrectly require -walletdbpassphrase).
+    if (IsBerkeleyBDBFile(path)) {
+        return false;
+    }
+    // Encrypted SQLCipher databases do not start with "SQLite format 3".
     return !IsPlaintextSQLiteHeader(path);
 }
 
@@ -405,9 +411,26 @@ bool SQLiteDatabase::Backup(const std::string& strDest) const
 {
     if (!m_db) return false;
 
+    fs::path pathSrc(m_path);
+    fs::path pathDest(strDest);
+    if (fs::is_directory(pathDest)) {
+        pathDest /= pathSrc.filename();
+    }
+
+    try {
+        if (fs::exists(pathDest) && fs::equivalent(pathSrc, pathDest)) {
+            LogPrintf("SQLiteDatabase: cannot backup to wallet source file %s\n", pathDest.string());
+            return false;
+        }
+    } catch (const fs::filesystem_error& e) {
+        LogPrintf("SQLiteDatabase: Backup path check failed: %s\n", e.what());
+        return false;
+    }
+
+    const std::string dest_path = pathDest.string();
     sqlite3* pDestDb = nullptr;
     int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
-    if (sqlite3_open_v2(strDest.c_str(), &pDestDb, flags, nullptr) != SQLITE_OK) {
+    if (sqlite3_open_v2(dest_path.c_str(), &pDestDb, flags, nullptr) != SQLITE_OK) {
         LogPrintf("SQLiteDatabase: Backup failed - Unable to open destination database: %s\n", sqlite3_errmsg(pDestDb));
         if (pDestDb) sqlite3_close(pDestDb);
         return false;
@@ -457,9 +480,9 @@ bool SQLiteDatabase::Backup(const std::string& strDest) const
     sqlite3_close(pDestDb);
     
     // 백업 생성 파일 권한을 소유자 전용 최소 권한(0600)으로 제한
-    chmod(strDest.c_str(), 0600);
-    
-    LogPrintf("SQLiteDatabase: Successfully backed up wallet database to %s\n", strDest);
+    chmod(dest_path.c_str(), 0600);
+
+    LogPrintf("SQLiteDatabase: Successfully backed up wallet database to %s\n", dest_path);
     return true;
 }
 bool SQLiteDatabase::Rewrite(const char* pszSkip)
