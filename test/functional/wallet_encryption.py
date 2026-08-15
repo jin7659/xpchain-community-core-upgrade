@@ -23,8 +23,9 @@ class WalletEncryptionTest(BitcoinTestFramework):
         passphrase = "WalletPassphrase"
         passphrase2 = "SecondWalletPassphrase"
 
-        # Make sure the wallet isn't encrypted first
-        address = self.nodes[0].getnewaddress()
+        # Make sure the wallet isn't encrypted first.
+        # Default -addresstype is bech32m (Taproot); dumpprivkey needs a key-path address.
+        address = self.nodes[0].getnewaddress("", "legacy")
         privkey = self.nodes[0].dumpprivkey(address)
         assert_equal(privkey[:1], "c")
         assert_equal(len(privkey), 52)
