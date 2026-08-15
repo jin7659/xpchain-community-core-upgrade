@@ -43,7 +43,7 @@ Build XPChain Core
 
 1. Clone the XPChain Core source code and cd into `xpchain`
 
-        git clone https://github.com/xpc-wg/xpchain
+        git clone https://github.com/jinseob-dev/xpchain-community-core-upgrade
         cd xpchain
 
 2.  Build XPChain Core:

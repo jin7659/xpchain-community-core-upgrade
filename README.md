@@ -1,7 +1,7 @@
 XPChain Core integration/staging tree
 =====================================
 
-[![Build Status](https://github.com/jin7659/xpchain-community-core-upgrade/actions/workflows/ci.yml/badge.svg)](https://github.com/jin7659/xpchain-community-core-upgrade/actions/workflows/ci.yml)
+[![Build Status](https://github.com/jinseob-dev/xpchain-community-core-upgrade/actions/workflows/ci.yml/badge.svg)](https://github.com/jinseob-dev/xpchain-community-core-upgrade/actions/workflows/ci.yml)
 
 https://www.xpchain.co.kr/
 
@@ -50,7 +50,7 @@ Development Process
 -------------------
 
 The `master` branch is regularly built and tested, but is not guaranteed to be
-completely stable. [Tags](https://github.com/xpc-wg/xpchain/tags) are created
+completely stable. [Tags](https://github.com/jinseob-dev/xpchain-community-core-upgrade/tags) are created
 regularly to indicate new official, stable release versions of XPChain Core.
 
 The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -89,4 +89,4 @@ Translations
 While Bitcoin has [their Transifex page](https://www.transifex.com/projects/p/bitcoin/),
 XPChain doesn't have such pages of external translation web service (e.g. Transifex or Crowdin). If you want to make some change as well as add new translations, just create a new GitHub pull request
 to whose title is prefixed “Translation:”.
-Read [translation_process.md](https://github.com/xpc-wg/xpchain/blob/master/doc/translation_process.md) for details.
+Read [translation_process.md](doc/translation_process.md) for details.

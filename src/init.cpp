@@ -529,7 +529,7 @@ void SetupServerArgs()
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://github.com/arnoldcho/xpchain-community-core/>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/jinseob-dev/xpchain-community-core-upgrade/>";
     const std::string URL_WEBSITE = "<https://www.xpchain.co.kr/>";
     const std::string COPYRIGHT_XPCHAIN_COMMUNITY = "Copyright (C) 2019-2026 The XPChain Community developers";
     const std::string COPYRIGHT_XPCHAIN_CORE = "Copyright (C) 2018-2019 The XPChain Core developers";

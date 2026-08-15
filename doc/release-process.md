@@ -3,7 +3,7 @@ Release Process
 
 Before every release candidate:
 
-* Update translations, see [translation_process.md](https://github.com/xpc-wg/xpchain/blob/master/doc/translation_process.md#synchronising-translations).
+* Update translations, see [translation_process.md](translation_process.md#synchronising-translations).
 * Update manpages, see [gen-manpages.sh](https://github.com/bitcoin/bitcoin/blob/master/contrib/devtools/README.md#gen-manpagessh).
 
 Before every minor and major release:
@@ -29,6 +29,6 @@ Finally:
 * Announce the release:
   - Update xpchain.co.kr
   - Official announcements in Discord, Twitter, etc.
-  - Archive release notes for the new version to `doc/release-notes/` (branch `master` and branch of the release)
-  - Create a [new GitHub release](https://github.com/xpc-wg/xpchain/releases/new) with a link to the archived release notes.
+  - Archive release notes for the new version to `doc/xpchain-release-notes/` (branch `master` and branch of the release)
+  - Create a [new GitHub release](https://github.com/jinseob-dev/xpchain-community-core-upgrade/releases/new) with a link to the archived release notes (or push a `v*` tag to trigger `.github/workflows/release.yml`).
   - Celebrate
