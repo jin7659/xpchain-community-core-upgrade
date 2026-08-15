@@ -15,7 +15,7 @@
 #define CLIENT_VERSION_BUILD 0
 
 /* Version is release */
-#define CLIENT_VERSION_IS_RELEASE true
+#define CLIENT_VERSION_IS_RELEASE false
 
 /* Major version */
 #define CLIENT_VERSION_MAJOR 0
@@ -347,7 +347,7 @@
 #define LT_OBJDIR ".libs/"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "https://github.com/arnoldcho/xpchain-community-core/issues"
+#define PACKAGE_BUGREPORT "https://github.com/jinseob-dev/xpchain-community-core-upgrade/issues"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "XPChain Core"

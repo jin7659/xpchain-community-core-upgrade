@@ -10,7 +10,7 @@ and performance improvements.
 
 Please report bugs using the issue tracker at GitHub:
 
-  <https://github.com/xpc-wg/xpchain/issues>
+  <https://github.com/jinseob-dev/xpchain-community-core-upgrade/issues>
 
 How to Upgrade
 ==============

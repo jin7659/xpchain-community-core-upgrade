@@ -190,6 +190,6 @@ Before mainnet:
 
 - Project README exchange section: [../README.md](../README.md)
 - Wallet upgrade / mnemonic recovery: [wallet-upgrade.md](wallet-upgrade.md)
-- Issue tracker: [xpchain-community-core-upgrade](https://github.com/jin7659/xpchain-community-core-upgrade)
+- Issue tracker: [xpchain-community-core-upgrade](https://github.com/jinseob-dev/xpchain-community-core-upgrade)
 
 When reporting integration issues, include: XPChain Core version (`xpchain-cli --version`), network (mainnet/testnet/regtest), relevant redacted RPC logs, and txid — never share private keys or wallet passphrases.

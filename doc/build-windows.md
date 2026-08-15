@@ -85,7 +85,7 @@ This means you cannot use a directory that located directly on the host Windows 
 
 Acquire the source in the usual way:
 
-    git clone https://github.com/xpc-wg/xpchain.git
+    git clone https://github.com/jinseob-dev/xpchain-community-core-upgrade.git
 
 Once the source code is ready the build steps are below.
 
@@ -113,7 +113,7 @@ This means you cannot use a directory that located directly on the host Windows 
 
 Acquire the source in the usual way:
 
-    git clone https://github.com/xpc-wg/xpchain.git
+    git clone https://github.com/jinseob-dev/xpchain-community-core-upgrade.git
 
 Then build using:
 

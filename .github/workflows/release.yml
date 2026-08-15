@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (example: v0.17.0-4)'
+        description: 'Release tag (example: v0.27.0)'
         required: true
         type: string
 
@@ -257,7 +257,8 @@ jobs:
   release:
     name: Publish GitHub Release
     runs-on: ubuntu-22.04
-    needs: [linux, windows64, windows32]
+    # Wait for macOS so .dmg / macos.tar.gz are present before publishing.
+    needs: [linux, windows64, windows32, macos]
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4

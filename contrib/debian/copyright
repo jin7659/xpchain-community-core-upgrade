@@ -2,7 +2,7 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: XPChain
 Upstream-Contact: Satoshi Nakamoto <satoshin@gmx.com>
  irc://#bitcoin@freenode.net
-Source: https://github.com/xpc-wg/xpchain
+Source: https://github.com/jinseob-dev/xpchain-community-core-upgrade
 
 Files: *
 Copyright: 2009-2018, Bitcoin Core Developers

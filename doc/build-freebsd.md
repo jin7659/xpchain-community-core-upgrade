@@ -24,7 +24,7 @@ See [dependencies.md](dependencies.md) for a complete overview.
 
 Download the source code:
 ```
-git clone https://github.com/xpc-wg/xpchain
+git clone https://github.com/jinseob-dev/xpchain-community-core-upgrade
 ```
 
 ## Building XPChain Core
