@@ -1,11 +1,12 @@
 # Release validation checklist — XPChain Core v0.27.0
 
-Status: **partially validated** (Linux CI + local wallet suite green; cross-OS release artifacts not yet built)
+Status: **partially validated — formal release deferred** (Linux CI + wallet suite green; no `v0.27.0` tag planned for now)
 
 - Repository: `jinseob-dev/xpchain-community-core-upgrade`
 - Version in tree: `0.27.0` (`configure.ac`)
-- `_CLIENT_VERSION_IS_RELEASE`: `false` until this checklist is completed and a `v0.27.0` tag is published
-- Validation branch / PR: `cursor/v027-validation-008a` ([PR #13](https://github.com/jinseob-dev/xpchain-community-core-upgrade/pull/13))
+- `_CLIENT_VERSION_IS_RELEASE`: `false` (keep pre-release warning until a formal tag is intentionally cut)
+- Validation merged via [PR #13](https://github.com/jinseob-dev/xpchain-community-core-upgrade/pull/13)
+- Release-prep PR #14 was closed without merge (release cancelled)
 
 ## Scope vs 0.17.0-4
 
@@ -73,4 +74,4 @@ Draft-only asset today: `XPChain-Core.dmg` on the untagged draft release (not a 
 |------|------|------|-------|
 | Builder | cloud-agent | 2026-08-15 | PR #13 CI green; local wallet suite green |
 | Tester | | | Cross-OS artifacts + exchange smoke still open |
-| Releaser | | | Set `_CLIENT_VERSION_IS_RELEASE` to `true`, tag `v0.27.0` |
+| Releaser | | | Formal `v0.27.0` tag deferred; leave `IS_RELEASE=false` |
