@@ -131,12 +131,20 @@ void BerkeleyEnvironment::Close()
             db.second = nullptr;
         }
     }
+    mapDb.clear();
+    mapFileUseCount.clear();
 
     int ret = dbenv->close(0);
     if (ret != 0)
         LogPrintf("BerkeleyEnvironment::Close: Error %d closing database environment: %s\n", ret, DbEnv::strerror(ret));
     if (!fMockDb)
         DbEnv((u_int32_t)0).remove(strPath.c_str(), 0);
+
+    // Keep the g_dbenvs map entry alive (BerkeleyDatabase holds a raw pointer into
+    // it). Recreate DbEnv so a later Open() after unloadwallet/loadwallet works
+    // without use-after-free from erasing the map entry during Flush().
+    dbenv.reset(new DbEnv(DB_CXX_NO_EXCEPTIONS));
+    fMockDb = false;
 }
 
 void BerkeleyEnvironment::Reset()
