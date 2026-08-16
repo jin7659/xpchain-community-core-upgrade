@@ -33,6 +33,7 @@
 #include <wallet/wallet.h>
 #include <wallet/walletdb.h>
 #include <wallet/walletutil.h>
+#include <support/cleanse.h>
 
 #ifdef USE_SQLCIPHER
 #include <wallet/sqlite.h>
@@ -3367,7 +3368,9 @@ static UniValue createwallet(const JSONRPCRequest& request)
             "1. \"wallet_name\"          (string, required) The name for the new wallet. If this is a path, the wallet will be created at the path location.\n"
             "2. disable_private_keys   (boolean, optional, default: false) Disable the possibility of private keys (only watchonlys are possible in this mode).\n"
             "3. descriptors            (boolean, optional, default: false) Create a native descriptor wallet (SQLite).\n"
-            "4. \"passphrase\"           (string, optional) Encrypt the wallet with this passphrase.\n"
+            "4. \"passphrase\"           (string, optional) Encrypt the wallet with this passphrase on create.\n"
+            "                     Empty or omitted leaves the wallet unencrypted. On SQLite/SQLCipher builds\n"
+            "                     this also encrypts the wallet file at rest (same passphrase for both layers).\n"
             "5. load_on_startup        (boolean, optional) Save wallet name to config file to load on startup.\n"
             "6. berkeley               (boolean, optional, default: false) Create a legacy Berkeley DB wallet instead of SQLite.\n"
             "\nResult:\n"
@@ -3410,6 +3413,17 @@ static UniValue createwallet(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Descriptor wallets require SQLite and cannot use berkeley=true");
     }
 
+    SecureString passphrase;
+    if (request.params.size() > 3 && !request.params[3].isNull()) {
+        if (!request.params[3].isStr()) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "passphrase must be a string");
+        }
+        const std::string pass_str = request.params[3].get_str();
+        if (!pass_str.empty()) {
+            passphrase.assign(pass_str.c_str());
+        }
+    }
+
     // Modern wallet creation logic
     fs::path wallet_path = fs::absolute(wallet_name, GetWalletDir());
     if (fs::symlink_status(wallet_path).type() != fs::file_not_found) {
@@ -3423,6 +3437,15 @@ static UniValue createwallet(const JSONRPCRequest& request)
     AddWallet(wallet);
 
     wallet->postInitProcess();
+
+    if (!passphrase.empty()) {
+        if (!wallet->EncryptWallet(passphrase)) {
+            throw JSONRPCError(RPC_WALLET_ENCRYPTION_FAILED, "Wallet created but encryption failed.");
+        }
+        // Keep process-level arg in sync so same-session reloads / GUI reopen work.
+        gArgs.ForceSetArg("-walletdbpassphrase", std::string(passphrase.begin(), passphrase.end()));
+        memory_cleanse(passphrase.data(), passphrase.size());
+    }
 
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("name", wallet->GetName());

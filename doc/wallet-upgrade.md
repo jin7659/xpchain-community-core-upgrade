@@ -172,6 +172,8 @@ xpchain-cli loadwallet "legacy_bdb.sqlite"
 
 ## Encrypted Wallets
 
+- **GUI Create Wallet** can encrypt on create (recommended). The same passphrase protects spending keys and, on SQLCipher builds, the wallet file at rest.
+- CLI: `xpchain-cli createwallet "name" false true "passphrase"` (name, disable_private_keys, descriptors, passphrase).
 - Unlock the wallet before mnemonic import (GUI prompts automatically; CLI requires `walletpassphrase`).
 - After upgrading binaries, encrypted wallets open normally with your existing passphrase.
 - SQLite wallets with SQLCipher require a build that includes SQLCipher support.

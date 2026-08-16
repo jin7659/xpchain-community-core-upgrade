@@ -226,7 +226,7 @@ void XPChainGUI::createActions()
     QActionGroup *tabGroup = new QActionGroup(this);
 
     createWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/add"), tr("&Create Wallet..."), this);
-    createWalletAction->setStatusTip(tr("Create a new wallet"));
+    createWalletAction->setStatusTip(tr("Create a new wallet (optionally encrypted on create)"));
 
     openWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/open"), tr("&Open Wallet..."), this);
     openWalletAction->setStatusTip(tr("Open an existing wallet"));
@@ -1466,15 +1466,36 @@ void XPChainGUI::createWallet()
     CreateWalletDialog dlg(this);
     if(dlg.exec())
     {
+        const QString name = dlg.walletName();
+        const bool encrypt = dlg.encryptWallet();
+        QString passphrase = dlg.passphrase();
+        dlg.secureClearPassphrases();
+
         UniValue params(UniValue::VARR);
-        params.push_back(dlg.walletName().toStdString());
+        params.push_back(name.toStdString());
         params.push_back(dlg.disablePrivateKeys());
         params.push_back(dlg.descriptors());
-        params.push_back(""); // passphrase (empty for now)
+        params.push_back(encrypt ? passphrase.toStdString() : "");
         params.push_back(true); // load_on_startup
+
+        passphrase.fill(QChar(' '));
+        passphrase.clear();
 
         try {
             m_node.executeRpc("createwallet", params, "");
+            if (encrypt) {
+                QMessageBox::information(this, tr("Wallet created"),
+                    tr("Wallet \"%1\" was created and encrypted.<br/><br/>"
+                       "Spending keys are locked. Unlock before sending or signing.<br/><br/>"
+                       "After restart: open the wallet file with this passphrase "
+                       "(GUI prompt or <code>-walletdbpassphrase</code>), then unlock keys again.")
+                        .arg(name));
+            } else {
+                QMessageBox::information(this, tr("Wallet created"),
+                    tr("Wallet \"%1\" was created without encryption. "
+                       "You can encrypt it later from Settings → Encrypt Wallet.")
+                        .arg(name));
+            }
         } catch (const UniValue& e) {
             QMessageBox::critical(this, tr("Wallet Creation Failed"), QString::fromStdString(e["message"].get_str()));
         } catch (const std::exception& e) {
