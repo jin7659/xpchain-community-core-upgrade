@@ -18,10 +18,11 @@
 #include <QThreadPool>
 #include <QShowEvent>
 #include <QRegularExpression>
+#include <QSet>
+#include <QCoreApplication>
 
 #include <util.h>
 #include <support/cleanse.h>
-#include <ui_interface.h>
 
 #include <vector>
 
@@ -222,7 +223,7 @@ void MnemonicImportDialog::onMnemonicTextChanged()
         return;
     }
 
-    const QStringList words = text.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+    const QStringList words = text.split(QRegularExpression(QStringLiteral("\\s+")), QString::SkipEmptyParts);
     const int n = words.size();
     QStringList invalid;
     for (const QString& word : words) {

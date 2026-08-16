@@ -241,6 +241,6 @@ test/functional/wallet_sqlite_encryption.py
 If recovery still fails after following this guide:
 
 1. Do **not** delete wallet files or mnemonics.
-2. Preserve `wallet_backups/` copies.
+2. Preserve `wallet_backups/` / `backups/` copies from mnemonic import.
 3. Note your XPChain Core version (`xpchain-cli --version`), coin_type used, and whether the wallet is encrypted.
 4. Report issues to the [xpchain-community-core-upgrade](https://github.com/jinseob-dev/xpchain-community-core-upgrade) repository with logs from `debug.log` (redact mnemonics and passphrases).
