@@ -105,6 +105,7 @@ private:
     QToolBar* appToolBar = nullptr;
     QAction *createWalletAction = nullptr;
     QAction *openWalletAction = nullptr;
+    QAction *generateMnemonicAction = nullptr;
     QAction *importMnemonicAction = nullptr;
     QAction *migrateWalletAction = nullptr;
     QAction *backupAllWalletsAction = nullptr;
@@ -264,6 +265,8 @@ private Q_SLOTS:
     void showDebugWindowActivateConsole();
     /** Create a new wallet */
     void createWallet();
+    /** Generate BIP39 mnemonic, confirm backup, create seeded wallet */
+    void generateMnemonicWallet();
     /** Restore wallet using BIP39 mnemonic */
     void importMnemonic();
     /** Migrate current Berkeley DB wallet to SQLite */

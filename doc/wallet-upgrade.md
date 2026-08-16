@@ -53,7 +53,19 @@ xpchain-cli getbalance
 
 XPChain supports restoring a wallet from a 12- or 24-word English BIP39 mnemonic.
 
-### GUI (xpchain-qt)
+### Generate & backup a new mnemonic (GUI)
+
+Existing wallets generally **cannot export** a BIP39 phrase unless they were created from one. To create a new mnemonic-backed wallet:
+
+1. Open **File → Generate & Backup Mnemonic**.
+2. Choose wallet name, 12 or 24 words, BIP44 (recommended for web wallet address compatibility), and optional encryption.
+3. Write down the numbered word list offline, then confirm you stored it safely.
+4. Re-enter the phrase to confirm the backup.
+5. The GUI creates a legacy HD wallet, unlocks it if encrypted, and imports the mnemonic (`importmnemonic`, no full rescan for a fresh wallet).
+
+Keep the written phrase offline. It is not recoverable from the wallet database later.
+
+### Restore an existing mnemonic (GUI)
 
 1. For a **clean recovery**, create a **new empty wallet** first (`File → Create Wallet`), or use **Create empty wallet first…** in the restore dialog.
 2. Open **File → Restore Wallet from Mnemonic**.

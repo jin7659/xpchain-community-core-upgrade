@@ -8,6 +8,7 @@
 
 #include <chainparams.h>
 #include <qt/test/rpcnestedtests.h>
+#include <random.h>
 #include <util.h>
 #include <qt/test/uritests.h>
 #include <qt/test/compattests.h>
@@ -46,6 +47,7 @@ int main(int argc, char *argv[])
 {
     SetupEnvironment();
     SetupNetworking();
+    RandomInit();
     SelectParams(CBaseChainParams::MAIN);
     noui_connect();
     ClearDatadirCache();

@@ -24,6 +24,7 @@
 #include <qt/walletview.h>
 #include <wallet/walletutil.h>
 #include <qt/mnemonicimportdialog.h>
+#include <qt/mnemonicbackupdialog.h>
 #include <qt/askpassphrasedialog.h>
 #endif // ENABLE_WALLET
 
@@ -35,6 +36,7 @@
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
 #include <support/allocators/secure.h>
+#include <support/cleanse.h>
 #include <ui_interface.h>
 #include <util.h>
 
@@ -233,6 +235,9 @@ void XPChainGUI::createActions()
     openWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/open"), tr("&Open Wallet..."), this);
     openWalletAction->setStatusTip(tr("Open an existing wallet"));
 
+    generateMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Generate & Backup Mnemonic..."), this);
+    generateMnemonicAction->setStatusTip(tr("Generate a new BIP39 mnemonic, confirm backup, and create a wallet seeded from it"));
+
     importMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Restore Wallet from Mnemonic..."), this);
     importMnemonicAction->setStatusTip(tr("Restore keys from a BIP39 mnemonic into the current wallet (prefer a new empty wallet)"));
 
@@ -365,6 +370,7 @@ void XPChainGUI::createActions()
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
     connect(createWalletAction, SIGNAL(triggered()), this, SLOT(createWallet()));
     connect(openWalletAction, SIGNAL(triggered()), this, SLOT(openWallet()));
+    connect(generateMnemonicAction, SIGNAL(triggered()), this, SLOT(generateMnemonicWallet()));
     connect(importMnemonicAction, SIGNAL(triggered()), this, SLOT(importMnemonic()));
     connect(migrateWalletAction, SIGNAL(triggered()), this, SLOT(migrateWallet()));
     connect(backupAllWalletsAction, SIGNAL(triggered()), this, SLOT(backupAllWallets()));
@@ -407,6 +413,7 @@ void XPChainGUI::createMenuBar()
     {
         file->addAction(createWalletAction);
         file->addAction(openWalletAction);
+        file->addAction(generateMnemonicAction);
         file->addAction(importMnemonicAction);
         file->addAction(migrateWalletAction);
         file->addAction(backupAllWalletsAction);
@@ -1511,6 +1518,92 @@ void XPChainGUI::createWallet()
             QMessageBox::critical(this, tr("Wallet Creation Failed"), QString::fromStdString(e.what()));
         }
     }
+}
+
+void XPChainGUI::generateMnemonicWallet()
+{
+#ifdef ENABLE_WALLET
+    // Ensure wallets directory exists so new wallets are created there
+    QDir().mkpath(QString::fromStdString(GetDataDir().string()) + "/wallets");
+
+    MnemonicBackupDialog dlg(this);
+    if (!dlg.exec()) {
+        return;
+    }
+
+    const QString name = dlg.walletName();
+    const bool encrypt = dlg.encryptWallet();
+    QString wallet_pass = dlg.walletPassphrase();
+    const bool use_bip44 = dlg.useBip44();
+    const unsigned int bip44_coin_type = dlg.bip44CoinType();
+    QString bip39_pass = dlg.bip39Passphrase();
+    SecureString mnemonic = dlg.mnemonic();
+    dlg.secureClearSecrets();
+
+    QByteArray encodedName = QUrl::toPercentEncoding(name);
+    const std::string uri = "/wallet/" + std::string(encodedName.constData(), encodedName.length());
+
+    try {
+        UniValue create_params(UniValue::VARR);
+        create_params.push_back(name.toStdString());
+        create_params.push_back(false); // disable_private_keys
+        create_params.push_back(false); // descriptors — mnemonic import requires legacy HD
+        create_params.push_back(encrypt ? wallet_pass.toStdString() : "");
+        create_params.push_back(true); // load_on_startup
+        m_node.executeRpc("createwallet", create_params, "");
+
+        if (encrypt) {
+            UniValue unlock_params(UniValue::VARR);
+            unlock_params.push_back(wallet_pass.toStdString());
+            unlock_params.push_back(120); // seconds
+            m_node.executeRpc("walletpassphrase", unlock_params, uri);
+        }
+
+        UniValue options(UniValue::VOBJ);
+        if (!bip39_pass.isEmpty()) {
+            options.pushKV("passphrase", bip39_pass.toStdString());
+        }
+        options.pushKV("bip44", use_bip44);
+        options.pushKV("bip44_coin_type", static_cast<int>(bip44_coin_type));
+        options.pushKV("gap_limit", 1000);
+        options.pushKV("rescan", false);
+
+        UniValue import_params(UniValue::VARR);
+        import_params.push_back(std::string(mnemonic.begin(), mnemonic.end()));
+        import_params.push_back(options);
+        m_node.executeRpc("importmnemonic", import_params, uri);
+
+        QString path_note;
+        if (use_bip44) {
+            path_note = tr("BIP44 path m/44'/%1'/0'/…").arg(bip44_coin_type);
+        } else {
+            path_note = tr("XPChain Core HD path m/0'/…");
+        }
+
+        QMessageBox::information(this, tr("Mnemonic wallet created"),
+            tr("Wallet \"%1\" was created from your confirmed BIP39 backup (%2).<br/><br/>"
+               "Keep the written mnemonic offline. It cannot be recovered from the wallet file later.<br/><br/>"
+               "%3")
+                .arg(name)
+                .arg(path_note)
+                .arg(encrypt
+                    ? tr("The wallet is encrypted. Unlock spending keys before sending.")
+                    : tr("The wallet is not encrypted. You can encrypt it later from Settings → Encrypt Wallet.")));
+    } catch (const UniValue& e) {
+        QMessageBox::critical(this, tr("Mnemonic wallet creation failed"),
+                              QString::fromStdString(e["message"].get_str()));
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, tr("Mnemonic wallet creation failed"),
+                              QString::fromStdString(e.what()));
+    }
+
+    memory_cleanse(mnemonic.data(), mnemonic.size());
+    mnemonic.clear();
+    wallet_pass.fill(QChar(' '));
+    wallet_pass.clear();
+    bip39_pass.fill(QChar(' '));
+    bip39_pass.clear();
+#endif
 }
 
 void XPChainGUI::importMnemonic()
