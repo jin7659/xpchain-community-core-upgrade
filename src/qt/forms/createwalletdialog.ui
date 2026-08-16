@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>250</height>
+    <width>480</width>
+    <height>360</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,25 +34,86 @@
    </item>
    <item>
     <widget class="QCheckBox" name="disable_privkeys_cb">
+     <property name="toolTip">
+      <string>Watch-only wallet: no private keys are generated. You can import addresses or descriptors later, but you cannot spend from this wallet.</string>
+     </property>
      <property name="text">
       <string>Disable Private Keys</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="make_blank_cb">
-     <property name="text">
-      <string>Make Blank Wallet</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QCheckBox" name="descriptor_cb">
+     <property name="toolTip">
+      <string>Use the modern descriptor wallet format (SQLite). Recommended for new wallets. Leave unchecked only if you need a legacy HD keypath wallet.</string>
+     </property>
      <property name="text">
       <string>Descriptor Wallet (Modern v27.0+)</string>
      </property>
      <property name="checked">
       <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="encrypt_wallet_cb">
+     <property name="toolTip">
+      <string>Encrypt spending keys and (on SQLite/SQLCipher builds) the wallet file at rest. You will need this passphrase to open the wallet file after restart and again to unlock keys for sending.</string>
+     </property>
+     <property name="text">
+      <string>Encrypt wallet</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="encrypt_hint_label">
+     <property name="text">
+      <string>Recommended. Protects spending keys and the wallet file (SQLCipher). Leave unchecked only if you intentionally want an unencrypted wallet.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="passphraseLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="passphrase_label">
+       <property name="text">
+        <string>Passphrase</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="passphrase_edit">
+       <property name="echoMode">
+        <enum>QLineEdit::Password</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="confirm_label">
+       <property name="text">
+        <string>Confirm</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="confirm_edit">
+       <property name="echoMode">
+        <enum>QLineEdit::Password</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="show_passphrase_cb">
+     <property name="text">
+      <string>Show passphrase</string>
      </property>
     </widget>
    </item>
@@ -64,7 +125,7 @@
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>40</height>
+       <height>20</height>
       </size>
      </property>
     </spacer>

@@ -23,10 +23,20 @@ public:
     explicit CreateWalletDialog(QWidget* parent);
     virtual ~CreateWalletDialog();
 
+    void accept() override;
+
     QString walletName() const;
     bool disablePrivateKeys() const;
-    bool makeBlankWallet() const;
     bool descriptors() const;
+    bool encryptWallet() const;
+    /** Passphrase when encryptWallet() is true; empty otherwise. Cleared after read in createWallet(). */
+    QString passphrase() const;
+    void secureClearPassphrases();
+
+private Q_SLOTS:
+    void updateOkButton();
+    void setEncryptionWidgetsEnabled(bool enabled);
+    void toggleShowPassphrase(bool show);
 
 private:
     Ui::CreateWalletDialog *ui;

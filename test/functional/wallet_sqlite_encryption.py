@@ -22,6 +22,20 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
     def run_test(self):
         node = self.nodes[0]
 
+        self.log.info("createwallet with passphrase encrypts on create (no shutdown)")
+        create_pass = "create-on-encrypt-pass"
+        node.createwallet("enc_on_create", False, False, create_pass)
+        created = node.get_wallet_rpc("enc_on_create")
+        created_info = created.getwalletinfo()
+        assert_equal(created_info["databaseformat"], "sqlite")
+        assert "unlocked_until" in created_info
+        assert_equal(created_info["unlocked_until"], 0)
+        assert_raises_rpc_error(-14, "wallet passphrase entered was incorrect",
+                                created.walletpassphrase, "wrong-pass", 10)
+        created.walletpassphrase(create_pass, 60)
+        created.getnewaddress()
+        created.walletlock()
+
         self.log.info("Create SQLite wallet for encryption test")
         node.createwallet("encrypted.sqlite")
         wallet = node.get_wallet_rpc("encrypted.sqlite")
@@ -32,6 +46,13 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
         if not info.get("sqlcipher", False):
             self.log.warning("Skipping at-rest encryption checks: build without SQLCipher")
             return
+
+        if created_info.get("sqlcipher", False):
+            enc_path = os.path.join(node.datadir, "regtest", "wallets", "enc_on_create", "wallet.dat")
+            with open(enc_path, "rb") as f:
+                header = f.read(16)
+            assert not header.startswith(b"SQLite format 3"), \
+                "createwallet passphrase should SQLCipher-encrypt the wallet file"
 
         self.log.info("Encrypt SQLite wallet and verify at-rest protection")
         passphrase = "sqlite-at-rest-passphrase"
