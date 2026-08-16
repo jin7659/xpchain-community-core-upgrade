@@ -192,11 +192,9 @@ Official **depends** builds include **SQLCipher** for SQLite wallet at-rest encr
 
 - `encryptwallet` rewrites the SQLite file with a database-level key (in addition to application-layer key encryption).
 - `getwalletinfo` reports `"sqlcipher": true` and `"databaseformat": "sqlite"`.
-- After restart:
-  - **GUI**: if `-walletdbpassphrase` is not set, a dialog prompts for the database passphrase (remembered for the process only; not written to disk).
-  - **xpchaind / conf**: pass the same passphrase with `-walletdbpassphrase` (or `walletdbpassphrase=` in `xpchain.conf`).
-  - **Runtime load**: `loadwallet "name" "dbpassphrase"` when the wallet is not loaded at startup (required if `-walletdbpassphrase` is unset).
-  - Application keys remain locked until `walletpassphrase` / GUI unlock.
+- After restart there are **two separate steps** (same passphrase for both when you used `encryptwallet`):
+  1. **Open wallet file** — GUI dialog titled like “Open encrypted wallet file” if `-walletdbpassphrase` is unset (remembered for the process only; not written to disk). Daemon: `-walletdbpassphrase` / `walletdbpassphrase=` in `xpchain.conf`, or `loadwallet "name" "dbpassphrase"`.
+  2. **Unlock spending keys** — GUI “Unlock wallet keys” / Settings unlock, or `walletpassphrase`. Opening the file does **not** unlock keys by itself.
 - Prefer conf/`-walletdbpassphrase` for unattended daemons; never store the passphrase in Qt settings or shared docs.
 
 If your build shows `"sqlcipher": false`, install `libsqlcipher-dev` (or build via `depends/`) before deploying custodial wallets.

@@ -15,7 +15,13 @@ namespace Ui {
     class AskPassphraseDialog;
 }
 
-/** Multifunctional dialog to ask for passphrases. Used for encryption, unlocking, and changing the passphrase.
+/** Multifunctional dialog to ask for passphrases.
+ *
+ * Two encryption layers exist for SQLCipher/SQLite wallets and must not be
+ * confused in the UI:
+ * - DatabaseUnlock: open the encrypted wallet *file* (at-rest / SQLCipher).
+ * - Unlock / Encrypt / ChangePass: protect *spending keys* in memory (and
+ *   ChangePass also rekeys the SQLCipher file when applicable).
  */
 class AskPassphraseDialog : public QDialog
 {
@@ -24,10 +30,10 @@ class AskPassphraseDialog : public QDialog
 public:
     enum Mode {
         Encrypt,         /**< Ask passphrase twice and encrypt */
-        Unlock,          /**< Ask passphrase and unlock */
+        Unlock,          /**< Ask passphrase and unlock spending keys */
         ChangePass,      /**< Ask old passphrase + new passphrase twice */
         Decrypt,         /**< Ask passphrase and decrypt wallet */
-        DatabaseUnlock   /**< Ask passphrase to open SQLCipher wallet DB (no WalletModel) */
+        DatabaseUnlock   /**< Ask passphrase to open SQLCipher wallet file (no WalletModel) */
     };
 
     explicit AskPassphraseDialog(Mode mode, QWidget *parent, const QString& warningText = QString());

@@ -4157,8 +4157,9 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
                 db_passphrase = SecureString(gArgs.GetArg("-walletdbpassphrase", ""));
             } else {
                 const std::string prompt = strprintf(
-                    _("Wallet \"%s\" is encrypted with SQLCipher. Enter the database passphrase to open the wallet file. "
-                      "Private keys remain locked until you unlock the wallet with the same passphrase."),
+                    _("Open encrypted wallet file \"%s\": enter the database passphrase. "
+                      "This only opens the wallet file (SQLCipher). "
+                      "Spending keys stay locked until you unlock the wallet again with the same passphrase."),
                     name);
                 if (!uiInterface.ThreadSafeAskPassphrase.empty() &&
                     uiInterface.ThreadSafeAskPassphrase(name, prompt, db_passphrase) &&

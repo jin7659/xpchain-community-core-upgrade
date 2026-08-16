@@ -305,7 +305,10 @@ void WalletView::decryptForMinting(bool status)
             return;
 
         fWalletUnlockMintOnly = true;
-        AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this);
+        AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this,
+            tr("Enter your wallet passphrase to <b>unlock spending keys for staking only</b>.<br/><br/>"
+               "Sending coins will still require a full unlock. "
+               "This is separate from opening an encrypted wallet file at startup."));
         dlg.setModel(walletModel);
         dlg.exec();
 
