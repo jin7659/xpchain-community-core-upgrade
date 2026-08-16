@@ -106,6 +106,7 @@ private:
     QAction *createWalletAction = nullptr;
     QAction *openWalletAction = nullptr;
     QAction *importMnemonicAction = nullptr;
+    QAction *migrateWalletAction = nullptr;
     QAction *backupAllWalletsAction = nullptr;
     QAction* overviewAction = nullptr;
     QAction* historyAction = nullptr;
@@ -265,6 +266,8 @@ private Q_SLOTS:
     void createWallet();
     /** Restore wallet using BIP39 mnemonic */
     void importMnemonic();
+    /** Migrate current Berkeley DB wallet to SQLite */
+    void migrateWallet();
     /** Open a wallet */
     void openWallet();
     /** Backup all wallets */

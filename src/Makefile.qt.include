@@ -99,6 +99,7 @@ QT_FORMS_UI = \
   qt/forms/askpassphrasedialog.ui \
   qt/forms/coincontroldialog.ui \
   qt/forms/createwalletdialog.ui \
+  qt/forms/migratewalletdialog.ui \
   qt/forms/editaddressdialog.ui \
   qt/forms/editstakingrewarddistributiondialog.ui \
   qt/forms/helpmessagedialog.ui \
@@ -123,6 +124,7 @@ QT_MOC_CPP = \
   qt/moc_addresstablemodel.cpp \
   qt/moc_askpassphrasedialog.cpp \
   qt/moc_createwalletdialog.cpp \
+  qt/moc_migratewalletdialog.cpp \
   qt/moc_bantablemodel.cpp \
   qt/moc_xpchainaddressvalidator.cpp \
   qt/moc_xpchainamountfield.cpp \
@@ -205,6 +207,7 @@ XPCHAIN_QT_H = \
   qt/addresstablemodel.h \
   qt/askpassphrasedialog.h \
   qt/createwalletdialog.h \
+  qt/migratewalletdialog.h \
   qt/bantablemodel.h \
   qt/xpchainaddressvalidator.h \
   qt/xpchainamountfield.h \
@@ -358,6 +361,7 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/addresstablemodel.cpp \
   qt/askpassphrasedialog.cpp \
   qt/createwalletdialog.cpp \
+  qt/migratewalletdialog.cpp \
   qt/coincontroldialog.cpp \
   qt/coincontroltreewidget.cpp \
   qt/editaddressdialog.cpp \
