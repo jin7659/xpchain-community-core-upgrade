@@ -106,6 +106,7 @@ QT_FORMS_UI = \
   qt/forms/intro.ui \
   qt/forms/modaloverlay.ui \
   qt/forms/mnemonicimportdialog.ui \
+  qt/forms/mnemonicbackupdialog.ui \
   qt/forms/openuridialog.ui \
   qt/forms/optionsdialog.ui \
   qt/forms/overviewpage.ui \
@@ -179,6 +180,7 @@ QT_MOC_CPP = \
   qt/moc_txanalytics.cpp \
   qt/moc_transactionanalyticswidget.cpp \
   qt/moc_mnemonicimportdialog.cpp \
+  qt/moc_mnemonicbackupdialog.cpp \
   qt/moc_watchaddressdialog.cpp
 
 XPCHAIN_MM = \
@@ -269,6 +271,7 @@ XPCHAIN_QT_H = \
   qt/txanalytics.h \
   qt/transactionanalyticswidget.h \
   qt/mnemonicimportdialog.h \
+  qt/mnemonicbackupdialog.h \
   qt/watchaddressdialog.h \
   qt/res/bip39_words.h
 
@@ -396,6 +399,7 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/txanalytics.cpp \
   qt/transactionanalyticswidget.cpp \
   qt/mnemonicimportdialog.cpp \
+  qt/mnemonicbackupdialog.cpp \
   qt/watchaddressdialog.cpp
 
 XPCHAIN_QT_CPP = $(XPCHAIN_QT_BASE_CPP)

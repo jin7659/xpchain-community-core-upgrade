@@ -7,10 +7,13 @@
 
 #include <crypto/hmac_sha512.h>
 #include <crypto/sha256.h>
+#include <random.h>
+#include <support/cleanse.h>
 
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
@@ -114,6 +117,54 @@ bool Validate(const SecureString& mnemonic, std::string& error_msg)
     }
 
     return true;
+}
+
+SecureString Generate(size_t word_count)
+{
+    if (word_count != 12 && word_count != 24) {
+        throw std::invalid_argument("Mnemonic word count must be 12 or 24");
+    }
+
+    const size_t entropy_bits = (word_count == 12) ? 128 : 256;
+    const size_t checksum_bits = entropy_bits / 32;
+    const size_t entropy_bytes = entropy_bits / 8;
+
+    std::vector<unsigned char> entropy(entropy_bytes);
+    GetStrongRandBytes(entropy.data(), entropy.size());
+
+    unsigned char hash[32];
+    CSHA256 sha;
+    sha.Write(entropy.data(), entropy.size());
+    sha.Finalize(hash);
+
+    const size_t total_bits = entropy_bits + checksum_bits;
+    std::vector<bool> bits(total_bits, false);
+    for (size_t i = 0; i < entropy_bits; ++i) {
+        bits[i] = (entropy[i / 8] >> (7 - (i % 8))) & 1;
+    }
+    for (size_t i = 0; i < checksum_bits; ++i) {
+        bits[entropy_bits + i] = (hash[0] >> (7 - i)) & 1;
+    }
+
+    SecureString mnemonic;
+    for (size_t w = 0; w < word_count; ++w) {
+        int idx = 0;
+        for (int b = 0; b < 11; ++b) {
+            idx <<= 1;
+            if (bits[w * 11 + b]) {
+                idx |= 1;
+            }
+        }
+        if (w > 0) {
+            mnemonic.push_back(' ');
+        }
+        const char* word = BIP39_WORDS[idx];
+        mnemonic.append(word, word + std::strlen(word));
+    }
+
+    memory_cleanse(entropy.data(), entropy.size());
+    memory_cleanse(hash, sizeof(hash));
+    return mnemonic;
 }
 
 std::vector<unsigned char> DeriveSeed(const std::string& mnemonic, const std::string& passphrase)

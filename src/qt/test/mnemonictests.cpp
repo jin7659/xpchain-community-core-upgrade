@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include <QRegularExpression>
 #include <QTest>
 
 void MnemonicTests::bip39Valid12Word()
@@ -32,4 +33,33 @@ void MnemonicTests::bip39DeriveSeedDeterministic()
     std::vector<unsigned char> seed = Mnemonic::DeriveSeed(mnemonic, passphrase);
     QCOMPARE(seed.size(), size_t(64));
     QCOMPARE(HexStr(seed), std::string("5eb00bbddcf069084889a8ab9155568165f5c453ccb85e70811aaed6f6da5fc19a5ac40b389cd370d086206dec8aa6c43daea6690f20ad3d8d48b2d2ce9e38e4"));
+}
+
+void MnemonicTests::bip39Generate12Validates()
+{
+    const SecureString mnemonic = Mnemonic::Generate(12);
+    std::string error;
+    QVERIFY(Mnemonic::Validate(mnemonic, error));
+    QVERIFY(error.empty());
+
+    QString phrase = QString::fromUtf8(mnemonic.data(), static_cast<int>(mnemonic.size()));
+    QCOMPARE(phrase.split(QRegularExpression("\\s+"), QString::SkipEmptyParts).size(), 12);
+}
+
+void MnemonicTests::bip39Generate24Validates()
+{
+    const SecureString mnemonic = Mnemonic::Generate(24);
+    std::string error;
+    QVERIFY(Mnemonic::Validate(mnemonic, error));
+    QVERIFY(error.empty());
+
+    QString phrase = QString::fromUtf8(mnemonic.data(), static_cast<int>(mnemonic.size()));
+    QCOMPARE(phrase.split(QRegularExpression("\\s+"), QString::SkipEmptyParts).size(), 24);
+}
+
+void MnemonicTests::bip39GenerateUnique()
+{
+    const SecureString a = Mnemonic::Generate(12);
+    const SecureString b = Mnemonic::Generate(12);
+    QVERIFY(std::string(a.begin(), a.end()) != std::string(b.begin(), b.end()));
 }

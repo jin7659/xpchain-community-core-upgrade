@@ -14,6 +14,9 @@ namespace Mnemonic {
 bool Validate(const SecureString& mnemonic, std::string& error_msg);
 bool Validate(const std::string& mnemonic, std::string& error_msg);
 
+//! Generate a new BIP39 English mnemonic (word_count must be 12 or 24).
+SecureString Generate(size_t word_count);
+
 std::vector<unsigned char> DeriveSeed(const SecureString& mnemonic, const SecureString& passphrase = SecureString());
 std::vector<unsigned char> DeriveSeed(const std::string& mnemonic, const std::string& passphrase = "");
 } // namespace Mnemonic
