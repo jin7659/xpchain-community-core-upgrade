@@ -5,6 +5,7 @@
 #include <qt/guiconstants.h>
 #include <qt/guiutil.h>
 #include <qt/createwalletdialog.h>
+#include <qt/migratewalletdialog.h>
 #include <qt/intro.h>
 #include <qt/modaloverlay.h>
 #include <qt/networkstyle.h>
@@ -51,6 +52,7 @@
 #include <QListWidget>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QUrl>
 #include <QMimeData>
 #include <QProgressDialog>
 #include <QSettings>
@@ -234,6 +236,9 @@ void XPChainGUI::createActions()
     importMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Restore Wallet from Mnemonic..."), this);
     importMnemonicAction->setStatusTip(tr("Restore keys from a BIP39 mnemonic into the current wallet (prefer a new empty wallet)"));
 
+    migrateWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Migrate Wallet to SQLite..."), this);
+    migrateWalletAction->setStatusTip(tr("Copy the current Berkeley DB wallet into a new SQLite wallet file"));
+
     backupAllWalletsAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup All Wallets..."), this);
     backupAllWalletsAction->setStatusTip(tr("Backup all loaded wallets to a specific directory"));
 
@@ -361,6 +366,7 @@ void XPChainGUI::createActions()
     connect(createWalletAction, SIGNAL(triggered()), this, SLOT(createWallet()));
     connect(openWalletAction, SIGNAL(triggered()), this, SLOT(openWallet()));
     connect(importMnemonicAction, SIGNAL(triggered()), this, SLOT(importMnemonic()));
+    connect(migrateWalletAction, SIGNAL(triggered()), this, SLOT(migrateWallet()));
     connect(backupAllWalletsAction, SIGNAL(triggered()), this, SLOT(backupAllWallets()));
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
@@ -402,6 +408,7 @@ void XPChainGUI::createMenuBar()
         file->addAction(createWalletAction);
         file->addAction(openWalletAction);
         file->addAction(importMnemonicAction);
+        file->addAction(migrateWalletAction);
         file->addAction(backupAllWalletsAction);
         file->addAction(openAction);
         file->addAction(backupWalletAction);
@@ -618,6 +625,8 @@ void XPChainGUI::setWalletActionsEnabled(bool enabled)
     openAction->setEnabled(enabled);
     mintingAction->setEnabled(enabled);
     openStakingRewardSettingsAction->setEnabled(enabled);
+    importMnemonicAction->setEnabled(enabled);
+    migrateWalletAction->setEnabled(enabled);
 }
 
 void XPChainGUI::createTrayIcon(const NetworkStyle *networkStyle)
@@ -1520,6 +1529,68 @@ void XPChainGUI::importMnemonic()
 
     MnemonicImportDialog dlg(this, walletModel);
     dlg.exec();
+#endif
+}
+
+void XPChainGUI::migrateWallet()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame)
+        return;
+    WalletView *walletView = walletFrame->currentWalletView();
+    if (!walletView)
+        return;
+    WalletModel *walletModel = walletView->getWalletModel();
+    if (!walletModel) {
+        QMessageBox::warning(this, tr("No Wallet Selected"),
+                             tr("Please open or select a Berkeley DB wallet first."));
+        return;
+    }
+
+    MigrateWalletDialog dlg(this, walletModel);
+    if (!dlg.exec()) {
+        return;
+    }
+
+    UniValue options(UniValue::VOBJ);
+    options.pushKV("backup", dlg.doBackup());
+    options.pushKV("load_new", dlg.loadNew());
+    options.pushKV("destination", dlg.destination().toStdString());
+
+    UniValue params(UniValue::VARR);
+    params.push_back(options);
+
+    const std::string wallet_name = walletModel->wallet().getWalletName();
+    QByteArray encodedName = QUrl::toPercentEncoding(QString::fromStdString(wallet_name));
+    const std::string uri = "/wallet/" + std::string(encodedName.constData(), encodedName.length());
+
+    try {
+        UniValue result = m_node.executeRpc("migratewallet", params, uri);
+        QString message = tr("Wallet migrated to SQLite successfully.");
+        if (result.exists("destination")) {
+            message += tr("\n\nNew wallet: %1").arg(QString::fromStdString(result["destination"].get_str()));
+        }
+        if (result.exists("backup")) {
+            message += tr("\nBackup: %1").arg(QString::fromStdString(result["backup"].get_str()));
+        }
+        if (result.exists("records_copied")) {
+            message += tr("\nRecords copied: %1").arg(result["records_copied"].get_int());
+        }
+        if (result.exists("loaded_wallet")) {
+            message += tr("\n\nSwitched to: %1\nVerify your balance on Overview before sending.")
+                           .arg(QString::fromStdString(result["loaded_wallet"].get_str()));
+        } else {
+            message += tr("\n\nThe original Berkeley DB wallet is still loaded. "
+                          "Unload it and open the .sqlite file when you are ready.");
+        }
+        QMessageBox::information(this, tr("Migration Complete"), message);
+    } catch (const UniValue& e) {
+        QString err = e.exists("message") ? QString::fromStdString(e["message"].get_str())
+                                          : QString::fromStdString(e.write());
+        QMessageBox::critical(this, tr("Migration Failed"), err);
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, tr("Migration Failed"), QString::fromStdString(e.what()));
+    }
 #endif
 }
 

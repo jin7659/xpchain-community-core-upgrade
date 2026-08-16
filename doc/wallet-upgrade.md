@@ -130,6 +130,15 @@ xpchain-cli rescanblockchain 0
 
 Legacy BDB wallets can be migrated with `migratewallet`:
 
+### GUI (xpchain-qt)
+
+1. Open the Berkeley DB wallet you want to migrate.
+2. Choose **File → Migrate Wallet to SQLite…**
+3. Confirm the destination (default `<name>.sqlite`), backup, and whether to switch to the new wallet.
+4. After success, verify balance on Overview and send a small test transaction.
+
+Migration is disabled when the current wallet is already SQLite.
+
 ### CLI
 
 ```bash
