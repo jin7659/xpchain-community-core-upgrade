@@ -286,6 +286,8 @@ public Q_SLOTS:
     void updateWatchOnlyFlag(bool fHaveWatchonly);
     /* Current, immature or unconfirmed balance might have changed - emit 'balanceChanged' if so */
     void pollBalanceChanged();
+    /** Notify user after a mnemonic-import blockchain rescan finishes (safe if import dialog closed). */
+    void notifyMnemonicRescanFinished(bool success);
 };
 
 #endif // XPCHAIN_QT_WALLETMODEL_H

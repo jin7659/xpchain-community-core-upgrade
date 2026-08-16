@@ -71,6 +71,20 @@ void WalletModel::updateStatus()
     }
 }
 
+void WalletModel::notifyMnemonicRescanFinished(bool success)
+{
+    if (success) {
+        Q_EMIT message(tr("Mnemonic Rescan Complete"),
+                       tr("Blockchain rescan finished after mnemonic restore. Check Overview for your balance."),
+                       CClientUIInterface::MSG_INFORMATION);
+    } else {
+        Q_EMIT message(tr("Rescan Failed"),
+                       tr("The wallet could not start or complete a blockchain rescan after mnemonic import.\n\n"
+                          "If another rescan is already running, wait for it to finish or cancel it from the progress dialog, then try Tools → Rescan again."),
+                       CClientUIInterface::MSG_ERROR);
+    }
+}
+
 void WalletModel::pollBalanceChanged()
 {
     // Try to get balances and return early if locks can't be acquired. This

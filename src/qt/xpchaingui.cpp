@@ -232,7 +232,7 @@ void XPChainGUI::createActions()
     openWalletAction->setStatusTip(tr("Open an existing wallet"));
 
     importMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Restore Wallet from Mnemonic..."), this);
-    importMnemonicAction->setStatusTip(tr("Restore wallet using BIP39 mnemonic 12/24 words"));
+    importMnemonicAction->setStatusTip(tr("Restore keys from a BIP39 mnemonic into the current wallet (prefer a new empty wallet)"));
 
     backupAllWalletsAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup All Wallets..."), this);
     backupAllWalletsAction->setStatusTip(tr("Backup all loaded wallets to a specific directory"));
