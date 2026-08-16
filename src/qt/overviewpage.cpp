@@ -143,46 +143,43 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     pieChart = new AssetPieChart(this);
     ui->verticalLayout_2->insertWidget(1, pieChart);
 
-    // Phase 3: 정밀 채굴 예상 시간 보정 안내 라벨 배치
+    // Staking estimate — quiet secondary line under balances / chart
     labelStakingTimeCorrection = new QLabel(this);
-    labelStakingTimeCorrection->setStyleSheet("font-family: 'Inter'; font-size: 11px; color: #a0a0a0; padding: 4px;");
-    labelStakingTimeCorrection->setText(tr("정밀 채굴 예상 시간: 계산 중..."));
+    labelStakingTimeCorrection->setWordWrap(true);
+    labelStakingTimeCorrection->setStyleSheet(
+        "QLabel { font-size: 11px; color: #8b949e; padding: 2px 2px 6px 2px; background: transparent; border: none; }");
+    labelStakingTimeCorrection->setText(tr("Staking estimate: calculating…"));
     ui->verticalLayout_2->addWidget(labelStakingTimeCorrection);
 
-    // Phase 3: 자산 클래스 등급 배지 라벨 배치 (Balances 타이틀 영역)
+    // Balance-tier node tag next to Balances title
     labelBadge = new QLabel(this);
     labelBadge->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-    labelBadge->setStyleSheet("font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; background-color: #485a6a; border-radius: 4px; padding: 2px 6px;");
-    ui->horizontalLayout_4->addWidget(labelBadge);
+    labelBadge->setStyleSheet(
+        "QLabel { font-size: 10px; font-weight: 600; color: #c9d1d9; "
+        "background-color: transparent; border: 1px solid #3d444d; "
+        "border-radius: 3px; padding: 2px 8px; }");
+    ui->horizontalLayout_4->insertWidget(1, labelBadge);
 
-    // Phase 3: 월간 채굴 보상 바 차트 위젯 배치 (오른쪽 트랜잭션 목록 아래, 가로 스크롤 가능하게 QScrollArea로 감싸줌)
+    // Monthly staking chart (scrollable horizontally when many months)
     analyticsWidget = new TransactionAnalyticsWidget(this);
-    
+
     QScrollArea* scrollArea = new QScrollArea(this);
-    scrollArea->setWidgetResizable(false); // 내부 위젯의 고유 가로 크기를 유지하여 스크롤 가능하게 함
+    scrollArea->setWidgetResizable(false);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff); // 세로 스크롤바 비활성
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setWidget(analyticsWidget);
-    scrollArea->setMinimumHeight(245);
+    scrollArea->setMinimumHeight(230);
+    scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setStyleSheet(
-        "QScrollArea {"
-        "  background: transparent;"
-        "  border: none;"
-        "}"
+        "QScrollArea { background: transparent; border: none; }"
         "QScrollBar:horizontal {"
-        "  border: none;"
-        "  background: #1A1A1A;"
-        "  height: 6px;"
-        "  margin: 0px 0px 0px 0px;"
+        "  border: none; background: #1a1a1a; height: 6px; margin: 0;"
         "}"
         "QScrollBar::handle:horizontal {"
-        "  background: #106ba3;"
-        "  min-width: 20px;"
-        "  border-radius: 3px;"
+        "  background: #3d8ec4; min-width: 24px; border-radius: 3px;"
         "}"
         "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {"
-        "  border: none;"
-        "  background: none;"
+        "  border: none; background: none; width: 0;"
         "}"
     );
     ui->verticalLayout_3->addWidget(scrollArea);
@@ -218,22 +215,22 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     QPushButton* watchAddressButton = new QPushButton(tr("Web Wallet Settings"), this);
     watchAddressButton->setStyleSheet(
         "QPushButton {"
-        "  background-color: #2b2b2b;"
-        "  color: #ffffff;"
-        "  border: 1px solid #3d3d3d;"
-        "  border-radius: 4px;"
-        "  padding: 4px 10px;"
-        "  font-family: 'Inter';"
+        "  background-color: transparent;"
+        "  color: #c9d1d9;"
+        "  border: 1px solid #3d444d;"
+        "  border-radius: 3px;"
+        "  padding: 3px 10px;"
         "  font-size: 11px;"
-        "  font-weight: bold;"
+        "  font-weight: 600;"
         "}"
         "QPushButton:hover {"
-        "  background-color: #106ba3;"
+        "  background-color: #1f6feb22;"
         "  border: 1px solid #106ba3;"
         "  color: #ffffff;"
         "}"
         "QPushButton:pressed {"
         "  background-color: #0d4f7a;"
+        "  color: #ffffff;"
         "}"
     );
     ui->horizontalLayout_4->addWidget(watchAddressButton);
@@ -515,29 +512,36 @@ void OverviewPage::updateAssetBadge(double totalBalance)
 {
     if (!labelBadge) return;
 
+    // Thresholds are spendable+pending+immature wallet total (XPC), used only as a local status tag.
     QString badgeText;
     QString badgeStyle;
+    QString tip;
+
+    const QString base =
+        "QLabel { font-size: 10px; font-weight: 600; border-radius: 3px; padding: 2px 8px; "
+        "background-color: transparent; }";
 
     if (totalBalance >= 1000000.0) {
-        badgeText = tr("VIP Node");
-        badgeStyle = "font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; "
-                     "background-color: #e0a904; border-radius: 4px; padding: 2px 6px; border: 1px solid #ffffff;";
+        badgeText = tr("VIP node");
+        badgeStyle = base + "QLabel { color: #f0c14b; border: 1px solid #8a6d1d; }";
+        tip = tr("Wallet total ≥ 1,000,000 XPC");
     } else if (totalBalance >= 200000.0) {
-        badgeText = tr("Gold Miner");
-        badgeStyle = "font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; "
-                     "background-color: #8a9ba8; border-radius: 4px; padding: 2px 6px;";
+        badgeText = tr("Gold node");
+        badgeStyle = base + "QLabel { color: #d7dee5; border: 1px solid #6b7785; }";
+        tip = tr("Wallet total ≥ 200,000 XPC");
     } else if (totalBalance >= 50000.0) {
-        badgeText = tr("Elite Node");
-        badgeStyle = "font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; "
-                     "background-color: #106ba3; border-radius: 4px; padding: 2px 6px;";
+        badgeText = tr("Active node");
+        badgeStyle = base + "QLabel { color: #6cb6ff; border: 1px solid #1f6feb; }";
+        tip = tr("Wallet total ≥ 50,000 XPC");
     } else {
-        badgeText = tr("Common Miner");
-        badgeStyle = "font-family: 'Inter'; font-weight: bold; font-size: 10px; color: #ffffff; "
-                     "background-color: #485a6a; border-radius: 4px; padding: 2px 6px;";
+        badgeText = tr("Starter node");
+        badgeStyle = base + "QLabel { color: #8b949e; border: 1px solid #3d444d; }";
+        tip = tr("Wallet total under 50,000 XPC — local status tag only");
     }
 
     labelBadge->setText(badgeText);
     labelBadge->setStyleSheet(badgeStyle);
+    labelBadge->setToolTip(tip);
 }
 
 void OverviewPage::onWatchAddressButtonClicked()
