@@ -6,29 +6,72 @@
 #include <qt/forms/ui_mnemonicimportdialog.h>
 #include <qt/walletmodel.h>
 #include <qt/mnemonic.h>
+#include <qt/guiconstants.h>
+#include <qt/guiutil.h>
+
+#include <wallet/bip39_words.h>
 
 #include <QMessageBox>
 #include <QDir>
 #include <QDateTime>
 #include <QFileInfo>
 #include <QThreadPool>
-#include <qt/guiutil.h>
+#include <QShowEvent>
+#include <QRegularExpression>
+
 #include <util.h>
 #include <support/cleanse.h>
+#include <ui_interface.h>
 
 #include <vector>
+
+namespace {
+class MnemonicRescanWorker : public QRunnable
+{
+public:
+    MnemonicRescanWorker(WalletModel* model) : m_model(model) {}
+
+    void run() override
+    {
+        bool success = false;
+        if (m_model) {
+            success = m_model->wallet().rescanBlockchain(0);
+        }
+        if (m_model) {
+            QMetaObject::invokeMethod(m_model, "notifyMnemonicRescanFinished",
+                                      Qt::QueuedConnection,
+                                      Q_ARG(bool, success));
+        }
+    }
+
+private:
+    WalletModel* m_model;
+};
+} // namespace
 
 MnemonicImportDialog::MnemonicImportDialog(QWidget *parent, WalletModel *_model) :
     QDialog(parent),
     ui(new Ui::MnemonicImportDialog),
-    model(_model)
+    model(_model),
+    m_empty_wallet_warned(false)
 {
     ui->setupUi(this);
 
+    ui->passphraseEdit->setMaxLength(MAX_PASSPHRASE_SIZE);
     ui->statusLabel->clear();
+    updateBackupWarning();
+    onBip44Toggled(ui->bip44CheckBox->isChecked());
+
     connect(ui->cancelButton, &QPushButton::clicked, this, &MnemonicImportDialog::on_cancelButton_clicked);
-    connect(ui->bip44CheckBox, &QCheckBox::toggled, ui->legacyCoinTypeCheckBox, &QWidget::setEnabled);
-    ui->legacyCoinTypeCheckBox->setEnabled(ui->bip44CheckBox->isChecked());
+    connect(ui->createEmptyWalletButton, &QPushButton::clicked, this, &MnemonicImportDialog::on_createEmptyWalletButton_clicked);
+    connect(ui->bip44CheckBox, &QCheckBox::toggled, this, &MnemonicImportDialog::onBip44Toggled);
+    connect(ui->legacyCoinTypeCheckBox, &QCheckBox::toggled, this, [this](bool) {
+        onBip44Toggled(ui->bip44CheckBox->isChecked());
+    });
+    connect(ui->showPassphraseCheckBox, &QCheckBox::toggled, this, &MnemonicImportDialog::onShowPassphraseToggled);
+    connect(ui->mnemonicEdit, &QPlainTextEdit::textChanged, this, &MnemonicImportDialog::onMnemonicTextChanged);
+
+    onMnemonicTextChanged();
 }
 
 MnemonicImportDialog::~MnemonicImportDialog()
@@ -36,9 +79,202 @@ MnemonicImportDialog::~MnemonicImportDialog()
     delete ui;
 }
 
+void MnemonicImportDialog::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    if (!m_empty_wallet_warned) {
+        m_empty_wallet_warned = true;
+        warnIfWalletNotEmpty();
+    }
+}
+
 void MnemonicImportDialog::on_cancelButton_clicked()
 {
     reject();
+}
+
+void MnemonicImportDialog::on_createEmptyWalletButton_clicked()
+{
+    QMessageBox::information(this, tr("Create an empty wallet first"),
+        tr("This dialog will close.\n\n"
+           "1. Use File → Create Wallet to make a new empty wallet.\n"
+           "2. Select that wallet.\n"
+           "3. Open File → Restore Wallet from Mnemonic again.\n\n"
+           "That keeps restored keys separate from your current wallet."));
+    reject();
+}
+
+void MnemonicImportDialog::onBip44Toggled(bool checked)
+{
+    ui->legacyCoinTypeCheckBox->setEnabled(checked);
+    if (!checked) {
+        ui->legacyCoinTypeCheckBox->setChecked(false);
+        ui->pathHintLabel->setText(
+            tr("Using XPChain Core HD (m/0'/…). Uncheck only for Core-native seeds — "
+               "this path does not match XPChain web wallet addresses."));
+    } else if (ui->legacyCoinTypeCheckBox->isChecked()) {
+        ui->pathHintLabel->setText(
+            tr("BIP44 path m/44'/398'/0'/… (legacy web wallet). Prefer coin_type 0 unless you know you need 398."));
+    } else {
+        ui->pathHintLabel->setText(
+            tr("BIP44 path m/44'/0'/0'/… — current XPChain web wallet (recommended)."));
+    }
+}
+
+void MnemonicImportDialog::onShowPassphraseToggled(bool show)
+{
+    ui->passphraseEdit->setEchoMode(show ? QLineEdit::Normal : QLineEdit::Password);
+}
+
+const QSet<QString>& MnemonicImportDialog::bip39WordSet()
+{
+    static const QSet<QString> words = []() {
+        QSet<QString> set;
+        set.reserve(2048);
+        for (int i = 0; i < 2048; ++i) {
+            set.insert(QString::fromUtf8(BIP39_WORDS[i]));
+        }
+        return set;
+    }();
+    return words;
+}
+
+bool MnemonicImportDialog::isBip39Word(const QString& word)
+{
+    return bip39WordSet().contains(word.toLower());
+}
+
+void MnemonicImportDialog::setStatus(StatusKind kind, const QString& text)
+{
+    // Avoid neon hardcoded colors that fight the global theme; use readable accents.
+    QString color;
+    switch (kind) {
+    case StatusError: color = QStringLiteral("#c62828"); break;
+    case StatusWarn:  color = QStringLiteral("#ef6c00"); break;
+    case StatusOk:    color = QStringLiteral("#2e7d32"); break;
+    case StatusInfo:  color = QStringLiteral("#1565c0"); break;
+    case StatusNeutral:
+    default:          color = QString(); break;
+    }
+    if (color.isEmpty()) {
+        ui->statusLabel->setStyleSheet(QString());
+    } else {
+        ui->statusLabel->setStyleSheet(QStringLiteral("color: %1; font-weight: 600;").arg(color));
+    }
+    ui->statusLabel->setText(text);
+}
+
+QString MnemonicImportDialog::backupDirName() const
+{
+    if (model && !model->wallet().isLegacy()) {
+        return QStringLiteral("backups");
+    }
+    return QStringLiteral("wallet_backups");
+}
+
+void MnemonicImportDialog::updateBackupWarning()
+{
+    const QString dir = backupDirName();
+    ui->warningLabel->setText(
+        tr("WARNING: Import merges keys into the <b>current</b> wallet "
+           "(“%1”). A backup is written to <code>%2/backup_before_mnemonic_*.dat</code> "
+           "before import.<br/><br/>"
+           "For a clean recovery, create a new empty wallet first "
+           "(button below, or File → Create Wallet), then restore into that wallet.")
+            .arg(model ? QString::fromStdString(model->wallet().getWalletName()) : tr("(unknown)"))
+            .arg(dir));
+}
+
+bool MnemonicImportDialog::walletLooksUsed() const
+{
+    if (!model) return false;
+    const interfaces::WalletBalances bal = model->wallet().getBalances();
+    if (bal.balance != 0 || bal.unconfirmed_balance != 0 || bal.immature_balance != 0) {
+        return true;
+    }
+    return !model->wallet().getWalletTxs().empty();
+}
+
+void MnemonicImportDialog::warnIfWalletNotEmpty()
+{
+    if (!walletLooksUsed()) {
+        return;
+    }
+    const auto btn = QMessageBox::warning(this, tr("Current wallet is not empty"),
+        tr("This wallet already has a balance or transaction history.\n\n"
+           "Mnemonic import merges derived keys into this wallet; it does not replace it.\n\n"
+           "For a clean recovery, cancel and create a new empty wallet first.\n\n"
+           "Continue merging into “%1”?")
+            .arg(QString::fromStdString(model->wallet().getWalletName())),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No);
+    if (btn != QMessageBox::Yes) {
+        reject();
+    }
+}
+
+void MnemonicImportDialog::onMnemonicTextChanged()
+{
+    const QString text = ui->mnemonicEdit->toPlainText().trimmed();
+    if (text.isEmpty()) {
+        ui->wordCountLabel->setText(tr("0 words — enter 12 or 24 BIP39 words"));
+        setStatus(StatusNeutral, QString());
+        return;
+    }
+
+    const QStringList words = text.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+    const int n = words.size();
+    QStringList invalid;
+    for (const QString& word : words) {
+        if (!isBip39Word(word)) {
+            invalid.append(word);
+        }
+    }
+
+    QString count_text = tr("%1 word(s)").arg(n);
+    const bool length_ok = (n == 12 || n == 15 || n == 18 || n == 21 || n == 24);
+    if (length_ok) {
+        count_text += tr(" · length OK");
+    } else {
+        count_text += tr(" · need 12 or 24 (also accepts 15/18/21)");
+    }
+
+    if (!invalid.isEmpty()) {
+        const QString shown = invalid.mid(0, 4).join(QStringLiteral(", "));
+        count_text += tr(" · not in BIP39 list: %1").arg(shown);
+        if (invalid.size() > 4) {
+            count_text += tr("…");
+        }
+        ui->wordCountLabel->setText(count_text);
+        setStatus(StatusWarn, tr("Fix unknown words before importing."));
+        return;
+    }
+
+    // Suggest completions for the last incomplete token (still typing).
+    const bool ends_with_space = ui->mnemonicEdit->toPlainText().endsWith(QLatin1Char(' '))
+        || ui->mnemonicEdit->toPlainText().endsWith(QLatin1Char('\n'));
+    if (!ends_with_space && !words.isEmpty()) {
+        const QString partial = words.last().toLower();
+        if (partial.size() >= 2 && !bip39WordSet().contains(partial)) {
+            QStringList suggestions;
+            for (const QString& candidate : bip39WordSet()) {
+                if (candidate.startsWith(partial)) {
+                    suggestions.append(candidate);
+                    if (suggestions.size() >= 5) break;
+                }
+            }
+            if (!suggestions.isEmpty()) {
+                count_text += tr(" · suggestions: %1").arg(suggestions.join(QStringLiteral(", ")));
+            }
+        }
+    }
+
+    ui->wordCountLabel->setText(count_text);
+    if (length_ok) {
+        setStatus(StatusInfo, tr("Word list looks valid. Full checksum is checked on Import."));
+    } else {
+        setStatus(StatusNeutral, QString());
+    }
 }
 
 static void rotateBackups(const QString& backupDirAbsPath)
@@ -57,42 +293,10 @@ static void rotateBackups(const QString& backupDirAbsPath)
     }
 }
 
-class MnemonicRescanWorker : public QRunnable
-{
-public:
-    MnemonicRescanWorker(WalletModel* model, QObject* receiver)
-        : m_model(model), m_receiver(receiver) {}
-
-    void run() override
-    {
-        bool success = false;
-        if (m_model) {
-            success = m_model->wallet().rescanBlockchain(0);
-        }
-        QMetaObject::invokeMethod(m_receiver, "onRescanFinished",
-                                  Qt::QueuedConnection,
-                                  Q_ARG(bool, success));
-    }
-
-private:
-    WalletModel* m_model;
-    QObject* m_receiver;
-};
-
-void MnemonicImportDialog::onRescanFinished(bool success)
-{
-    if (!success) {
-        QMessageBox::warning(this, tr("Rescan Failed"),
-            tr("The wallet could not start or complete a blockchain rescan.\n\n"
-               "If another rescan is already running, wait for it to finish or cancel it from the progress dialog, then try Tools → Rescan again."));
-    }
-}
-
 void MnemonicImportDialog::on_importButton_clicked()
 {
     if (!model) {
-        ui->statusLabel->setStyleSheet("color: #ff4500;");
-        ui->statusLabel->setText(tr("Error: Wallet model is not available."));
+        setStatus(StatusError, tr("Error: Wallet model is not available."));
         return;
     }
 
@@ -102,27 +306,24 @@ void MnemonicImportDialog::on_importButton_clicked()
     SecureString passphraseSec(passphraseBytes.constData(), passphraseBytes.constData() + passphraseBytes.size());
 
     if (mnemonicSec.empty()) {
-        ui->statusLabel->setStyleSheet("color: #ff4500;");
-        ui->statusLabel->setText(tr("Please enter your mnemonic phrase."));
+        setStatus(StatusError, tr("Please enter your mnemonic phrase."));
         return;
     }
 
     std::string error_msg;
     if (!Mnemonic::Validate(mnemonicSec, error_msg)) {
-        ui->statusLabel->setStyleSheet("color: #ff4500;");
-        ui->statusLabel->setText(tr("Validation failed: %1").arg(QString::fromStdString(error_msg)));
+        setStatus(StatusError, tr("Validation failed: %1").arg(QString::fromStdString(error_msg)));
         return;
     }
 
-    ui->statusLabel->setStyleSheet("color: #ffa500;");
-    ui->statusLabel->setText(tr("Mnemonic valid! Preparing migration and wallet backup..."));
+    setStatus(StatusWarn, tr("Mnemonic valid. Creating wallet backup…"));
     QCoreApplication::processEvents();
 
     QString dataDir = QString::fromStdString(GetDataDir().string());
-    QString backupDirName = model->wallet().isLegacy() ? "wallet_backups" : "backups";
-    QDir backupDir(dataDir);
-    backupDir.mkpath(backupDirName);
-    QString backupPath = dataDir + "/" + backupDirName + "/backup_before_mnemonic_" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") + ".dat";
+    QString backupDir = backupDirName();
+    QDir(dataDir).mkpath(backupDir);
+    QString backupPath = dataDir + "/" + backupDir + "/backup_before_mnemonic_"
+        + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss") + ".dat";
 
     if (!model->wallet().backupWallet(backupPath.toStdString())) {
         QFileInfo backupInfo(backupPath);
@@ -131,7 +332,8 @@ void MnemonicImportDialog::on_importButton_clicked()
         QMessageBox::StandardButton btn = QMessageBox::warning(this, tr("Backup Directory Write Permission Denied"),
             tr("The wallet could not save the automatic backup to:\n%1\n\n"
                "This is likely due to insufficient write permissions in the directory.\n"
-               "For security, you must perform a manual backup before importing. Would you like to select an alternative location to save your backup?").arg(absoluteBackupPath),
+               "For security, you must perform a manual backup before importing. Would you like to select an alternative location to save your backup?")
+                .arg(absoluteBackupPath),
             QMessageBox::Yes | QMessageBox::No);
 
         if (btn == QMessageBox::Yes) {
@@ -140,28 +342,25 @@ void MnemonicImportDialog::on_importButton_clicked()
                 tr("Wallet Data (*.dat)"), nullptr);
 
             if (manualFilename.isEmpty() || !model->wallet().backupWallet(manualFilename.toStdString())) {
-                ui->statusLabel->setStyleSheet("color: #ff4500;");
-                ui->statusLabel->setText(tr("Manual wallet backup failed or cancelled. Aborting import for security."));
+                setStatus(StatusError, tr("Manual wallet backup failed or cancelled. Aborting import for security."));
                 memory_cleanse(mnemonicSec.data(), mnemonicSec.size());
                 memory_cleanse(passphraseSec.data(), passphraseSec.size());
                 return;
             }
         } else {
-            ui->statusLabel->setStyleSheet("color: #ff4500;");
-            ui->statusLabel->setText(tr("Wallet backup failed. Aborting import for security."));
+            setStatus(StatusError, tr("Wallet backup failed. Aborting import for security."));
             memory_cleanse(mnemonicSec.data(), mnemonicSec.size());
             memory_cleanse(passphraseSec.data(), passphraseSec.size());
             return;
         }
     } else {
-        rotateBackups(dataDir + "/" + backupDirName);
+        rotateBackups(dataDir + "/" + backupDir);
     }
 
     if (model->wallet().isLocked()) {
         WalletModel::UnlockContext ctx(model->requestUnlock());
         if (!ctx.isValid()) {
-            ui->statusLabel->setStyleSheet("color: #ff4500;");
-            ui->statusLabel->setText(tr("Wallet unlock failed or cancelled. Aborting seed import."));
+            setStatus(StatusError, tr("Wallet unlock failed or cancelled. Aborting seed import."));
             memory_cleanse(mnemonicSec.data(), mnemonicSec.size());
             memory_cleanse(passphraseSec.data(), passphraseSec.size());
             return;
@@ -176,24 +375,20 @@ void MnemonicImportDialog::on_importButton_clicked()
     std::vector<unsigned char> seed = Mnemonic::DeriveSeed(mnemonicSec, passphraseSec);
     memory_cleanse(mnemonicSec.data(), mnemonicSec.size());
     memory_cleanse(passphraseSec.data(), passphraseSec.size());
+    ui->mnemonicEdit->clear();
+    ui->passphraseEdit->clear();
 
     if (!model->wallet().importMnemonicSeed(seed, options)) {
         memory_cleanse(seed.data(), seed.size());
-        ui->statusLabel->setStyleSheet("color: #ff4500;");
-        ui->statusLabel->setText(tr("Failed to import derived seed into core. Check if HD is enabled, if the wallet is locked, or if the keys already exist."));
+        setStatus(StatusError, tr("Failed to import derived seed. Check that HD is enabled, the wallet is unlocked, and keys are not conflicting."));
         return;
     }
     memory_cleanse(seed.data(), seed.size());
 
-    ui->statusLabel->setStyleSheet("color: #00ff00;");
-    if (options.use_bip44) {
-        ui->statusLabel->setText(tr("Web wallet compatible recovery complete. Starting blockchain rescan..."));
-    } else {
-        ui->statusLabel->setText(tr("Migration successful! Starting blockchain rescan..."));
-    }
+    setStatus(StatusOk, tr("Keys imported. Starting blockchain rescan — progress appears in the main window."));
     QCoreApplication::processEvents();
 
-    MnemonicRescanWorker* worker = new MnemonicRescanWorker(model, this);
+    MnemonicRescanWorker* worker = new MnemonicRescanWorker(model);
     worker->setAutoDelete(true);
     QThreadPool::globalInstance()->start(worker);
 
@@ -201,14 +396,16 @@ void MnemonicImportDialog::on_importButton_clicked()
     if (options.use_bip44) {
         importMsg = tr("Web wallet compatible BIP44 mnemonic recovery has completed.\n\n"
                        "Keys were imported along path m/44'/%1'/0'/change/index (up to %2 addresses per chain).\n\n"
-                       "A full blockchain rescan has started. Keep the wallet open until it finishes.\n"
+                       "A full blockchain rescan has started. Keep the wallet open until the progress dialog finishes.\n"
+                       "You will get a notification when the rescan completes.\n\n"
                        "Note: proof-of-stake rewards require coins to mature for several days before minting.")
                       .arg(options.bip44_coin_type)
                       .arg(options.gap_limit);
     } else {
         importMsg = tr("Your wallet has been migrated to the BIP39 seed using the XPChain Core HD scheme (m/0'/...).\n\n"
-                       "This path is different from the web wallet BIP44 layout unless you enabled web wallet recovery.\n\n"
-                       "A full blockchain rescan has started in the background.");
+                       "This path is different from the web wallet BIP44 layout.\n\n"
+                       "A full blockchain rescan has started. Keep the wallet open until it finishes; "
+                       "a notification will appear when it completes.");
     }
 
     QMessageBox::information(this, tr("Import Complete"), importMsg);

@@ -20,8 +20,11 @@ This document describes how to upgrade XPChain Core wallet releases safely, with
 Automatic backup on GUI mnemonic import is stored under:
 
 ```
-<datadir>/wallet_backups/backup_before_mnemonic_YYYYMMDD_hhmmss.dat
+<datadir>/wallet_backups/backup_before_mnemonic_YYYYMMDD_hhmmss.dat   # legacy BDB wallets
+<datadir>/backups/backup_before_mnemonic_YYYYMMDD_hhmmss.dat          # non-legacy / descriptor wallets
 ```
+
+The restore dialog shows the path that applies to the current wallet.
 
 ## Standard Upgrade Steps
 
@@ -52,15 +55,15 @@ XPChain supports restoring a wallet from a 12- or 24-word English BIP39 mnemonic
 
 ### GUI (xpchain-qt)
 
-1. For a **clean recovery**, create a **new empty wallet** first (`File → Create Wallet`).
-2. Open **Import Mnemonic** from the menu.
-3. Enter your mnemonic words.
-4. Enable **BIP44 (web wallet compatible)** when recovering from the XPChain web wallet.
+1. For a **clean recovery**, create a **new empty wallet** first (`File → Create Wallet`), or use **Create empty wallet first…** in the restore dialog.
+2. Open **File → Restore Wallet from Mnemonic**.
+3. Enter your mnemonic words (word count and BIP39 list hints appear as you type).
+4. Leave **Recover from XPChain web wallet (BIP44)** checked when recovering from the XPChain web wallet.
 5. Choose the correct **coin type**:
-   - **coin_type 0** — current web wallet (default since 2026)
-   - **coin_type 398** — legacy web wallet path (older deployments only)
+   - **coin_type 0** (default) — current web wallet
+   - **Legacy coin_type 398** — only if coin_type 0 finds nothing (older deployments)
 6. Confirm import. The wallet backs up automatically before importing keys.
-7. Wait for the blockchain rescan to finish before checking your balance.
+7. Wait for the blockchain rescan progress dialog to finish (a notification appears when it completes) before checking your balance.
 
 ### CLI (xpchain-cli)
 
@@ -208,8 +211,8 @@ If your build shows `"sqlcipher": false`, install `libsqlcipher-dev` (or build v
 | `wallets/wallet.dat` | Default wallet (SQLite for new installs; existing BDB files still open) |
 | `wallets/<name>/wallet.dat` | Named wallet directory layout (SQLite by default; BDB if created with `berkeley=true` or legacy) |
 | `wallets/*.sqlite` | Explicit SQLite wallet files |
-| `wallet_backups/` | Automatic pre-mnemonic-import backups (GUI) |
-| `backups/` | Non-legacy wallet backup directory |
+| `wallet_backups/` | Automatic pre-mnemonic-import backups (GUI) for **legacy** wallets |
+| `backups/` | Automatic pre-mnemonic-import backups (GUI) for **non-legacy** wallets |
 
 See [files.md](files.md) for the full data directory layout.
 

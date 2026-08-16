@@ -6,9 +6,11 @@
 #define XPCHAIN_QT_MNEMONICIMPORTDIALOG_H
 
 #include <QDialog>
-#include <QRunnable>
+#include <QSet>
+#include <QString>
 
 class WalletModel;
+class QShowEvent;
 
 namespace Ui {
 class MnemonicImportDialog;
@@ -22,14 +24,37 @@ public:
     explicit MnemonicImportDialog(QWidget *parent = nullptr, WalletModel *model = nullptr);
     ~MnemonicImportDialog();
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private Q_SLOTS:
     void on_importButton_clicked();
     void on_cancelButton_clicked();
-    void onRescanFinished(bool success);
+    void on_createEmptyWalletButton_clicked();
+    void onMnemonicTextChanged();
+    void onBip44Toggled(bool checked);
+    void onShowPassphraseToggled(bool checked);
 
 private:
+    enum StatusKind {
+        StatusNeutral,
+        StatusInfo,
+        StatusWarn,
+        StatusError,
+        StatusOk
+    };
+
+    void setStatus(StatusKind kind, const QString& text);
+    void updateBackupWarning();
+    void warnIfWalletNotEmpty();
+    bool walletLooksUsed() const;
+    QString backupDirName() const;
+    static bool isBip39Word(const QString& word);
+    static const QSet<QString>& bip39WordSet();
+
     Ui::MnemonicImportDialog *ui;
     WalletModel *model;
+    bool m_empty_wallet_warned;
 };
 
 #endif // XPCHAIN_QT_MNEMONICIMPORTDIALOG_H
