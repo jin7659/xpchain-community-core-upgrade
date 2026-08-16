@@ -317,15 +317,15 @@ void XPChainGUI::createActions()
     toggleHideAction->setStatusTip(tr("Show or hide the main Window"));
 
     encryptWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_closed"), tr("&Encrypt Wallet..."), this);
-    encryptWalletAction->setStatusTip(tr("Encrypt the private keys that belong to your wallet"));
+    encryptWalletAction->setStatusTip(tr("Encrypt spending keys and (on SQLite) the wallet file at rest with a passphrase"));
     encryptWalletAction->setCheckable(true);
     decryptForMintingAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_open"), tr("&Unlock Wallet for Minting Only"), this);
-    decryptForMintingAction->setStatusTip(tr("Unlock wallet only for minting. Sending coins will still require the password."));
+    decryptForMintingAction->setStatusTip(tr("Unlock spending keys for staking only. Sending still requires a full unlock."));
     decryptForMintingAction->setCheckable(true);
     backupWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup Wallet..."), this);
     backupWalletAction->setStatusTip(tr("Backup wallet to another location"));
     changePassphraseAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Change Passphrase..."), this);
-    changePassphraseAction->setStatusTip(tr("Change the passphrase used for wallet encryption"));
+    changePassphraseAction->setStatusTip(tr("Change the passphrase for spending keys and encrypted wallet files"));
     signMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/edit"), tr("Sign &message..."), this);
     signMessageAction->setStatusTip(tr("Sign messages with your XPChain addresses to prove you own them"));
     verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify message..."), this);
@@ -1015,9 +1015,18 @@ void XPChainGUI::askWalletDbPassphrase(const QString& wallet_name, const QString
     if (ok) *ok = false;
     if (!passphrase_out) return;
 
+    // Prefer a clear dual-layer explanation even when the core supplies a prompt.
     QString warning = message;
+    if (warning.isEmpty()) {
+        warning = tr("Enter the <b>database passphrase</b> to open the encrypted wallet <b>file</b>.<br/><br/>"
+                     "Private keys stay locked after this step. You will be asked again when you "
+                     "send, sign, or unlock for staking.");
+    } else if (!warning.contains(QStringLiteral("locked"), Qt::CaseInsensitive)) {
+        warning += tr("<br/><br/>Private keys stay locked after opening the file. "
+                      "Unlock again before sending or signing.");
+    }
     if (!wallet_name.isEmpty()) {
-        warning = tr("Wallet: %1").arg(wallet_name) + "<br><br>" + message;
+        warning = tr("<b>Wallet file:</b> %1").arg(wallet_name) + "<br><br>" + warning;
     }
     AskPassphraseDialog dlg(AskPassphraseDialog::DatabaseUnlock, this, warning);
     if (dlg.exec() == QDialog::Accepted) {
@@ -1171,10 +1180,13 @@ void XPChainGUI::setEncryptionStatus(int status)
         labelWalletEncryptionIcon->show();
         if (fWalletUnlockMintOnly) {
             labelWalletEncryptionIcon->setPixmap(platformStyle->SingleColorIcon(":/icons/lock_staking").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
-            labelWalletEncryptionIcon->setToolTip(tr("Wallet is <b>encrypted</b> and currently <b>unlocked for staking only</b>"));
+            labelWalletEncryptionIcon->setToolTip(
+                tr("Wallet file is open. Spending keys are <b>unlocked for staking only</b> — "
+                   "sending still requires a full unlock."));
         } else {
             labelWalletEncryptionIcon->setPixmap(platformStyle->SingleColorIcon(":/icons/lock_open").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
-            labelWalletEncryptionIcon->setToolTip(tr("Wallet is <b>encrypted</b> and currently <b>unlocked</b>"));
+            labelWalletEncryptionIcon->setToolTip(
+                tr("Wallet file is open and spending keys are <b>unlocked</b> (sending and signing allowed)."));
         }
         encryptWalletAction->setChecked(true);
         changePassphraseAction->setEnabled(true);
@@ -1185,7 +1197,9 @@ void XPChainGUI::setEncryptionStatus(int status)
     case WalletModel::Locked:
         labelWalletEncryptionIcon->show();
         labelWalletEncryptionIcon->setPixmap(platformStyle->SingleColorIcon(":/icons/lock_closed").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
-        labelWalletEncryptionIcon->setToolTip(tr("Wallet is <b>encrypted</b> and currently <b>locked</b>"));
+        labelWalletEncryptionIcon->setToolTip(
+            tr("Wallet is <b>encrypted</b>. The wallet <b>file may already be open</b>, "
+               "but spending keys are <b>locked</b> — unlock before sending or signing."));
         encryptWalletAction->setChecked(true);
         changePassphraseAction->setEnabled(true);
         encryptWalletAction->setEnabled(false); // TODO: decrypt currently not supported

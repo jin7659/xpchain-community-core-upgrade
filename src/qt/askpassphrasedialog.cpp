@@ -43,21 +43,36 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent, const QStr
     switch(mode)
     {
         case Encrypt: // Ask passphrase x2
-            ui->warningLabel->setText(tr("Enter the new passphrase to the wallet.<br/>Please use a passphrase of <b>ten or more random characters</b>, or <b>eight or more words</b>."));
+            ui->warningLabel->setText(
+                tr("Choose a passphrase that protects <b>two layers</b> on SQLite wallets:<br/>"
+                   "1) the wallet <b>file</b> at rest (SQLCipher), and<br/>"
+                   "2) your <b>spending keys</b> in memory.<br/><br/>"
+                   "After restart you will enter it once to <b>open the wallet file</b>, "
+                   "then again when you need to <b>send or sign</b>. "
+                   "Please use a passphrase of <b>ten or more random characters</b>, "
+                   "or <b>eight or more words</b>."));
             ui->passLabel1->hide();
             ui->passEdit1->hide();
+            ui->passLabel2->setText(tr("New passphrase"));
+            ui->passLabel3->setText(tr("Repeat new passphrase"));
             setWindowTitle(tr("Encrypt wallet"));
             break;
-        case Unlock: // Ask passphrase
-            ui->warningLabel->setText(tr("This operation needs your wallet passphrase to unlock the wallet."));
+        case Unlock: // Ask passphrase for spending keys
+            ui->warningLabel->setText(warningText.isEmpty()
+                ? tr("Enter your wallet passphrase to <b>unlock spending keys</b>.<br/><br/>"
+                     "This is not the same step as opening an encrypted wallet file at startup. "
+                     "If you already opened the file, keys can still be locked until you unlock here.")
+                : warningText);
+            ui->passLabel1->setText(tr("Wallet passphrase"));
             ui->passLabel2->hide();
             ui->passEdit2->hide();
             ui->passLabel3->hide();
             ui->passEdit3->hide();
-            setWindowTitle(tr("Unlock wallet"));
+            setWindowTitle(tr("Unlock wallet keys"));
             break;
         case Decrypt:   // Ask passphrase
             ui->warningLabel->setText(tr("This operation needs your wallet passphrase to decrypt the wallet."));
+            ui->passLabel1->setText(tr("Wallet passphrase"));
             ui->passLabel2->hide();
             ui->passEdit2->hide();
             ui->passLabel3->hide();
@@ -66,17 +81,26 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent, const QStr
             break;
         case DatabaseUnlock: // SQLCipher wallet file passphrase
             ui->warningLabel->setText(warningText.isEmpty()
-                ? tr("Enter the passphrase to open the encrypted wallet database.")
+                ? tr("Enter the <b>database passphrase</b> to open the encrypted wallet <b>file</b>.<br/><br/>"
+                     "Private keys stay locked after this step. You will be asked again when you "
+                     "send, sign, or unlock for staking.")
                 : warningText);
+            ui->passLabel1->setText(tr("Database passphrase"));
             ui->passLabel2->hide();
             ui->passEdit2->hide();
             ui->passLabel3->hide();
             ui->passEdit3->hide();
-            setWindowTitle(tr("Unlock wallet database"));
+            setWindowTitle(tr("Open encrypted wallet file"));
             break;
         case ChangePass: // Ask old passphrase + new passphrase x2
             setWindowTitle(tr("Change passphrase"));
-            ui->warningLabel->setText(tr("Enter the old passphrase and new passphrase to the wallet."));
+            ui->warningLabel->setText(
+                tr("Enter the current passphrase and a new one.<br/><br/>"
+                   "On SQLCipher (SQLite) wallets this updates <b>both</b> the wallet-file key "
+                   "and the spending-key encryption. Use the same new passphrase for both layers."));
+            ui->passLabel1->setText(tr("Current passphrase"));
+            ui->passLabel2->setText(tr("New passphrase"));
+            ui->passLabel3->setText(tr("Repeat new passphrase"));
             break;
     }
     textChanged();
@@ -129,7 +153,7 @@ void AskPassphraseDialog::accept()
             break;
         }
         QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm wallet encryption"),
-                 tr("Warning: If you encrypt your wallet and lose your passphrase, you will <b>LOSE ALL OF YOUR XPCHAINS</b>!") + "<br><br>" + tr("Are you sure you wish to encrypt your wallet?"),
+                 tr("Warning: If you encrypt your wallet and lose your passphrase, you will <b>LOSE ALL OF YOUR XPC</b>!") + "<br><br>" + tr("Are you sure you wish to encrypt your wallet?"),
                  QMessageBox::Yes|QMessageBox::Cancel,
                  QMessageBox::Cancel);
         if(retval == QMessageBox::Yes)
@@ -142,16 +166,19 @@ void AskPassphraseDialog::accept()
                                          "<qt>" +
                                          tr("%1 will close now to finish the encryption process. "
                                          "Remember that encrypting your wallet cannot fully protect "
-                                         "your xpchains from being stolen by malware infecting your computer.").arg(tr(PACKAGE_NAME)) +
+                                         "your XPC from being stolen by malware infecting your computer.").arg(tr(PACKAGE_NAME)) +
                                          "<br><br><b>" +
                                          tr("IMPORTANT: Any previous backups you have made of your wallet file "
                                          "should be replaced with the newly generated, encrypted wallet file. "
                                          "For security reasons, previous backups of the unencrypted wallet file "
                                          "will become useless as soon as you start using the new, encrypted wallet.") +
                                          "</b><br><br>" +
-                                         tr("On restart, enter the same passphrase when prompted (GUI), or set "
-                                         "<code>-walletdbpassphrase</code> for <code>xpchaind</code> / xpchain.conf. "
-                                         "Keys stay locked until you unlock the wallet again.") +
+                                         tr("Two steps after restart:<br/>"
+                                         "1) <b>Open wallet file</b> — enter this passphrase when prompted "
+                                         "(GUI), or set <code>-walletdbpassphrase</code> for "
+                                         "<code>xpchaind</code> / xpchain.conf.<br/>"
+                                         "2) <b>Unlock spending keys</b> — unlock again before sending or signing. "
+                                         "Opening the file does not unlock keys by itself.") +
                                          "</qt>");
                     QApplication::quit();
                 }
@@ -206,19 +233,21 @@ void AskPassphraseDialog::accept()
         {
             if(model->changePassphrase(oldpass, newpass1))
             {
-                QMessageBox::information(this, tr("Wallet encrypted"),
-                                     tr("Wallet passphrase was successfully changed."));
+                QMessageBox::information(this, tr("Passphrase changed"),
+                                     tr("Wallet passphrase was successfully changed. "
+                                        "On SQLCipher wallets this updates both the database passphrase "
+                                        "and spending-key encryption."));
                 QDialog::accept(); // Success
             }
             else
             {
-                QMessageBox::critical(this, tr("Wallet encryption failed"),
+                QMessageBox::critical(this, tr("Passphrase change failed"),
                                      tr("The passphrase entered for the wallet decryption was incorrect."));
             }
         }
         else
         {
-            QMessageBox::critical(this, tr("Wallet encryption failed"),
+            QMessageBox::critical(this, tr("Passphrase change failed"),
                                  tr("The supplied passphrases do not match."));
         }
         break;
