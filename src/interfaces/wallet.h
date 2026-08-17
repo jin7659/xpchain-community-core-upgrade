@@ -272,6 +272,15 @@ public:
     // Return whether wallet is a legacy (BDB) wallet.
     virtual bool isLegacy() = 0;
 
+    //! Database engine name ("berkeley" or "sqlite").
+    virtual std::string databaseFormat() = 0;
+
+    //! True when the wallet *file* is encrypted at rest (SQLCipher). Distinct from isCrypted().
+    virtual bool isEncryptedAtRest() = 0;
+
+    //! True when this is a descriptor wallet.
+    virtual bool isDescriptor() = 0;
+
     //! Register handler for unload message.
     using UnloadFn = std::function<void()>;
     virtual std::unique_ptr<Handler> handleUnload(UnloadFn fn) = 0;

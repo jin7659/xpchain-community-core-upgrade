@@ -3191,6 +3191,10 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
             "{\n"
             "  \"walletname\": xxxxx,               (string) the wallet name\n"
             "  \"walletversion\": xxxxx,            (numeric) the wallet version\n"
+            "  \"databaseformat\": \"sqlite\"|\"berkeley\", (string) wallet database engine\n"
+            "  \"sqlcipher\": true|false,           (boolean) whether this build includes SQLCipher support\n"
+            "  \"encrypted_at_rest\": true|false,   (boolean) whether the wallet file is SQLCipher-encrypted\n"
+            "  \"descriptors\": true|false,         (boolean) whether this is a descriptor wallet\n"
             "  \"balance\": xxxxxxx,                (numeric) the total confirmed balance of the wallet in " + CURRENCY_UNIT + "\n"
             "  \"unconfirmed_balance\": xxx,        (numeric) the total unconfirmed balance of the wallet in " + CURRENCY_UNIT + "\n"
             "  \"immature_balance\": xxxxxx,        (numeric) the total immature balance of the wallet in " + CURRENCY_UNIT + "\n"
@@ -3226,6 +3230,7 @@ static UniValue getwalletinfo(const JSONRPCRequest& request)
 #else
     obj.pushKV("sqlcipher", false);
 #endif
+    obj.pushKV("encrypted_at_rest", pwallet->GetDatabase().EncryptedAtRest());
     obj.pushKV("balance",       ValueFromAmount(pwallet->GetBalance()));
     obj.pushKV("unconfirmed_balance", ValueFromAmount(pwallet->GetUnconfirmedBalance()));
     obj.pushKV("immature_balance",    ValueFromAmount(pwallet->GetImmatureBalance()));

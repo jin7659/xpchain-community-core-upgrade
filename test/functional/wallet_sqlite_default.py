@@ -23,13 +23,18 @@ class WalletSQLiteDefaultTest(BitcoinTestFramework):
         self.log.info("Default wallet should use SQLite")
         default_info = node.getwalletinfo()
         assert_equal(default_info["databaseformat"], "sqlite")
+        assert_equal(default_info["encrypted_at_rest"], False)
+        assert_equal(default_info["descriptors"], False)
         default_path = os.path.join(wallet_dir, "wallet.dat")
         assert os.path.isfile(default_path)
 
         self.log.info("createwallet without berkeley flag creates SQLite")
         node.createwallet("modern")
         modern = node.get_wallet_rpc("modern")
-        assert_equal(modern.getwalletinfo()["databaseformat"], "sqlite")
+        modern_info = modern.getwalletinfo()
+        assert_equal(modern_info["databaseformat"], "sqlite")
+        assert_equal(modern_info["encrypted_at_rest"], False)
+        assert_equal(modern_info["descriptors"], False)
         modern_path = os.path.join(wallet_dir, "modern", "wallet.dat")
         assert os.path.isfile(modern_path)
 
@@ -37,7 +42,10 @@ class WalletSQLiteDefaultTest(BitcoinTestFramework):
         # positional: name, disable_private_keys, descriptors, passphrase, load_on_startup, berkeley
         node.createwallet("legacy_bdb", False, False, "", False, True)
         legacy = node.get_wallet_rpc("legacy_bdb")
-        assert_equal(legacy.getwalletinfo()["databaseformat"], "berkeley")
+        legacy_info = legacy.getwalletinfo()
+        assert_equal(legacy_info["databaseformat"], "berkeley")
+        assert_equal(legacy_info["encrypted_at_rest"], False)
+        assert_equal(legacy_info["descriptors"], False)
         legacy_path = os.path.join(wallet_dir, "legacy_bdb", "wallet.dat")
         assert os.path.isfile(legacy_path)
 

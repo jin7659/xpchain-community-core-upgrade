@@ -62,6 +62,11 @@ private:
     QTimer *apiTimer;
     QLabel *labelBadge;
     QLabel *labelStakingTimeCorrection;
+    QWidget *walletStatusRow;
+    QLabel *labelFormatChip;
+    QLabel *labelFileChip;
+    QLabel *labelTypeChip;
+    QLabel *labelLockChip;
 
     // Phase 5 추가 멤버 (웹지갑 잔고 관찰)
     QNetworkAccessManager *watchNetworkManager;
@@ -83,6 +88,7 @@ private Q_SLOTS:
     void onStakingDataReceived(QNetworkReply* reply);
     void updateStakingTime(double networkWeight);
     void updateAssetBadge(double totalBalance);
+    void updateWalletStatusChips();
 
     // Phase 5 추가 슬롯
     void onWatchAddressButtonClicked();

@@ -633,6 +633,9 @@ public:
     bool isLegacy() override { 
         return m_wallet.GetDatabase().Format() == "berkeley"; 
     }
+    std::string databaseFormat() override { return m_wallet.GetDatabase().Format(); }
+    bool isEncryptedAtRest() override { return m_wallet.GetDatabase().EncryptedAtRest(); }
+    bool isDescriptor() override { return m_wallet.IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS); }
     std::unique_ptr<Handler> handleUnload(UnloadFn fn) override
     {
         return MakeHandler(m_wallet.NotifyUnload.connect(fn));

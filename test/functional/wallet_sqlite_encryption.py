@@ -30,6 +30,10 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
         assert_equal(created_info["databaseformat"], "sqlite")
         assert "unlocked_until" in created_info
         assert_equal(created_info["unlocked_until"], 0)
+        if created_info.get("sqlcipher", False):
+            assert_equal(created_info["encrypted_at_rest"], True)
+        else:
+            assert_equal(created_info["encrypted_at_rest"], False)
         assert_raises_rpc_error(-14, "wallet passphrase entered was incorrect",
                                 created.walletpassphrase, "wrong-pass", 10)
         created.walletpassphrase(create_pass, 60)
@@ -42,6 +46,7 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
 
         info = wallet.getwalletinfo()
         assert_equal(info["databaseformat"], "sqlite")
+        assert_equal(info["encrypted_at_rest"], False)
 
         if not info.get("sqlcipher", False):
             self.log.warning("Skipping at-rest encryption checks: build without SQLCipher")

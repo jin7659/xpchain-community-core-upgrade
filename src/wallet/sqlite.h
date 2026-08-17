@@ -56,6 +56,7 @@ public:
     
     std::string Filename() override { return m_path; }
     std::string Format() override { return "sqlite"; }
+    bool EncryptedAtRest() override { return !m_key.empty(); }
     
     /** SQLite 전용 배치 객체 생성 */
     std::unique_ptr<DatabaseBatch> MakeBatch(bool flush_on_close = true) override;

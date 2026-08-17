@@ -72,6 +72,8 @@ public:
 
     virtual std::string Filename() = 0;
     virtual std::string Format() = 0;
+    /** True when the wallet file itself is encrypted at rest (SQLCipher). */
+    virtual bool EncryptedAtRest() { return false; }
     virtual std::unique_ptr<DatabaseBatch> MakeBatch(bool flush_on_close = true) = 0;
     
     std::atomic<unsigned int> nUpdateCounter{0};

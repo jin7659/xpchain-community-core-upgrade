@@ -94,6 +94,7 @@ private:
     UnitDisplayStatusBarControl* unitDisplayControl = nullptr;
     QLabel* labelWalletEncryptionIcon = nullptr;
     QLabel* labelWalletHDStatusIcon = nullptr;
+    QLabel* labelWalletFormatStatus = nullptr;
     QLabel* labelProxyIcon = nullptr;
     QLabel* connectionsControl = nullptr;
     QLabel* labelBlocksIcon = nullptr;
@@ -222,6 +223,9 @@ private:
      @see WalletModel::EncryptionStatus
      */
     void setHDStatus(int hdEnabled);
+
+    /** Compact status-bar chip: SQLite/BDB plus tooltip for SQLCipher, descriptor, lock. */
+    void setWalletFormatStatus(WalletModel* walletModel);
 
 public Q_SLOTS:
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
