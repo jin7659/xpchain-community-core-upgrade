@@ -27,6 +27,7 @@
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
+#include <QHBoxLayout>
 
 #define DECORATION_SIZE 54
 #define NUM_ITEMS 5
@@ -131,6 +132,11 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     apiTimer(nullptr),
     labelBadge(nullptr),
     labelStakingTimeCorrection(nullptr),
+    walletStatusRow(nullptr),
+    labelFormatChip(nullptr),
+    labelFileChip(nullptr),
+    labelTypeChip(nullptr),
+    labelLockChip(nullptr),
     watchNetworkManager(nullptr),
     watchTimer(nullptr),
     m_watchOnlyWebWalletBalance(0.0)
@@ -159,6 +165,31 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
         "background-color: transparent; border: 1px solid #3d444d; "
         "border-radius: 3px; padding: 2px 8px; }");
     ui->horizontalLayout_4->insertWidget(1, labelBadge);
+
+    walletStatusRow = new QWidget(this);
+    QHBoxLayout* walletStatusLayout = new QHBoxLayout(walletStatusRow);
+    walletStatusLayout->setContentsMargins(0, 0, 0, 4);
+    walletStatusLayout->setSpacing(6);
+    auto makeChip = [this]() {
+        QLabel* chip = new QLabel(this);
+        chip->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+        chip->setStyleSheet(
+            "QLabel { font-size: 10px; font-weight: 600; color: #8b949e; "
+            "background-color: transparent; border: 1px solid #3d444d; "
+            "border-radius: 3px; padding: 2px 8px; }");
+        return chip;
+    };
+    labelFormatChip = makeChip();
+    labelFileChip = makeChip();
+    labelTypeChip = makeChip();
+    labelLockChip = makeChip();
+    walletStatusLayout->addWidget(labelFormatChip);
+    walletStatusLayout->addWidget(labelFileChip);
+    walletStatusLayout->addWidget(labelTypeChip);
+    walletStatusLayout->addWidget(labelLockChip);
+    walletStatusLayout->addStretch();
+    ui->verticalLayout_4->insertWidget(1, walletStatusRow);
+    walletStatusRow->hide();
 
     // Monthly staking chart (scrollable horizontally when many months)
     analyticsWidget = new TransactionAnalyticsWidget(this);
@@ -373,6 +404,8 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
         updateWatchOnlyLabels(wallet.haveWatchOnly());
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
+        connect(model, SIGNAL(encryptionStatusChanged()), this, SLOT(updateWalletStatusChips()));
+        updateWalletStatusChips();
 
         // Phase 3: SQLite 데이터베이스 초기화 및 히스토리 적재
         QString dataDir = QString::fromStdString(GetDataDir().string());
@@ -399,6 +432,8 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
         // Phase 3: 최초 즉각 1회 API 연동 실행
         requestStakingData();
+    } else {
+        updateWalletStatusChips();
     }
 
     // update the display unit, to not use the default ("BTC")
@@ -542,6 +577,84 @@ void OverviewPage::updateAssetBadge(double totalBalance)
     labelBadge->setText(badgeText);
     labelBadge->setStyleSheet(badgeStyle);
     labelBadge->setToolTip(tip);
+}
+
+namespace {
+void styleWalletChip(QLabel* label, const QString& text, const QString& color, const QString& border, const QString& tip)
+{
+    if (!label) return;
+    label->setText(text);
+    label->setToolTip(tip);
+    label->setVisible(!text.isEmpty());
+    label->setStyleSheet(QStringLiteral(
+        "QLabel { font-size: 10px; font-weight: 600; color: %1; "
+        "background-color: transparent; border: 1px solid %2; "
+        "border-radius: 3px; padding: 2px 8px; }").arg(color, border));
+}
+} // namespace
+
+void OverviewPage::updateWalletStatusChips()
+{
+    if (!walletStatusRow) return;
+    if (!walletModel) {
+        walletStatusRow->hide();
+        return;
+    }
+
+    interfaces::Wallet& wallet = walletModel->wallet();
+    const QString format = QString::fromStdString(wallet.databaseFormat());
+    const bool sqlite = (format == QLatin1String("sqlite"));
+    const bool at_rest = wallet.isEncryptedAtRest();
+    const bool descriptor = wallet.isDescriptor();
+    const bool watch_only = walletModel->privateKeysDisabled();
+    const WalletModel::EncryptionStatus enc = walletModel->getEncryptionStatus();
+
+    if (sqlite) {
+        styleWalletChip(labelFormatChip, tr("SQLite"), QStringLiteral("#6cb6ff"), QStringLiteral("#1f6feb"),
+                        tr("Wallet database engine: SQLite (recommended)."));
+        if (at_rest) {
+            styleWalletChip(labelFileChip, tr("SQLCipher"), QStringLiteral("#2e7d32"), QStringLiteral("#2e7d32"),
+                            tr("Wallet file is encrypted at rest (SQLCipher). Opening the file and unlocking spending keys are separate steps."));
+        } else {
+            styleWalletChip(labelFileChip, tr("Plain file"), QStringLiteral("#8b949e"), QStringLiteral("#3d444d"),
+                            tr("Wallet file is not SQLCipher-encrypted. Encrypt Wallet also encrypts the SQLite file on SQLCipher builds."));
+        }
+    } else {
+        styleWalletChip(labelFormatChip, tr("Berkeley DB"), QStringLiteral("#ef6c00"), QStringLiteral("#ef6c00"),
+                        tr("Legacy Berkeley DB wallet. Use File → Migrate Wallet to SQLite… to convert (original file is kept)."));
+        styleWalletChip(labelFileChip, tr("BDB file"), QStringLiteral("#8b949e"), QStringLiteral("#3d444d"),
+                        tr("Berkeley DB storage. SQLCipher at-rest encryption applies to SQLite wallets only."));
+    }
+
+    if (watch_only) {
+        styleWalletChip(labelTypeChip, tr("Watch-only"), QStringLiteral("#8b949e"), QStringLiteral("#3d444d"),
+                        tr("Private keys are disabled. This wallet cannot spend."));
+    } else if (descriptor) {
+        styleWalletChip(labelTypeChip, tr("Descriptor"), QStringLiteral("#6cb6ff"), QStringLiteral("#1f6feb"),
+                        tr("Descriptor wallet (modern key management)."));
+    } else {
+        styleWalletChip(labelTypeChip, tr("Legacy HD"), QStringLiteral("#8b949e"), QStringLiteral("#3d444d"),
+                        tr("Legacy HD wallet. Descriptor wallets are recommended for new funds."));
+    }
+
+    if (watch_only) {
+        styleWalletChip(labelLockChip, tr("No keys"), QStringLiteral("#8b949e"), QStringLiteral("#3d444d"),
+                        tr("Watch-only wallet: no spending keys to lock or unlock."));
+    } else if (enc == WalletModel::Unencrypted) {
+        styleWalletChip(labelLockChip, tr("Unencrypted"), QStringLiteral("#ef6c00"), QStringLiteral("#ef6c00"),
+                        tr("Spending keys are not encrypted. Use Settings → Encrypt Wallet."));
+    } else if (enc == WalletModel::Locked) {
+        styleWalletChip(labelLockChip, tr("Keys locked"), QStringLiteral("#ef6c00"), QStringLiteral("#ef6c00"),
+                        tr("Wallet file may already be open, but spending keys are locked. Unlock before sending or signing."));
+    } else if (fWalletUnlockMintOnly) {
+        styleWalletChip(labelLockChip, tr("Staking only"), QStringLiteral("#f0c14b"), QStringLiteral("#8a6d1d"),
+                        tr("Spending keys are unlocked for staking only. Sending still requires a full unlock."));
+    } else {
+        styleWalletChip(labelLockChip, tr("Keys unlocked"), QStringLiteral("#2e7d32"), QStringLiteral("#2e7d32"),
+                        tr("Spending keys are unlocked (sending and signing allowed)."));
+    }
+
+    walletStatusRow->show();
 }
 
 void OverviewPage::onWatchAddressButtonClicked()

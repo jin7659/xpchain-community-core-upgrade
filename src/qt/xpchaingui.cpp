@@ -149,6 +149,12 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
     unitDisplayControl = new UnitDisplayStatusBarControl(platformStyle);
     labelWalletEncryptionIcon = new QLabel();
     labelWalletHDStatusIcon = new QLabel();
+    labelWalletFormatStatus = new QLabel();
+    labelWalletFormatStatus->setStyleSheet(
+        "QLabel { font-size: 10px; font-weight: 600; color: #6cb6ff; "
+        "background-color: transparent; border: 1px solid #1f6feb; "
+        "border-radius: 3px; padding: 1px 6px; }");
+    labelWalletFormatStatus->hide();
     labelProxyIcon = new QLabel();
     connectionsControl = new GUIUtil::ClickableLabel();
     labelBlocksIcon = new GUIUtil::ClickableLabel();
@@ -159,6 +165,7 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
         frameBlocksLayout->addStretch();
         frameBlocksLayout->addWidget(labelWalletEncryptionIcon);
         frameBlocksLayout->addWidget(labelWalletHDStatusIcon);
+        frameBlocksLayout->addWidget(labelWalletFormatStatus);
     }
     frameBlocksLayout->addWidget(labelProxyIcon);
     frameBlocksLayout->addStretch();
@@ -1228,15 +1235,73 @@ void XPChainGUI::setEncryptionStatus(int status)
 void XPChainGUI::updateWalletStatus()
 {
     if (!walletFrame) {
+        if (labelWalletFormatStatus) labelWalletFormatStatus->hide();
         return;
     }
     WalletView * const walletView = walletFrame->currentWalletView();
     if (!walletView) {
+        if (labelWalletFormatStatus) labelWalletFormatStatus->hide();
         return;
     }
     WalletModel * const walletModel = walletView->getWalletModel();
     setEncryptionStatus(walletModel->getEncryptionStatus());
     setHDStatus(walletModel->wallet().hdEnabled());
+    setWalletFormatStatus(walletModel);
+}
+
+void XPChainGUI::setWalletFormatStatus(WalletModel* walletModel)
+{
+    if (!labelWalletFormatStatus) {
+        return;
+    }
+    if (!walletModel) {
+        labelWalletFormatStatus->hide();
+        return;
+    }
+
+    interfaces::Wallet& wallet = walletModel->wallet();
+    const bool sqlite = (wallet.databaseFormat() == "sqlite");
+    const bool at_rest = wallet.isEncryptedAtRest();
+    const bool descriptor = wallet.isDescriptor();
+    const bool watch_only = walletModel->privateKeysDisabled();
+    const int enc = walletModel->getEncryptionStatus();
+
+    QString format_text = sqlite ? tr("SQLite") : tr("BDB");
+    QString color = sqlite ? QStringLiteral("#6cb6ff") : QStringLiteral("#ef6c00");
+    QString border = sqlite ? QStringLiteral("#1f6feb") : QStringLiteral("#ef6c00");
+    labelWalletFormatStatus->setText(format_text);
+    labelWalletFormatStatus->setStyleSheet(QStringLiteral(
+        "QLabel { font-size: 10px; font-weight: 600; color: %1; "
+        "background-color: transparent; border: 1px solid %2; "
+        "border-radius: 3px; padding: 1px 6px; }").arg(color, border));
+
+    QString keys_line;
+    if (watch_only) {
+        keys_line = tr("Spending keys: none (watch-only)");
+    } else if (enc == WalletModel::Unencrypted) {
+        keys_line = tr("Spending keys: unencrypted");
+    } else if (enc == WalletModel::Locked) {
+        keys_line = tr("Spending keys: locked");
+    } else if (fWalletUnlockMintOnly) {
+        keys_line = tr("Spending keys: unlocked for staking only");
+    } else {
+        keys_line = tr("Spending keys: unlocked");
+    }
+
+    QString file_line;
+    if (sqlite) {
+        file_line = at_rest ? tr("File: SQLCipher (encrypted at rest)") : tr("File: unencrypted SQLite");
+    } else {
+        file_line = tr("File: Berkeley DB (use File → Migrate Wallet to SQLite…)");
+    }
+
+    labelWalletFormatStatus->setToolTip(
+        tr("Wallet status") + QStringLiteral("<br/>") +
+        tr("Database: %1").arg(sqlite ? tr("SQLite") : tr("Berkeley DB")) + QStringLiteral("<br/>") +
+        file_line + QStringLiteral("<br/>") +
+        tr("Type: %1").arg(watch_only ? tr("watch-only") : (descriptor ? tr("descriptor") : tr("legacy HD"))) + QStringLiteral("<br/>") +
+        keys_line);
+    labelWalletFormatStatus->show();
 }
 #endif // ENABLE_WALLET
 

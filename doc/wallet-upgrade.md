@@ -217,13 +217,28 @@ For a full integration guide (deposit monitoring, decimals, common mistakes), se
 Official **depends** builds include **SQLCipher** for SQLite wallet at-rest encryption. When SQLCipher is enabled:
 
 - `encryptwallet` rewrites the SQLite file with a database-level key (in addition to application-layer key encryption).
-- `getwalletinfo` reports `"sqlcipher": true` and `"databaseformat": "sqlite"`.
+- `getwalletinfo` reports `"sqlcipher": true|false` (build support), `"databaseformat": "sqlite"|"berkeley"`, and `"encrypted_at_rest": true|false` (this wallet file).
 - After restart there are **two separate steps** (same passphrase for both when you used `encryptwallet`):
   1. **Open wallet file** — GUI dialog titled like “Open encrypted wallet file” if `-walletdbpassphrase` is unset (remembered for the process only; not written to disk). Daemon: `-walletdbpassphrase` / `walletdbpassphrase=` in `xpchain.conf`, or `loadwallet "name" "dbpassphrase"`.
   2. **Unlock spending keys** — GUI “Unlock wallet keys” / Settings unlock, or `walletpassphrase`. Opening the file does **not** unlock keys by itself.
 - Prefer conf/`-walletdbpassphrase` for unattended daemons; never store the passphrase in Qt settings or shared docs.
 
 If your build shows `"sqlcipher": false`, install `libsqlcipher-dev` (or build via `depends/`) before deploying custodial wallets.
+
+## Wallet status in the GUI
+
+The Overview page shows four chips for the **current** wallet:
+
+| Chip | Meaning |
+|------|---------|
+| SQLite / Berkeley DB | Database engine. BDB wallets can be converted with **File → Migrate Wallet to SQLite…** |
+| SQLCipher / Plain file / BDB file | Whether the *file* is encrypted at rest (SQLCipher). Distinct from spending-key encryption. |
+| Descriptor / Legacy HD / Watch-only | Key management type |
+| Keys locked / unlocked / unencrypted | Spending-key lock (same as the status-bar padlock) |
+
+The status bar also shows a compact **SQLite** or **BDB** chip. Hover it for the same four facts.
+
+`getwalletinfo` exposes the same data as `databaseformat`, `encrypted_at_rest`, `descriptors`, and `unlocked_until`.
 
 ## Wallet File Locations
 
