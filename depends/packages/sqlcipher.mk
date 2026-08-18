@@ -24,7 +24,7 @@ define $(package)_config_cmds
 endef
 
 define $(package)_build_cmds
-  if test "$(host_os)" = mingw32; then $(MAKE) mksourceid.exe && ln -sf mksourceid.exe mksourceid; fi && $(MAKE) libsqlcipher.la
+  $(MAKE) mksourceid.exe || true; test -f mksourceid.exe && ln -sf mksourceid.exe mksourceid || true; $(MAKE) libsqlcipher.la
 endef
 
 define $(package)_stage_cmds
