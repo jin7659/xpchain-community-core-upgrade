@@ -198,10 +198,11 @@ jobs:
             cp src/qt/xpchain-qt dist/
             make appbundle
             QT5_PREFIX="$(brew --prefix qt@5)"
-            "${QT5_PREFIX}/bin/macdeployqt" XPChain-Qt.app -verbose=1
+            APP_BUNDLE="XPChain-Core.app"
+            "${QT5_PREFIX}/bin/macdeployqt" "${APP_BUNDLE}" -verbose=1
             BOOST_LIBDIR="$(brew --prefix boost)/lib"
-            APP_BIN="XPChain-Qt.app/Contents/MacOS/XPChain-Qt"
-            APP_FW_DIR="XPChain-Qt.app/Contents/Frameworks"
+            APP_BIN="${APP_BUNDLE}/Contents/MacOS/XPChain-Qt"
+            APP_FW_DIR="${APP_BUNDLE}/Contents/Frameworks"
             # macdeployqt may miss transitive non-Qt dylibs. Bundle all Boost dylibs and rewrite install names.
             for libpath in "${BOOST_LIBDIR}"/libboost_*.dylib; do
               [ -f "${libpath}" ] || continue
@@ -225,19 +226,19 @@ jobs:
               install_name_tool -change "${dep}" "@executable_path/../Frameworks/${dep_base}" "${APP_BIN}" || true
             done
             # Re-sign after deployment to avoid broken signature state on user machines.
-            codesign --force --deep --sign - --timestamp=none XPChain-Qt.app
-            codesign --verify --deep --strict --verbose=2 XPChain-Qt.app
+            codesign --force --deep --sign - --timestamp=none "${APP_BUNDLE}"
+            codesign --verify --deep --strict --verbose=2 "${APP_BUNDLE}"
             mkdir -p dmg-src
-            ditto XPChain-Qt.app dmg-src/XPChain-Qt.app
+            ditto "${APP_BUNDLE}" "dmg-src/${APP_BUNDLE}"
             ln -s /Applications dmg-src/Applications
             create-dmg \
-              --volname "XPChain-Qt" \
+              --volname "XPChain Core" \
               --window-pos 200 120 \
               --window-size 560 360 \
               --icon-size 120 \
-              --icon "XPChain-Qt.app" 140 170 \
+              --icon "${APP_BUNDLE}" 140 170 \
               --icon "Applications" 420 170 \
-              --hide-extension "XPChain-Qt.app" \
+              --hide-extension "${APP_BUNDLE}" \
               --app-drop-link 420 170 \
               "xpchain-${TAG}-macos.dmg" \
               "dmg-src"
