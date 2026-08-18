@@ -11,7 +11,6 @@ $(package)_config_opts=--disable-shared --enable-static --enable-tempstore=yes
 $(package)_config_opts+=--disable-shell --disable-readline
 $(package)_config_opts+=--with-crypto-lib=openssl
 $(package)_config_opts_linux=--with-pic
-# mingw: autoconf's -lcrypto probe fails (link order / cross paths); skip and link explicitly.
 $(package)_config_opts_mingw32=--with-crypto-lib=none
 $(package)_cflags_mingw32+=-DSQLCIPHER_CRYPTO_OPENSSL
 endef
@@ -21,16 +20,11 @@ define $(package)_preprocess_cmds
 endef
 
 define $(package)_config_cmds
-  $($(package)_autoconf) LDFLAGS="$$($(package)_ldflags) -lcrypto" \
-    $(if $(filter mingw32,$(host_os)),LIBS="-lgdi32 -lws2_32",)
+  $($(package)_autoconf) LDFLAGS="$$($(package)_ldflags) -lcrypto"
 endef
 
 define $(package)_build_cmds
-  $(if $(filter mingw32,$(host_os)),\
-    $(MAKE) mksourceid.exe && ln -sf mksourceid.exe mksourceid && \
-    ln -sf lemon.exe lemon 2>/dev/null || true && \
-    ln -sf mkkeywordhash.exe mkkeywordhash 2>/dev/null || true &&,)
-  $(MAKE) libsqlcipher.la
+  if test "$(host_os)" = mingw32; then $(MAKE) mksourceid.exe && ln -sf mksourceid.exe mksourceid; fi && $(MAKE) libsqlcipher.la
 endef
 
 define $(package)_stage_cmds
