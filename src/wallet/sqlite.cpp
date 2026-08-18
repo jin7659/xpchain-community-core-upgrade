@@ -34,7 +34,7 @@ bool IsPlaintextSQLiteHeader(const fs::path& path)
         return false;
     }
 
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(path.string().c_str(), std::ios::binary);
     if (!file) {
         return false;
     }
