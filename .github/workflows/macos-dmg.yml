@@ -1,0 +1,128 @@
+name: Build macOS DMG (preview)
+
+# Preview / snapshot DMG only. Does not flip IS_RELEASE or cut v0.27.0.
+on:
+  push:
+    tags:
+      - 'preview-*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || github.ref_name }}
+
+jobs:
+  macos:
+    name: macOS DMG
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install autoconf automake libtool pkg-config openssl@3 libevent boost berkeley-db@4 miniupnpc protobuf@21 qt@5 qrencode create-dmg
+
+      - name: Build
+        run: |
+          BREW_PREFIX="$(brew --prefix)"
+          BOOST_PREFIX="$(brew --prefix boost)"
+          PROTOBUF_PREFIX="$(brew --prefix protobuf@21)"
+          export BOOST_ROOT="${BOOST_PREFIX}"
+          export BOOST_INCLUDEDIR="${BOOST_PREFIX}/include"
+          export BOOST_LIBRARYDIR="${BOOST_PREFIX}/lib"
+          export BOOST_LDFLAGS="-L${BOOST_PREFIX}/lib"
+          export PATH="${PROTOBUF_PREFIX}/bin:${PATH}"
+          export LDFLAGS="-L${BREW_PREFIX}/opt/openssl@3/lib -L${BREW_PREFIX}/opt/berkeley-db@4/lib -L${PROTOBUF_PREFIX}/lib"
+          export CPPFLAGS="-I${BREW_PREFIX}/opt/openssl@3/include -I${BREW_PREFIX}/opt/berkeley-db@4/include -I${BREW_PREFIX}/opt/boost/include -I${PROTOBUF_PREFIX}/include"
+          export PKG_CONFIG_PATH="${PROTOBUF_PREFIX}/lib/pkgconfig:${BREW_PREFIX}/opt/openssl@3/lib/pkgconfig:${BREW_PREFIX}/opt/qt@5/lib/pkgconfig"
+          ./autogen.sh
+          ./configure --with-gui=qt5 \
+            --disable-tests \
+            --disable-bench \
+            --with-incompatible-bdb \
+            --with-boost="${BOOST_PREFIX}" \
+            --with-boost-libdir="${BOOST_PREFIX}/lib"
+          make -j"$(sysctl -n hw.ncpu)"
+
+      - name: Package DMG
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          mkdir -p dist
+          cp src/xpchaind src/xpchain-cli src/xpchain-tx dist/
+          if [ ! -f src/qt/xpchain-qt ]; then
+            echo "xpchain-qt was not built; cannot produce a DMG"
+            exit 1
+          fi
+          cp src/qt/xpchain-qt dist/
+          make appbundle
+          QT5_PREFIX="$(brew --prefix qt@5)"
+          "${QT5_PREFIX}/bin/macdeployqt" XPChain-Qt.app -verbose=1
+          BOOST_LIBDIR="$(brew --prefix boost)/lib"
+          APP_BIN="XPChain-Qt.app/Contents/MacOS/XPChain-Qt"
+          APP_FW_DIR="XPChain-Qt.app/Contents/Frameworks"
+          for libpath in "${BOOST_LIBDIR}"/libboost_*.dylib; do
+            [ -f "${libpath}" ] || continue
+            cp -f "${libpath}" "${APP_FW_DIR}/"
+          done
+          for dylib in "${APP_FW_DIR}"/libboost_*.dylib; do
+            [ -f "${dylib}" ] || continue
+            base="$(basename "${dylib}")"
+            install_name_tool -id "@loader_path/${base}" "${dylib}" || true
+            otool -L "${dylib}" | awk '/libboost_.*\.dylib/{print $1}' | while read -r dep; do
+              [ -n "${dep}" ] || continue
+              dep_base="$(basename "${dep}")"
+              install_name_tool -change "${dep}" "@loader_path/${dep_base}" "${dylib}" || true
+            done
+          done
+          otool -L "${APP_BIN}" | awk '/libboost_.*\.dylib/{print $1}' | while read -r dep; do
+            [ -n "${dep}" ] || continue
+            dep_base="$(basename "${dep}")"
+            install_name_tool -change "${dep}" "@executable_path/../Frameworks/${dep_base}" "${APP_BIN}" || true
+          done
+          codesign --force --deep --sign - --timestamp=none XPChain-Qt.app
+          codesign --verify --deep --strict --verbose=2 XPChain-Qt.app
+          mkdir -p dmg-src
+          ditto XPChain-Qt.app dmg-src/XPChain-Qt.app
+          ln -s /Applications dmg-src/Applications
+          create-dmg \
+            --volname "XPChain-Qt" \
+            --window-pos 200 120 \
+            --window-size 560 360 \
+            --icon-size 120 \
+            --icon "XPChain-Qt.app" 140 170 \
+            --icon "Applications" 420 170 \
+            --hide-extension "XPChain-Qt.app" \
+            --app-drop-link 420 170 \
+            "xpchain-${TAG}-macos.dmg" \
+            "dmg-src"
+          tar -C dist -czf "xpchain-${TAG}-macos.tar.gz" xpchaind xpchain-cli xpchain-tx xpchain-qt
+          ls -lah xpchain-${TAG}-macos.dmg xpchain-${TAG}-macos.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: |
+            xpchain-*-macos.tar.gz
+            xpchain-*-macos.dmg
+
+      - name: Publish draft prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: XPChain Core GUI preview (${{ github.ref_name }})
+          body: |
+            Snapshot DMG of current `master` GUI work (mnemonic backup, migrate wallet, overview chips, wallet status).
+
+            This is **not** a formal v0.27.0 release (`IS_RELEASE` remains false).
+          prerelease: true
+          draft: true
+          files: |
+            xpchain-*-macos.dmg
+            xpchain-*-macos.tar.gz
