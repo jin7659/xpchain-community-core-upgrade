@@ -11,8 +11,11 @@ $(package)_config_opts=--disable-shared --enable-static --enable-tempstore=yes
 $(package)_config_opts+=--disable-shell --disable-readline
 $(package)_config_opts+=--with-crypto-lib=openssl
 $(package)_config_opts_linux=--with-pic
-$(package)_config_opts_mingw32=--with-crypto-lib=none
-$(package)_cflags_mingw32+=-DSQLCIPHER_CRYPTO_OPENSSL
+# Cross-compile from Linux: sqlcipher configure leaves TARGET_EXEEXT empty unless
+# config_TARGET_EXEEXT=.exe is set, which would compile the Unix VFS (sys/ioctl.h).
+$(package)_config_opts_mingw32=--with-crypto-lib=none config_TARGET_EXEEXT=.exe
+$(package)_cflags_mingw32+=-DSQLCIPHER_CRYPTO_OPENSSL -DSQLITE_OS_WIN=1
+$(package)_config_env_mingw32=config_TARGET_EXEEXT=.exe
 endef
 
 define $(package)_preprocess_cmds
