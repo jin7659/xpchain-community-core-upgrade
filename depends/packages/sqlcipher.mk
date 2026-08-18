@@ -11,6 +11,9 @@ $(package)_config_opts=--disable-shared --enable-static --enable-tempstore=yes
 $(package)_config_opts+=--disable-shell --disable-readline
 $(package)_config_opts+=--with-crypto-lib=openssl
 $(package)_config_opts_linux=--with-pic
+# mingw: autoconf's -lcrypto probe fails (link order / cross paths); skip and link explicitly.
+$(package)_config_opts_mingw32=--with-crypto-lib=none
+$(package)_cflags_mingw32+=-DSQLCIPHER_CRYPTO_OPENSSL
 endef
 
 define $(package)_preprocess_cmds
@@ -18,7 +21,8 @@ define $(package)_preprocess_cmds
 endef
 
 define $(package)_config_cmds
-  $($(package)_autoconf) CFLAGS="$$($(package)_cflags)" CPPFLAGS="$$($(package)_cppflags)" LDFLAGS="$$($(package)_ldflags) -lcrypto"
+  $($(package)_autoconf) LDFLAGS="$$($(package)_ldflags) -lcrypto" \
+    $(if $(filter mingw32,$(host_os)),LIBS="-lgdi32 -lws2_32",)
 endef
 
 define $(package)_build_cmds
