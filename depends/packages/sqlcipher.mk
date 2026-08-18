@@ -26,6 +26,10 @@ define $(package)_config_cmds
 endef
 
 define $(package)_build_cmds
+  $(if $(filter mingw32,$(host_os)),\
+    $(MAKE) mksourceid.exe && ln -sf mksourceid.exe mksourceid && \
+    ln -sf lemon.exe lemon 2>/dev/null || true && \
+    ln -sf mkkeywordhash.exe mkkeywordhash 2>/dev/null || true &&,)
   $(MAKE) libsqlcipher.la
 endef
 
