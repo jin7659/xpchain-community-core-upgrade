@@ -1115,26 +1115,19 @@ else
   if test x$enable_wallet != xno; then
     have_sqlcipher=no
     have_sqlite3=no
-    save_LIBS="$LIBS"
-    LIBS="$LIBS $CRYPTO_LIBS"
     AC_CHECK_HEADER([sqlcipher/sqlite3.h],[
-      AC_CHECK_LIB([sqlcipher],[sqlite3_open],[
-        have_sqlite3=yes
-        have_sqlcipher=yes
-        SQLITE3_LIBS="-lsqlcipher"
-        AC_DEFINE([USE_SQLCIPHER],[1],[Define to 1 to enable SQLCipher encryption support])
-        AC_DEFINE([SQLITE_HAS_CODEC],[1],[Define to 1 to enable SQLCipher encryption API])
-      ])
+      have_sqlite3=yes
+      have_sqlcipher=yes
+      SQLITE3_LIBS="-lsqlcipher"
+      AC_DEFINE([USE_SQLCIPHER],[1],[Define to 1 to enable SQLCipher encryption support])
+      AC_DEFINE([SQLITE_HAS_CODEC],[1],[Define to 1 to enable SQLCipher encryption API])
     ])
     if test x$have_sqlite3 != xyes; then
       AC_CHECK_HEADER([sqlite3.h],[
-        AC_CHECK_LIB([sqlite3],[sqlite3_open],[
-          have_sqlite3=yes
-          SQLITE3_LIBS="-lsqlite3"
-        ])
+        have_sqlite3=yes
+        SQLITE3_LIBS="-lsqlite3"
       ])
     fi
-    LIBS="$save_LIBS"
     if test x$have_sqlite3 = xyes; then
       AC_DEFINE([USE_SQLITE],[1],[Define to 1 to enable SQLite wallet support])
     else
