@@ -28,7 +28,9 @@
 #include <utilmoneystr.h>
 #include <wallet/fees.h>
 #include <wallet/walletutil.h>
+#ifdef USE_SQLITE
 #include <wallet/sqlite.h>
+#endif
 #include <kernel.h>
 
 #include <algorithm>
@@ -467,6 +469,7 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
                     return false;
                 WalletBatch(*database).WriteMasterKey(pMasterKey.first, pMasterKey.second);
                 
+#ifdef USE_SQLITE
                 if (database->Format() == "sqlite") {
                     auto sqlite_db = static_cast<SQLiteDatabase*>(database.get());
                     sqlite_db->SetKey(strNewWalletPassphrase);
@@ -479,6 +482,7 @@ bool CWallet::ChangeWalletPassphrase(const SecureString& strOldWalletPassphrase,
                     gArgs.ForceSetArg("-walletdbpassphrase",
                                       std::string(strNewWalletPassphrase.begin(), strNewWalletPassphrase.end()));
                 }
+#endif
 
                 if (fWasLocked)
                     Lock();
@@ -742,10 +746,12 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
         // Need to completely rewrite the wallet file; if we don't, bdb might keep
         // bits of the unencrypted private key in slack space in the database file.
         // SQLCipher의 경우 Rewrite() 내부에서 파일 전체 암호화(rekey)를 수행합니다.
+#ifdef USE_SQLITE
         if (database->Format() == "sqlite") {
             auto sqlite_db = static_cast<SQLiteDatabase*>(database.get());
             sqlite_db->SetKey(strWalletPassphrase);
         }
+#endif
         if (!database->Rewrite()) {
             WalletLogPrintf("%s: SQLite database encryption rewrite failed!\n", __func__);
             return false;

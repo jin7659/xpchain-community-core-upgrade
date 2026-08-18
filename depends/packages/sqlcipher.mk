@@ -11,6 +11,11 @@ $(package)_config_opts=--disable-shared --enable-static --enable-tempstore=yes
 $(package)_config_opts+=--disable-shell --disable-readline
 $(package)_config_opts+=--with-crypto-lib=openssl
 $(package)_config_opts_linux=--with-pic
+# Cross-compile from Linux: sqlcipher configure leaves TARGET_EXEEXT empty unless
+# config_TARGET_EXEEXT=.exe is set, which would compile the Unix VFS (sys/ioctl.h).
+$(package)_config_opts_mingw32=--with-crypto-lib=none config_TARGET_EXEEXT=.exe
+$(package)_cflags_mingw32+=-DSQLCIPHER_CRYPTO_OPENSSL -DSQLITE_OS_WIN=1
+$(package)_config_env_mingw32=config_TARGET_EXEEXT=.exe
 endef
 
 define $(package)_preprocess_cmds
@@ -18,11 +23,11 @@ define $(package)_preprocess_cmds
 endef
 
 define $(package)_config_cmds
-  $($(package)_autoconf) CFLAGS="$$($(package)_cflags)" CPPFLAGS="$$($(package)_cppflags)" LDFLAGS="$$($(package)_ldflags) -lcrypto"
+  $($(package)_autoconf) LDFLAGS="$$($(package)_ldflags) -lcrypto"
 endef
 
 define $(package)_build_cmds
-  $(MAKE) libsqlcipher.la
+  $(MAKE) mksourceid.exe || true; test -f mksourceid.exe && ln -sf mksourceid.exe mksourceid || true; $(MAKE) libsqlcipher.la
 endef
 
 define $(package)_stage_cmds

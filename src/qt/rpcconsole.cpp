@@ -30,7 +30,11 @@
 #endif
 
 #ifdef USE_SQLITE
+#ifdef USE_SQLCIPHER
+#include <sqlcipher/sqlite3.h>
+#else
 #include <sqlite3.h>
+#endif
 #endif
 
 #include <QDesktopWidget>

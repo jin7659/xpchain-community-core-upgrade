@@ -42,16 +42,18 @@ jobs:
       - name: Build
         run: |
           ./autogen.sh
-          CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/
+          CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=qt5
           make -j"$(nproc)"
 
       - name: Package
         run: |
           TAG="${RELEASE_TAG}"
           mkdir -p dist
-          cp src/xpchaind src/xpchain-cli src/xpchain-tx src/qt/xpchain-qt dist/
-          strip dist/xpchaind dist/xpchain-cli dist/xpchain-tx dist/xpchain-qt || true
-          tar -C dist -czf "xpchain-${TAG}-linux-x86_64.tar.gz" xpchaind xpchain-cli xpchain-tx xpchain-qt
+          cp src/xpchaind src/xpchain-cli src/xpchain-tx dist/
+          cp src/qt/xpchain-qt dist/ 2>/dev/null || true
+          strip dist/* || true
+          chmod +x contrib/install/package-release.sh
+          ./contrib/install/package-release.sh linux "${TAG}" dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -73,7 +75,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git \
-            g++-mingw-w64-x86-64
+            g++-mingw-w64-x86-64 nsis
 
       - name: Select posix mingw toolchain (x86_64)
         run: |
@@ -88,23 +90,38 @@ jobs:
       - name: Configure and build
         run: |
           ./autogen.sh
-          CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --prefix=/
+          CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --prefix=/ --with-gui=qt5
           make -j"$(nproc)"
 
       - name: Package
         run: |
           TAG="${RELEASE_TAG}"
-          mkdir -p dist
-          cp src/xpchaind.exe src/xpchain-cli.exe src/xpchain-tx.exe src/qt/xpchain-qt.exe dist/
-          x86_64-w64-mingw32-strip dist/xpchaind.exe dist/xpchain-cli.exe dist/xpchain-tx.exe dist/xpchain-qt.exe || true
-          cd dist
-          zip -9 "../xpchain-${TAG}-win64.zip" xpchaind.exe xpchain-cli.exe xpchain-tx.exe xpchain-qt.exe
+          mkdir -p dist release
+          cp src/xpchaind.exe src/xpchain-cli.exe src/xpchain-tx.exe dist/
+          cp src/qt/xpchain-qt.exe dist/ 2>/dev/null || true
+          x86_64-w64-mingw32-strip dist/*.exe || true
+          chmod +x contrib/install/package-release.sh
+          ./contrib/install/package-release.sh win64 "${TAG}" dist
+          if [ -f src/qt/xpchain-qt.exe ]; then
+            cp dist/*.exe release/
+            make deploy || echo "NSIS deploy skipped"
+            shopt -s nullglob
+            for setup in xpchain-*-win64-setup.exe xpchain-*-win-setup.exe; do
+              mv "$setup" "xpchain-${TAG}-win64-setup.exe"
+            done
+          fi
+
+      - name: Stage Windows artifacts
+        run: |
+          mkdir -p win-upload
+          cp xpchain-*-win64.zip win-upload/
+          cp xpchain-*-win64-setup.exe win-upload/ 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: win64
-          path: xpchain-*-win64.zip
+          path: win-upload/*
 
   windows32:
     name: Windows x86
@@ -135,17 +152,18 @@ jobs:
       - name: Configure and build
         run: |
           ./autogen.sh
-          CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --prefix=/
+          CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --prefix=/ --with-gui=qt5
           make -j"$(nproc)"
 
       - name: Package
         run: |
           TAG="${RELEASE_TAG}"
           mkdir -p dist
-          cp src/xpchaind.exe src/xpchain-cli.exe src/xpchain-tx.exe src/qt/xpchain-qt.exe dist/
-          i686-w64-mingw32-strip dist/xpchaind.exe dist/xpchain-cli.exe dist/xpchain-tx.exe dist/xpchain-qt.exe || true
-          cd dist
-          zip -9 "../xpchain-${TAG}-win32.zip" xpchaind.exe xpchain-cli.exe xpchain-tx.exe xpchain-qt.exe
+          cp src/xpchaind.exe src/xpchain-cli.exe src/xpchain-tx.exe dist/
+          cp src/qt/xpchain-qt.exe dist/ 2>/dev/null || true
+          i686-w64-mingw32-strip dist/*.exe || true
+          chmod +x contrib/install/package-release.sh
+          ./contrib/install/package-release.sh win32 "${TAG}" dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -198,10 +216,11 @@ jobs:
             cp src/qt/xpchain-qt dist/
             make appbundle
             QT5_PREFIX="$(brew --prefix qt@5)"
-            "${QT5_PREFIX}/bin/macdeployqt" XPChain-Qt.app -verbose=1
+            APP_BUNDLE="XPChain-Core.app"
+            "${QT5_PREFIX}/bin/macdeployqt" "${APP_BUNDLE}" -verbose=1
             BOOST_LIBDIR="$(brew --prefix boost)/lib"
-            APP_BIN="XPChain-Qt.app/Contents/MacOS/XPChain-Qt"
-            APP_FW_DIR="XPChain-Qt.app/Contents/Frameworks"
+            APP_BIN="${APP_BUNDLE}/Contents/MacOS/XPChain-Qt"
+            APP_FW_DIR="${APP_BUNDLE}/Contents/Frameworks"
             # macdeployqt may miss transitive non-Qt dylibs. Bundle all Boost dylibs and rewrite install names.
             for libpath in "${BOOST_LIBDIR}"/libboost_*.dylib; do
               [ -f "${libpath}" ] || continue
@@ -225,19 +244,20 @@ jobs:
               install_name_tool -change "${dep}" "@executable_path/../Frameworks/${dep_base}" "${APP_BIN}" || true
             done
             # Re-sign after deployment to avoid broken signature state on user machines.
-            codesign --force --deep --sign - --timestamp=none XPChain-Qt.app
-            codesign --verify --deep --strict --verbose=2 XPChain-Qt.app
+            codesign --force --deep --sign - --timestamp=none "${APP_BUNDLE}"
+            codesign --verify --deep --strict --verbose=2 "${APP_BUNDLE}"
             mkdir -p dmg-src
-            ditto XPChain-Qt.app dmg-src/XPChain-Qt.app
+            ditto "${APP_BUNDLE}" "dmg-src/${APP_BUNDLE}"
+            cp contrib/install/README-INSTALL.txt dmg-src/
             ln -s /Applications dmg-src/Applications
             create-dmg \
-              --volname "XPChain-Qt" \
+              --volname "XPChain Core" \
               --window-pos 200 120 \
               --window-size 560 360 \
               --icon-size 120 \
-              --icon "XPChain-Qt.app" 140 170 \
+              --icon "${APP_BUNDLE}" 140 170 \
               --icon "Applications" 420 170 \
-              --hide-extension "XPChain-Qt.app" \
+              --hide-extension "${APP_BUNDLE}" \
               --app-drop-link 420 170 \
               "xpchain-${TAG}-macos.dmg" \
               "dmg-src"
@@ -268,8 +288,9 @@ jobs:
       - name: Flatten assets
         run: |
           mkdir -p out
-          find release-assets -type f \( -name '*.zip' -o -name '*.tar.gz' -o -name '*.dmg' \) -exec cp {} out/ \;
+          find release-assets -type f \( -name '*.zip' -o -name '*.tar.gz' -o -name '*.dmg' -o -name '*.exe' \) -exec cp {} out/ \;
           ls -lah out
+          sha256sum out/* > out/SHA256SUMS.txt
 
       - name: Create release
         uses: softprops/action-gh-release@v2

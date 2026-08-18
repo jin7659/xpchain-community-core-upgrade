@@ -1,0 +1,254 @@
+name: Preview release (Linux + Windows + macOS)
+
+# Snapshot installers for current master — not a formal v0.27.0 tag.
+on:
+  push:
+    tags:
+      - 'preview-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Preview tag name (example: preview-install)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  linux:
+    name: Linux x86_64
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libtool autotools-dev automake pkg-config bsdmainutils \
+            curl git python3 bison
+
+      - name: Cache depends
+        uses: actions/cache@v4
+        with:
+          path: |
+            depends/built
+            depends/sources
+          key: depends-linux-${{ hashFiles('depends/packages/*.mk') }}
+          restore-keys: depends-linux-
+
+      - name: Build depends
+        run: |
+          cd depends
+          make HOST=x86_64-linux-gnu FALLBACK_DOWNLOAD_PATH=https://bitcoincore.org/depends-sources -j"$(nproc)"
+
+      - name: Build
+        run: |
+          ./autogen.sh
+          CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site \
+            ./configure --prefix=/ --with-gui=qt5
+          make -j"$(nproc)"
+
+      - name: Package installable tarball
+        run: |
+          mkdir -p dist
+          cp src/xpchaind src/xpchain-cli src/xpchain-tx dist/
+          cp src/qt/xpchain-qt dist/ 2>/dev/null || true
+          strip dist/* || true
+          chmod +x contrib/install/package-release.sh
+          ./contrib/install/package-release.sh linux "${RELEASE_TAG}" dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64
+          path: xpchain-*-linux-x86_64.tar.gz
+
+  windows64:
+    name: Windows x64
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git \
+            g++-mingw-w64-x86-64 nsis zip
+
+      - name: Select mingw toolchain
+        run: |
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+
+      - name: Cache depends
+        uses: actions/cache@v4
+        with:
+          path: |
+            depends/built
+            depends/sources
+          key: depends-win64-${{ hashFiles('depends/packages/*.mk') }}
+          restore-keys: depends-win64-
+
+      - name: Build depends
+        run: |
+          cd depends
+          make HOST=x86_64-w64-mingw32 FALLBACK_DOWNLOAD_PATH=https://bitcoincore.org/depends-sources -j"$(nproc)"
+
+      - name: Build
+        run: |
+          ./autogen.sh
+          CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site \
+            ./configure --prefix=/ --with-gui=qt5
+          make -j"$(nproc)"
+
+      - name: Package zip + NSIS installer
+        run: |
+          mkdir -p dist release
+          cp src/xpchaind.exe src/xpchain-cli.exe src/xpchain-tx.exe dist/
+          cp src/qt/xpchain-qt.exe dist/ 2>/dev/null || true
+          x86_64-w64-mingw32-strip dist/*.exe || true
+          chmod +x contrib/install/package-release.sh
+          ./contrib/install/package-release.sh win64 "${RELEASE_TAG}" dist
+          if [ -f src/qt/xpchain-qt.exe ]; then
+            cp dist/*.exe release/
+            make deploy || echo "NSIS deploy skipped (makensis or GUI missing)"
+            shopt -s nullglob
+            for setup in xpchain-*-win64-setup.exe xpchain-*-win-setup.exe; do
+              mv "$setup" "xpchain-${RELEASE_TAG}-win64-setup.exe"
+            done
+          fi
+
+      - name: Stage Windows artifacts
+        run: |
+          mkdir -p win-upload
+          cp xpchain-*-win64.zip win-upload/
+          cp xpchain-*-win64-setup.exe win-upload/ 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win64
+          path: win-upload/*
+
+  macos:
+    name: macOS DMG
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install autoconf automake libtool pkg-config openssl@3 libevent boost berkeley-db@4 miniupnpc protobuf@21 qt@5 qrencode create-dmg
+
+      - name: Build
+        run: |
+          BREW_PREFIX="$(brew --prefix)"
+          BOOST_PREFIX="$(brew --prefix boost)"
+          PROTOBUF_PREFIX="$(brew --prefix protobuf@21)"
+          export BOOST_ROOT="${BOOST_PREFIX}"
+          export BOOST_INCLUDEDIR="${BOOST_PREFIX}/include"
+          export BOOST_LIBRARYDIR="${BOOST_PREFIX}/lib"
+          export PATH="${PROTOBUF_PREFIX}/bin:${PATH}"
+          export LDFLAGS="-L${BREW_PREFIX}/opt/openssl@3/lib -L${BREW_PREFIX}/opt/berkeley-db@4/lib -L${PROTOBUF_PREFIX}/lib"
+          export CPPFLAGS="-I${BREW_PREFIX}/opt/openssl@3/include -I${BREW_PREFIX}/opt/berkeley-db@4/include -I${BREW_PREFIX}/opt/boost/include -I${PROTOBUF_PREFIX}/include"
+          export PKG_CONFIG_PATH="${PROTOBUF_PREFIX}/lib/pkgconfig:${BREW_PREFIX}/opt/openssl@3/lib/pkgconfig:${BREW_PREFIX}/opt/qt@5/lib/pkgconfig"
+          ./autogen.sh
+          ./configure --with-gui=qt5 --disable-tests --disable-bench \
+            --with-incompatible-bdb --with-boost="${BOOST_PREFIX}" --with-boost-libdir="${BOOST_PREFIX}/lib"
+          make -j"$(sysctl -n hw.ncpu)"
+
+      - name: Package DMG + CLI tarball
+        run: |
+          TAG="${RELEASE_TAG}"
+          mkdir -p dist
+          cp src/xpchaind src/xpchain-cli src/xpchain-tx dist/
+          cp src/qt/xpchain-qt dist/
+          make appbundle
+          QT5_PREFIX="$(brew --prefix qt@5)"
+          APP_BUNDLE="XPChain-Core.app"
+          "${QT5_PREFIX}/bin/macdeployqt" "${APP_BUNDLE}" -verbose=1
+          BOOST_LIBDIR="$(brew --prefix boost)/lib"
+          APP_BIN="${APP_BUNDLE}/Contents/MacOS/XPChain-Qt"
+          APP_FW_DIR="${APP_BUNDLE}/Contents/Frameworks"
+          for libpath in "${BOOST_LIBDIR}"/libboost_*.dylib; do
+            [ -f "${libpath}" ] || continue
+            cp -f "${libpath}" "${APP_FW_DIR}/"
+          done
+          for dylib in "${APP_FW_DIR}"/libboost_*.dylib; do
+            [ -f "${dylib}" ] || continue
+            base="$(basename "${dylib}")"
+            install_name_tool -id "@loader_path/${base}" "${dylib}" || true
+            otool -L "${dylib}" | awk '/libboost_.*\.dylib/{print $1}' | while read -r dep; do
+              dep_base="$(basename "${dep}")"
+              install_name_tool -change "${dep}" "@loader_path/${dep_base}" "${dylib}" || true
+            done
+          done
+          otool -L "${APP_BIN}" | awk '/libboost_.*\.dylib/{print $1}' | while read -r dep; do
+            dep_base="$(basename "${dep}")"
+            install_name_tool -change "${dep}" "@executable_path/../Frameworks/${dep_base}" "${APP_BIN}" || true
+          done
+          codesign --force --deep --sign - --timestamp=none "${APP_BUNDLE}"
+          mkdir -p dmg-src
+          ditto "${APP_BUNDLE}" "dmg-src/${APP_BUNDLE}"
+          cp contrib/install/README-INSTALL.txt dmg-src/
+          ln -s /Applications dmg-src/Applications
+          create-dmg \
+            --volname "XPChain Core" \
+            --window-pos 200 120 --window-size 560 360 --icon-size 120 \
+            --icon "${APP_BUNDLE}" 140 170 --icon "Applications" 420 170 \
+            --hide-extension "${APP_BUNDLE}" --app-drop-link 420 170 \
+            "xpchain-${TAG}-macos.dmg" dmg-src
+          tar -C dist -czf "xpchain-${TAG}-macos.tar.gz" xpchaind xpchain-cli xpchain-tx xpchain-qt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: |
+            xpchain-*-macos.dmg
+            xpchain-*-macos.tar.gz
+
+  publish:
+    name: Publish draft prerelease
+    runs-on: ubuntu-22.04
+    needs: [linux, windows64, macos]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Flatten assets
+        run: |
+          mkdir -p out
+          find release-assets -type f \( -name '*.zip' -o -name '*.tar.gz' -o -name '*.dmg' -o -name '*.exe' \) -exec cp {} out/ \;
+          ls -lah out
+          sha256sum out/* > out/SHA256SUMS.txt
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: XPChain Core preview (${{ env.RELEASE_TAG }})
+          body: |
+            Multi-platform **preview** installers (Linux / Windows / macOS).
+
+            | OS | File | Install |
+            |----|------|---------|
+            | Linux | `*-linux-x86_64.tar.gz` | extract → `./install.sh` |
+            | Windows | `*-win64-setup.exe` or `*-win64.zip` | run setup or `install.bat` |
+            | macOS | `*-macos.dmg` | drag **XPChain-Core.app** to Applications |
+
+            See `README-INSTALL.txt` inside each archive. Not a formal v0.27.0 release.
+          prerelease: true
+          draft: true
+          files: out/*

@@ -23,17 +23,36 @@ git push origin v0.27.0
 - `Run workflow` 클릭
 - `tag` 입력 (예: `v0.27.0`)
 
-## 3) 결과물 확인
+## 3) 프리뷰 배포 (Linux + Windows + macOS 설치 패키지)
+
+정식 `v*` 태그 전에 설치 가능한 스냅샷을 만들 때:
+
+```bash
+git tag preview-install   # preview-* 패턴
+git push origin preview-install
+```
+
+- Workflow: **Preview release (Linux + Windows + macOS)**
+- GitHub Releases에 **draft prerelease** 로 업로드 (`SHA256SUMS.txt` 포함)
+- 각 OS별 설치 방법은 `contrib/install/README-INSTALL.txt` 참고
+
+| OS | 파일 | 설치 |
+|----|------|------|
+| Linux | `*-linux-x86_64.tar.gz` | 압축 해제 → `./install.sh` → PATH 추가 |
+| Windows | `*-win64-setup.exe` 또는 `*-win64.zip` | NSIS 설치 또는 `install.bat` / `install.ps1` |
+| macOS | `*-macos.dmg` | **XPChain-Core.app** 을 Applications로 드래그 |
+
+## 4) 결과물 확인 (정식 v* 릴리즈)
 - GitHub Releases에 자동 생성
 - Publish job은 Linux / Windows / **macOS** 아티팩트가 모두 준비된 뒤에 실행됩니다.
 - 첨부 파일 예시:
-  - `xpchain-v0.27.0-linux-x86_64.tar.gz`
-  - `xpchain-v0.27.0-win64.zip`
+  - `xpchain-v0.27.0-linux-x86_64.tar.gz` (내부 `install.sh` / `uninstall.sh`)
+  - `xpchain-v0.27.0-win64.zip` (+ 선택적 `*-win64-setup.exe`)
   - `xpchain-v0.27.0-win32.zip`
   - `xpchain-v0.27.0-macos.tar.gz`
   - `xpchain-v0.27.0-macos.dmg`
 
-## 4) 운영 권장사항
+## 5) 운영 권장사항
 - 태그를 찍기 전에 `master` 기준으로 CI(유닛/기능 테스트) 통과를 확인
 - 릴리즈 노트에 변경점(합의/지갑/네트워크)을 꼭 명시
 - 파일 해시(`sha256sum`)를 릴리즈 노트에 함께 게시
