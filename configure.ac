@@ -441,7 +441,8 @@ case $host in
      AC_CHECK_LIB([crypt32],      [main],, AC_MSG_ERROR(libcrypt32 missing))
 
      # Consume bundled libsecp256k1 as a static library (avoid __imp_ dllimport).
-     CPPFLAGS="$CPPFLAGS -DSECP256K1_STATIC"
+     # MinGW math.h hides M_PI unless _USE_MATH_DEFINES is set.
+     CPPFLAGS="$CPPFLAGS -DSECP256K1_STATIC -D_USE_MATH_DEFINES"
 
      # -static is interpreted by libtool, where it has a different meaning.
      # In libtool-speak, it's -all-static.
