@@ -18,8 +18,6 @@ class TransactionFilterProxy;
 class TxViewDelegate;
 class PlatformStyle;
 class WalletModel;
-class AssetPieChart;
-class TransactionAnalyticsWidget;
 
 namespace Ui {
     class OverviewPage;
@@ -54,13 +52,10 @@ private:
     ClientModel *clientModel;
     WalletModel *walletModel;
     interfaces::WalletBalances m_balances;
-    AssetPieChart *pieChart;
-    TransactionAnalyticsWidget *analyticsWidget;
 
     // Phase 3 추가 멤버
     QNetworkAccessManager *networkManager;
     QTimer *apiTimer;
-    QLabel *labelBadge;
     QLabel *labelStakingTimeCorrection;
     QWidget *walletStatusRow;
     QLabel *labelFormatChip;
@@ -87,7 +82,6 @@ private Q_SLOTS:
     void requestStakingData();
     void onStakingDataReceived(QNetworkReply* reply);
     void updateStakingTime(double networkWeight);
-    void updateAssetBadge(double totalBalance);
     void updateWalletStatusChips();
 
     // Phase 5 추가 슬롯

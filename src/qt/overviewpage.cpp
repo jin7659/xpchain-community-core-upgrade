@@ -4,11 +4,8 @@
 
 #include <qt/overviewpage.h>
 #include <qt/forms/ui_overviewpage.h>
-#include <qt/assetpiechart.h>
-#include <qt/transactionanalyticswidget.h>
 #include <qt/txanalytics.h>
 #include <qt/watchaddressdialog.h>
-#include <QScrollArea>
 
 #include <qt/xpchainunits.h>
 #include <qt/clientmodel.h>
@@ -127,10 +124,8 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     clientModel(0),
     walletModel(0),
     txdelegate(new TxViewDelegate(platformStyle, this)),
-    analyticsWidget(nullptr),
     networkManager(nullptr),
     apiTimer(nullptr),
-    labelBadge(nullptr),
     labelStakingTimeCorrection(nullptr),
     walletStatusRow(nullptr),
     labelFormatChip(nullptr),
@@ -145,26 +140,13 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
 
     m_balances.balance = -1;
 
-    // AssetPieChart 동적 생성 및 Balances 프레임 아래에 배치
-    pieChart = new AssetPieChart(this);
-    ui->verticalLayout_2->insertWidget(1, pieChart);
-
-    // Staking estimate — quiet secondary line under balances / chart
+    // Staking estimate — quiet secondary line under balances
     labelStakingTimeCorrection = new QLabel(this);
     labelStakingTimeCorrection->setWordWrap(true);
     labelStakingTimeCorrection->setStyleSheet(
         "QLabel { font-size: 11px; color: #8b949e; padding: 2px 2px 6px 2px; background: transparent; border: none; }");
     labelStakingTimeCorrection->setText(tr("Staking estimate: calculating…"));
     ui->verticalLayout_2->addWidget(labelStakingTimeCorrection);
-
-    // Balance-tier node tag next to Balances title
-    labelBadge = new QLabel(this);
-    labelBadge->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-    labelBadge->setStyleSheet(
-        "QLabel { font-size: 10px; font-weight: 600; color: #c9d1d9; "
-        "background-color: transparent; border: 1px solid #3d444d; "
-        "border-radius: 3px; padding: 2px 8px; }");
-    ui->horizontalLayout_4->insertWidget(1, labelBadge);
 
     walletStatusRow = new QWidget(this);
     QHBoxLayout* walletStatusLayout = new QHBoxLayout(walletStatusRow);
@@ -190,30 +172,6 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     walletStatusLayout->addStretch();
     ui->verticalLayout_4->insertWidget(1, walletStatusRow);
     walletStatusRow->hide();
-
-    // Monthly staking chart (scrollable horizontally when many months)
-    analyticsWidget = new TransactionAnalyticsWidget(this);
-
-    QScrollArea* scrollArea = new QScrollArea(this);
-    scrollArea->setWidgetResizable(false);
-    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scrollArea->setWidget(analyticsWidget);
-    scrollArea->setMinimumHeight(230);
-    scrollArea->setFrameShape(QFrame::NoFrame);
-    scrollArea->setStyleSheet(
-        "QScrollArea { background: transparent; border: none; }"
-        "QScrollBar:horizontal {"
-        "  border: none; background: #1a1a1a; height: 6px; margin: 0;"
-        "}"
-        "QScrollBar::handle:horizontal {"
-        "  background: #3d8ec4; min-width: 24px; border-radius: 3px;"
-        "}"
-        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {"
-        "  border: none; background: none; width: 0;"
-        "}"
-    );
-    ui->verticalLayout_3->addWidget(scrollArea);
 
     // use a SingleColorIcon for the "out of sync warning" icon
     QIcon icon = platformStyle->SingleColorIcon(":/icons/warning");
@@ -323,11 +281,6 @@ void OverviewPage::setBalance(const interfaces::WalletBalances& balances)
     qint64 watchOnlySatoshi = static_cast<qint64>(m_watchOnlyWebWalletBalance * 10000.0);
     qint64 coreWatchOnly = balances.watch_only_balance + balances.unconfirmed_watch_only_balance + balances.immature_watch_only_balance;
 
-    if (pieChart) {
-        QString walletTotalStr = XPChainUnits::formatWithUnit(unit, walletTotal, false, XPChainUnits::separatorAlways);
-        pieChart->setBalances(balances.balance, balances.unconfirmed_balance, balances.immature_balance, coreWatchOnly + watchOnlySatoshi, walletTotalStr);
-    }
-
     ui->labelWatchAvailable->setText(XPChainUnits::formatWithUnit(unit, balances.watch_only_balance + watchOnlySatoshi, false, XPChainUnits::separatorAlways));
     ui->labelWatchAvailable->setToolTip(tr("Watch-only balances including linked web wallet addresses (not spendable from this node)"));
     ui->labelWatchPending->setText(XPChainUnits::formatWithUnit(unit, balances.unconfirmed_watch_only_balance, false, XPChainUnits::separatorAlways));
@@ -344,9 +297,6 @@ void OverviewPage::setBalance(const interfaces::WalletBalances& balances)
     ui->labelImmature->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
-
-    double totalXPC = walletTotal / 10000.0;
-    updateAssetBadge(totalXPC);
 }
 
 // show/hide watch-only labels
@@ -407,28 +357,9 @@ void OverviewPage::setWalletModel(WalletModel *model)
         connect(model, SIGNAL(encryptionStatusChanged()), this, SLOT(updateWalletStatusChips()));
         updateWalletStatusChips();
 
-        // Phase 3: SQLite 데이터베이스 초기화 및 히스토리 적재
+        // Phase 3: TxAnalytics (tags / web wallet) — ensure DB is open
         QString dataDir = QString::fromStdString(GetDataDir().string());
-        if (TxAnalytics::getInstance().init(dataDir)) {
-            int rows = model->getTransactionTableModel()->rowCount(QModelIndex());
-            for (int i = 0; i < rows; ++i) {
-                QModelIndex idxType = model->getTransactionTableModel()->index(i, TransactionTableModel::Type, QModelIndex());
-                QModelIndex idxAmount = model->getTransactionTableModel()->index(i, TransactionTableModel::Amount, QModelIndex());
-                QModelIndex idxDate = model->getTransactionTableModel()->index(i, TransactionTableModel::Date, QModelIndex());
-                QModelIndex idxAddress = model->getTransactionTableModel()->index(i, TransactionTableModel::ToAddress, QModelIndex());
-
-                int typeVal = idxType.data(TransactionTableModel::TypeRole).toInt();
-                qint64 timeVal = idxDate.data(TransactionTableModel::DateRole).toDateTime().toSecsSinceEpoch();
-                double amountVal = idxAmount.data(TransactionTableModel::AmountRole).toDouble() / 10000.0;
-                QString txidVal = idxType.data(TransactionTableModel::TxHashRole).toString();
-                QString addressVal = idxAddress.data(Qt::DisplayRole).toString();
-
-                TxAnalytics::getInstance().addHistory(txidVal, timeVal, typeVal, amountVal, addressVal);
-            }
-            if (analyticsWidget) {
-                analyticsWidget->updateData();
-            }
-        }
+        TxAnalytics::getInstance().init(dataDir);
 
         // Phase 3: 최초 즉각 1회 API 연동 실행
         requestStakingData();
@@ -541,42 +472,6 @@ void OverviewPage::updateStakingTime(double networkWeight)
 
     timeText += tr(" — coins must mature ~3 days before staking");
     labelStakingTimeCorrection->setText(timeText);
-}
-
-void OverviewPage::updateAssetBadge(double totalBalance)
-{
-    if (!labelBadge) return;
-
-    // Thresholds are spendable+pending+immature wallet total (XPC), used only as a local status tag.
-    QString badgeText;
-    QString badgeStyle;
-    QString tip;
-
-    const QString base =
-        "QLabel { font-size: 10px; font-weight: 600; border-radius: 3px; padding: 2px 8px; "
-        "background-color: transparent; }";
-
-    if (totalBalance >= 1000000.0) {
-        badgeText = tr("VIP node");
-        badgeStyle = base + "QLabel { color: #f0c14b; border: 1px solid #8a6d1d; }";
-        tip = tr("Wallet total ≥ 1,000,000 XPC");
-    } else if (totalBalance >= 200000.0) {
-        badgeText = tr("Gold node");
-        badgeStyle = base + "QLabel { color: #d7dee5; border: 1px solid #6b7785; }";
-        tip = tr("Wallet total ≥ 200,000 XPC");
-    } else if (totalBalance >= 50000.0) {
-        badgeText = tr("Active node");
-        badgeStyle = base + "QLabel { color: #6cb6ff; border: 1px solid #1f6feb; }";
-        tip = tr("Wallet total ≥ 50,000 XPC");
-    } else {
-        badgeText = tr("Starter node");
-        badgeStyle = base + "QLabel { color: #8b949e; border: 1px solid #3d444d; }";
-        tip = tr("Wallet total under 50,000 XPC — local status tag only");
-    }
-
-    labelBadge->setText(badgeText);
-    labelBadge->setStyleSheet(badgeStyle);
-    labelBadge->setToolTip(tip);
 }
 
 namespace {

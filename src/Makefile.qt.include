@@ -150,7 +150,6 @@ QT_MOC_CPP = \
   qt/moc_openuridialog.cpp \
   qt/moc_optionsdialog.cpp \
   qt/moc_optionsmodel.cpp \
-  qt/moc_assetpiechart.cpp \
   qt/moc_overviewpage.cpp \
   qt/moc_peertablemodel.cpp \
   qt/moc_paymentserver.cpp \
@@ -178,7 +177,6 @@ QT_MOC_CPP = \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp \
   qt/moc_txanalytics.cpp \
-  qt/moc_transactionanalyticswidget.cpp \
   qt/moc_mnemonicimportdialog.cpp \
   qt/moc_mnemonicbackupdialog.cpp \
   qt/moc_watchaddressdialog.cpp
@@ -236,7 +234,6 @@ XPCHAIN_QT_H = \
   qt/openuridialog.h \
   qt/optionsdialog.h \
   qt/optionsmodel.h \
-  qt/assetpiechart.h \
   qt/overviewpage.h \
   qt/paymentrequestplus.h \
   qt/paymentserver.h \
@@ -269,7 +266,6 @@ XPCHAIN_QT_H = \
   qt/walletview.h \
   qt/winshutdownmonitor.h \
   qt/txanalytics.h \
-  qt/transactionanalyticswidget.h \
   qt/mnemonicimportdialog.h \
   qt/mnemonicbackupdialog.h \
   qt/watchaddressdialog.h \
@@ -373,7 +369,6 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/mintingview.cpp \
   qt/editstakingrewarddistributiondialog.cpp \
   qt/openuridialog.cpp \
-  qt/assetpiechart.cpp \
   qt/overviewpage.cpp \
   qt/paymentrequestplus.cpp \
   qt/paymentserver.cpp \
@@ -397,7 +392,6 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp \
   qt/txanalytics.cpp \
-  qt/transactionanalyticswidget.cpp \
   qt/mnemonicimportdialog.cpp \
   qt/mnemonicbackupdialog.cpp \
   qt/watchaddressdialog.cpp
