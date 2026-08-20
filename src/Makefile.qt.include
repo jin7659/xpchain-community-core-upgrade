@@ -117,8 +117,7 @@ QT_FORMS_UI = \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
   qt/forms/stakingrewardsettingpage.ui \
-  qt/forms/transactiondescdialog.ui \
-  qt/forms/watchaddressdialog.ui
+  qt/forms/transactiondescdialog.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
@@ -176,11 +175,8 @@ QT_MOC_CPP = \
   qt/moc_walletframe.cpp \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp \
-  qt/moc_txanalytics.cpp \
   qt/moc_mnemonicimportdialog.cpp \
-  qt/moc_mnemonicbackupdialog.cpp \
-  qt/moc_watchaddressdialog.cpp
-
+  qt/moc_mnemonicbackupdialog.cpp
 XPCHAIN_MM = \
   qt/macdockiconhandler.mm \
   qt/macnotificationhandler.mm
@@ -265,10 +261,8 @@ XPCHAIN_QT_H = \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
   qt/winshutdownmonitor.h \
-  qt/txanalytics.h \
   qt/mnemonicimportdialog.h \
   qt/mnemonicbackupdialog.h \
-  qt/watchaddressdialog.h \
   qt/res/bip39_words.h
 
 RES_ICONS = \
@@ -391,10 +385,8 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp \
-  qt/txanalytics.cpp \
   qt/mnemonicimportdialog.cpp \
-  qt/mnemonicbackupdialog.cpp \
-  qt/watchaddressdialog.cpp
+  qt/mnemonicbackupdialog.cpp
 
 XPCHAIN_QT_CPP = $(XPCHAIN_QT_BASE_CPP)
 if TARGET_WINDOWS

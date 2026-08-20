@@ -19,7 +19,20 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
+          # GitHub runners may ship a Google Chrome apt source that fails during
+          # mirror sync and breaks `apt-get update` (exit 100). Drop it and retry.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list \
+                     /etc/apt/sources.list.d/google-chrome*.list || true
+          for attempt in 1 2 3; do
+            if sudo apt-get update; then
+              break
+            fi
+            echo "apt-get update failed (attempt ${attempt}); retrying..."
+            sleep $((attempt * 5))
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+          done
           sudo apt-get install -y \
             build-essential libtool autotools-dev automake pkg-config bsdmainutils \
             curl git python3 bison
@@ -63,7 +76,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
+          # Same Chrome apt-source flake as unit-test job (see above).
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list \
+                     /etc/apt/sources.list.d/google-chrome*.list || true
+          for attempt in 1 2 3; do
+            if sudo apt-get update; then
+              break
+            fi
+            echo "apt-get update failed (attempt ${attempt}); retrying..."
+            sleep $((attempt * 5))
+            if [ "${attempt}" -eq 3 ]; then
+              exit 1
+            fi
+          done
           sudo apt-get install -y \
             build-essential libtool autotools-dev automake pkg-config bsdmainutils \
             curl git python3 bison

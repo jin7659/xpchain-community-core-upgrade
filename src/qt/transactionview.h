@@ -69,7 +69,6 @@ private:
     QComboBox *typeWidget;
     QComboBox *watchOnlyWidget;
     QLineEdit *search_widget;
-    QLineEdit *tagSearchWidget;
     QLineEdit *amountWidget;
 
     QMenu *contextMenu;
@@ -117,7 +116,6 @@ public Q_SLOTS:
     void chooseWatchonly(int idx);
     void changedAmount();
     void changedSearch();
-    void changedTagSearch();
     void exportClicked();
     void focusTransaction(const QModelIndex&);
     void focusTransaction(const uint256& txid);

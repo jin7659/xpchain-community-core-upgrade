@@ -9,7 +9,6 @@
 
 #include <QDateTime>
 #include <QSortFilterProxyModel>
-#include <QSet>
 
 /** Filter the transaction list according to pre-specified rules. */
 class TransactionFilterProxy : public QSortFilterProxyModel
@@ -37,7 +36,6 @@ public:
 
     void setDateRange(const QDateTime &from, const QDateTime &to);
     void setSearchString(const QString &);
-    void setTagSearchString(const QString &);
     /**
       @note Type filter takes a bit field created with TYPE() or ALL_TYPES
      */
@@ -61,9 +59,6 @@ private:
     QDateTime dateFrom;
     QDateTime dateTo;
     QString m_search_string;
-    QString m_tag_search_string;
-    QSet<QString> m_matching_txids;
-    bool m_tag_filter_active;
     quint32 typeFilter;
     WatchOnlyFilter watchOnlyFilter;
     CAmount minAmount;
