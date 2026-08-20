@@ -202,7 +202,7 @@ void MintingView::exportClicked()
     // CSV is currently the only supported format
     QString filename = GUIUtil::getSaveFileName(
             this,
-            tr("Export Minting Data"), QString(),
+            tr("Export Staking Data"), QString(),
             tr("Comma separated file (*.csv)"),nullptr);
 
     if (filename.isNull()) return;
@@ -216,8 +216,8 @@ void MintingView::exportClicked()
     writer.addColumn(tr("Age"), MintingTableModel::Age);
     writer.addColumn(tr("CoinDay"), MintingTableModel::CoinDay);
     writer.addColumn(tr("Balance"), MintingTableModel::Balance);
-    writer.addColumn(tr("MintingProbability"), MintingTableModel::MintProbability);
-    writer.addColumn(tr("MintingReward"), MintingTableModel::MintReward,0);
+    writer.addColumn(tr("StakeProbability"), MintingTableModel::MintProbability);
+    writer.addColumn(tr("StakeReward"), MintingTableModel::MintReward,0);
 
     if(!writer.write())
     {

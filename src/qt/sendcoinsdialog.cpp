@@ -124,9 +124,9 @@ SendCoinsDialog::SendCoinsDialog(const PlatformStyle *_platformStyle, QWidget *p
     ui->customFee->setValue(settings.value("nTransactionFee").toLongLong());
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
     
-    // 동적 스마트 수수료 상태 가이드 라벨 초기화
+    // Fee status guide label
     labelFeeStatusGuide = new QLabel(this);
-    labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; border-radius: 4px; margin-top: 4px;");
+    labelFeeStatusGuide->setStyleSheet("font-size: 11px; font-weight: bold; padding: 4px 6px; border-radius: 4px; margin-top: 4px;");
     ui->verticalLayoutFee2->addWidget(labelFeeStatusGuide);
 
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
@@ -723,30 +723,30 @@ void SendCoinsDialog::updateSmartFeeLabel()
         ui->fallbackFeeWarningLabel->setVisible(false);
     }
 
-    // 동적 수수료 가이드 업데이트
+    // Update fee status guide
     if (labelFeeStatusGuide) {
         if (ui->radioCustomFee->isChecked()) {
             if (ui->checkBoxMinimumFee->isChecked()) {
-                labelFeeStatusGuide->setText(tr("네트워크 수수료 가이드: 사용자 지정 최소 수수료 (Eco Mode)"));
-                labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
+                labelFeeStatusGuide->setText(tr("Fee guide: custom minimum fee (eco)"));
+                labelFeeStatusGuide->setStyleSheet("font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
             } else {
-                labelFeeStatusGuide->setText(tr("네트워크 수수료 가이드: 사용자 지정 수수료 적용 중"));
-                labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #0d4f7a; border-radius: 4px; margin-top: 4px;");
+                labelFeeStatusGuide->setText(tr("Fee guide: custom fee in use"));
+                labelFeeStatusGuide->setStyleSheet("font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #0d4f7a; border-radius: 4px; margin-top: 4px;");
             }
         } else {
             if (reason == FeeReason::FALLBACK) {
-                labelFeeStatusGuide->setText(tr("네트워크 수수료 가이드: 초기 분석 중 (Eco Mode)"));
-                labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
+                labelFeeStatusGuide->setText(tr("Fee guide: estimating (eco fallback)"));
+                labelFeeStatusGuide->setStyleSheet("font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
             } else {
                 if (returned_target <= 10) {
-                    labelFeeStatusGuide->setText(tr("네트워크 혼잡도: 신속 (Fast) - 10분 내 승인 예상"));
-                    labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #106ba3; border-radius: 4px; margin-top: 4px;");
+                    labelFeeStatusGuide->setText(tr("Network: fast — confirmation often within ~10 minutes"));
+                    labelFeeStatusGuide->setStyleSheet("font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #106ba3; border-radius: 4px; margin-top: 4px;");
                 } else if (returned_target <= 48) {
-                    labelFeeStatusGuide->setText(tr("네트워크 혼잡도: 보통 (Normal) - 2시간 내 승인 예상"));
-                    labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #2b6f9a; border-radius: 4px; margin-top: 4px;");
+                    labelFeeStatusGuide->setText(tr("Network: normal — confirmation often within ~2 hours"));
+                    labelFeeStatusGuide->setStyleSheet("font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #2b6f9a; border-radius: 4px; margin-top: 4px;");
                 } else {
-                    labelFeeStatusGuide->setText(tr("네트워크 혼잡도: 친환경 (Eco) - 24시간 내 승인 예상"));
-                    labelFeeStatusGuide->setStyleSheet("font-family: 'Inter'; font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
+                    labelFeeStatusGuide->setText(tr("Network: eco — confirmation may take up to ~24 hours"));
+                    labelFeeStatusGuide->setStyleSheet("font-size: 11px; font-weight: bold; padding: 4px 6px; color: #ffffff; background-color: #485a6a; border-radius: 4px; margin-top: 4px;");
                 }
             }
         }

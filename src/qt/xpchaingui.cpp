@@ -25,6 +25,8 @@
 #include <wallet/walletutil.h>
 #include <qt/mnemonicimportdialog.h>
 #include <qt/mnemonicbackupdialog.h>
+#include <qt/walletsetupdialog.h>
+#include <qt/importaddressdialog.h>
 #include <qt/askpassphrasedialog.h>
 #endif // ENABLE_WALLET
 
@@ -57,11 +59,13 @@
 #include <QUrl>
 #include <QMimeData>
 #include <QProgressDialog>
+#include <QRunnable>
 #include <QSettings>
 #include <QShortcut>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStyle>
+#include <QThreadPool>
 #include <QTimer>
 #include <QToolBar>
 #include <QUrlQuery>
@@ -242,11 +246,23 @@ void XPChainGUI::createActions()
     openWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/open"), tr("&Open Wallet..."), this);
     openWalletAction->setStatusTip(tr("Open an existing wallet"));
 
+    closeWalletAction = new QAction(tr("Close &Wallet..."), this);
+    closeWalletAction->setStatusTip(tr("Unload the currently selected wallet"));
+
+    walletSetupAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("Set &Up Wallet..."), this);
+    walletSetupAction->setStatusTip(tr("Create, generate a mnemonic, restore, or open a wallet"));
+
     generateMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Generate & Backup Mnemonic..."), this);
     generateMnemonicAction->setStatusTip(tr("Generate a new BIP39 mnemonic, confirm backup, and create a wallet seeded from it"));
 
     importMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Restore Wallet from Mnemonic..."), this);
     importMnemonicAction->setStatusTip(tr("Restore keys from a BIP39 mnemonic into the current wallet (prefer a new empty wallet)"));
+
+    importAddressAction = new QAction(tr("Import &Address..."), this);
+    importAddressAction->setStatusTip(tr("Import a watch-only address into the current wallet"));
+
+    rescanWalletAction = new QAction(tr("&Rescan Wallet..."), this);
+    rescanWalletAction->setStatusTip(tr("Rescan the blockchain for transactions belonging to this wallet"));
 
     migrateWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Migrate Wallet to SQLite..."), this);
     migrateWalletAction->setStatusTip(tr("Copy the current Berkeley DB wallet into a new SQLite wallet file"));
@@ -290,8 +306,8 @@ void XPChainGUI::createActions()
     historyAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_4));
     tabGroup->addAction(historyAction);
 
-    mintingAction = new QAction(platformStyle->SingleColorIcon(":/icons/tx_mined"), tr("&Minting"), this);
-    mintingAction->setStatusTip(tr("Show the status of minting"));
+    mintingAction = new QAction(platformStyle->SingleColorIcon(":/icons/tx_mined"), tr("&Staking"), this);
+    mintingAction->setStatusTip(tr("Show stakeable coins and estimated staking odds"));
     mintingAction->setToolTip(mintingAction->statusTip());
     mintingAction->setCheckable(true);
     mintingAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
@@ -336,7 +352,7 @@ void XPChainGUI::createActions()
     encryptWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_closed"), tr("&Encrypt Wallet..."), this);
     encryptWalletAction->setStatusTip(tr("Encrypt spending keys and (on SQLite) the wallet file at rest with a passphrase"));
     encryptWalletAction->setCheckable(true);
-    decryptForMintingAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_open"), tr("&Unlock Wallet for Minting Only"), this);
+    decryptForMintingAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_open"), tr("&Unlock Wallet for Staking Only"), this);
     decryptForMintingAction->setStatusTip(tr("Unlock spending keys for staking only. Sending still requires a full unlock."));
     decryptForMintingAction->setCheckable(true);
     backupWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup Wallet..."), this);
@@ -377,8 +393,12 @@ void XPChainGUI::createActions()
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
     connect(createWalletAction, SIGNAL(triggered()), this, SLOT(createWallet()));
     connect(openWalletAction, SIGNAL(triggered()), this, SLOT(openWallet()));
+    connect(closeWalletAction, SIGNAL(triggered()), this, SLOT(closeWallet()));
+    connect(walletSetupAction, SIGNAL(triggered()), this, SLOT(walletSetup()));
     connect(generateMnemonicAction, SIGNAL(triggered()), this, SLOT(generateMnemonicWallet()));
     connect(importMnemonicAction, SIGNAL(triggered()), this, SLOT(importMnemonic()));
+    connect(importAddressAction, SIGNAL(triggered()), this, SLOT(importAddress()));
+    connect(rescanWalletAction, SIGNAL(triggered()), this, SLOT(rescanWallet()));
     connect(migrateWalletAction, SIGNAL(triggered()), this, SLOT(migrateWallet()));
     connect(backupAllWalletsAction, SIGNAL(triggered()), this, SLOT(backupAllWallets()));
     // prevents an open debug window from becoming stuck/unusable on client shutdown
@@ -418,8 +438,11 @@ void XPChainGUI::createMenuBar()
     QMenu *file = appMenuBar->addMenu(tr("&File"));
     if(walletFrame)
     {
+        file->addAction(walletSetupAction);
+        file->addSeparator();
         file->addAction(createWalletAction);
         file->addAction(openWalletAction);
+        file->addAction(closeWalletAction);
         file->addAction(generateMnemonicAction);
         file->addAction(importMnemonicAction);
         file->addAction(migrateWalletAction);
@@ -445,6 +468,14 @@ void XPChainGUI::createMenuBar()
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
+
+    if (walletFrame) {
+        QMenu *tools = appMenuBar->addMenu(tr("&Tools"));
+        tools->addAction(importAddressAction);
+        tools->addAction(rescanWalletAction);
+        tools->addSeparator();
+        tools->addAction(openRPCConsoleAction);
+    }
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     if(walletFrame)
@@ -641,6 +672,9 @@ void XPChainGUI::setWalletActionsEnabled(bool enabled)
     openStakingRewardSettingsAction->setEnabled(enabled);
     importMnemonicAction->setEnabled(enabled);
     migrateWalletAction->setEnabled(enabled);
+    if (closeWalletAction) closeWalletAction->setEnabled(enabled);
+    if (importAddressAction) importAddressAction->setEnabled(enabled);
+    if (rescanWalletAction) rescanWalletAction->setEnabled(enabled);
 }
 
 void XPChainGUI::createTrayIcon(const NetworkStyle *networkStyle)
@@ -1539,6 +1573,50 @@ void UnitDisplayStatusBarControl::onMenuSelection(QAction* action)
     }
 }
 
+void XPChainGUI::walletSetup()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame) return;
+
+    WalletSetupDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    switch (dlg.choice()) {
+    case WalletSetupDialog::CreateEmpty:
+        createWallet();
+        break;
+    case WalletSetupDialog::GenerateMnemonic:
+        generateMnemonicWallet();
+        break;
+    case WalletSetupDialog::RestoreMnemonic: {
+        WalletView* view = walletFrame->currentWalletView();
+        if (!view || !view->getWalletModel()) {
+            const auto reply = QMessageBox::question(
+                this, tr("No wallet loaded"),
+                tr("Restore needs a wallet to import keys into.\n\n"
+                   "Create an empty wallet now, then continue with restore?"),
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+            if (reply != QMessageBox::Yes) {
+                return;
+            }
+            createWallet();
+            view = walletFrame->currentWalletView();
+            if (!view || !view->getWalletModel()) {
+                return;
+            }
+        }
+        importMnemonic();
+        break;
+    }
+    case WalletSetupDialog::OpenExisting:
+        openWallet();
+        break;
+    }
+#endif
+}
+
 void XPChainGUI::createWallet()
 {
     // Ensure wallets directory exists so new wallets are created there
@@ -1686,7 +1764,153 @@ void XPChainGUI::importMnemonic()
     }
 
     MnemonicImportDialog dlg(this, walletModel);
+    bool create_empty = false;
+    connect(&dlg, &MnemonicImportDialog::createEmptyWalletRequested, this, [&create_empty]() {
+        create_empty = true;
+    });
     dlg.exec();
+
+    if (create_empty) {
+        createWallet();
+        WalletView* view = walletFrame->currentWalletView();
+        if (view && view->getWalletModel()) {
+            MnemonicImportDialog again(this, view->getWalletModel());
+            again.exec();
+        }
+    }
+#endif
+}
+
+void XPChainGUI::closeWallet()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame) return;
+    WalletView* walletView = walletFrame->currentWalletView();
+    if (!walletView) return;
+    WalletModel* walletModel = walletView->getWalletModel();
+    if (!walletModel) {
+        QMessageBox::warning(this, tr("No Wallet Selected"), tr("Please select a wallet to close."));
+        return;
+    }
+
+    const QString name = walletModel->getWalletName();
+    const QString display = name.isEmpty() ? tr("[default wallet]") : name;
+    if (QMessageBox::question(this, tr("Close Wallet"),
+            tr("Unload wallet \"%1\"?\n\n"
+               "You can open it again later from File → Open Wallet.")
+                .arg(display),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+        return;
+    }
+
+    try {
+        UniValue params(UniValue::VARR);
+        params.push_back(name.toStdString());
+        m_node.executeRpc("unloadwallet", params, "");
+    } catch (const UniValue& e) {
+        QMessageBox::critical(this, tr("Close Wallet Failed"),
+                              QString::fromStdString(e.exists("message") ? e["message"].get_str() : e.write()));
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, tr("Close Wallet Failed"), QString::fromStdString(e.what()));
+    }
+#endif
+}
+
+void XPChainGUI::importAddress()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame) return;
+    WalletView* walletView = walletFrame->currentWalletView();
+    if (!walletView) return;
+    WalletModel* walletModel = walletView->getWalletModel();
+    if (!walletModel) {
+        QMessageBox::warning(this, tr("No Wallet Selected"),
+                             tr("Please open or select a wallet first."));
+        return;
+    }
+
+    ImportAddressDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    const QString address = dlg.address();
+    if (address.isEmpty()) {
+        QMessageBox::warning(this, tr("Import Address"), tr("Please enter an address."));
+        return;
+    }
+
+    const std::string wallet_name = walletModel->wallet().getWalletName();
+    QByteArray encodedName = QUrl::toPercentEncoding(QString::fromStdString(wallet_name));
+    const std::string uri = "/wallet/" + std::string(encodedName.constData(), encodedName.length());
+
+    try {
+        UniValue params(UniValue::VARR);
+        params.push_back(address.toStdString());
+        params.push_back(dlg.label().toStdString());
+        params.push_back(dlg.rescan());
+        m_node.executeRpc("importaddress", params, uri);
+        QMessageBox::information(this, tr("Address Imported"),
+            dlg.rescan()
+                ? tr("Address imported. A blockchain rescan may run in the background; watch the progress dialog.")
+                : tr("Address imported without a rescan. Use Tools → Rescan Wallet if history is missing."));
+    } catch (const UniValue& e) {
+        QMessageBox::critical(this, tr("Import Failed"),
+                              QString::fromStdString(e.exists("message") ? e["message"].get_str() : e.write()));
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, tr("Import Failed"), QString::fromStdString(e.what()));
+    }
+#endif
+}
+
+namespace {
+class GuiRescanWorker : public QRunnable
+{
+public:
+    GuiRescanWorker(WalletModel* model) : m_model(model) {}
+
+    void run() override
+    {
+        bool success = false;
+        if (m_model) {
+            success = m_model->wallet().rescanBlockchain(0);
+        }
+        if (m_model) {
+            QMetaObject::invokeMethod(m_model, "notifyMnemonicRescanFinished",
+                                      Qt::QueuedConnection,
+                                      Q_ARG(bool, success));
+        }
+    }
+
+private:
+    WalletModel* m_model;
+};
+} // namespace
+
+void XPChainGUI::rescanWallet()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame) return;
+    WalletView* walletView = walletFrame->currentWalletView();
+    if (!walletView) return;
+    WalletModel* walletModel = walletView->getWalletModel();
+    if (!walletModel) {
+        QMessageBox::warning(this, tr("No Wallet Selected"),
+                             tr("Please open or select a wallet first."));
+        return;
+    }
+
+    if (QMessageBox::question(this, tr("Rescan Wallet"),
+            tr("Rescan the blockchain for wallet \"%1\"?\n\n"
+               "This can take a long time. You can cancel from the progress dialog.")
+                .arg(walletModel->getWalletName().isEmpty() ? tr("[default wallet]") : walletModel->getWalletName()),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
+        return;
+    }
+
+    GuiRescanWorker* worker = new GuiRescanWorker(walletModel);
+    worker->setAutoDelete(true);
+    QThreadPool::globalInstance()->start(worker);
 #endif
 }
 
