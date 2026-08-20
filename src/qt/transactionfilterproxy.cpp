@@ -6,7 +6,6 @@
 
 #include <qt/transactiontablemodel.h>
 #include <qt/transactionrecord.h>
-#include <qt/txanalytics.h>
 
 #include <cstdlib>
 
@@ -20,9 +19,6 @@ TransactionFilterProxy::TransactionFilterProxy(QObject *parent) :
     dateFrom(MIN_DATE),
     dateTo(MAX_DATE),
     m_search_string(),
-    m_tag_search_string(),
-    m_matching_txids(),
-    m_tag_filter_active(false),
     typeFilter(ALL_TYPES),
     watchOnlyFilter(WatchOnlyFilter_All),
     minAmount(0),
@@ -60,12 +56,6 @@ bool TransactionFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex &
         !  label.contains(m_search_string, Qt::CaseInsensitive) &&
         !   txid.contains(m_search_string, Qt::CaseInsensitive)) {
         return false;
-    }
-
-    if (m_tag_filter_active) {
-        if (!m_matching_txids.contains(txid)) {
-            return false;
-        }
     }
 
     qint64 amount = llabs(index.data(TransactionTableModel::AmountRole).toLongLong());
@@ -134,22 +124,4 @@ Qt::ItemFlags TransactionFilterProxy::flags(const QModelIndex &index) const
 {
     if (!sourceModel()) return Qt::NoItemFlags;
     return QSortFilterProxyModel::flags(index);
-}
-
-void TransactionFilterProxy::setTagSearchString(const QString &tagSearch)
-{
-    if (m_tag_search_string == tagSearch) return;
-    m_tag_search_string = tagSearch;
-    if (tagSearch.isEmpty()) {
-        m_tag_filter_active = false;
-        m_matching_txids.clear();
-    } else {
-        m_tag_filter_active = true;
-        QList<QString> matched = TxAnalytics::getInstance().searchTxIdsByTag(tagSearch);
-        m_matching_txids.clear();
-        for (const QString& id : matched) {
-            m_matching_txids.insert(id);
-        }
-    }
-    invalidateFilter();
 }

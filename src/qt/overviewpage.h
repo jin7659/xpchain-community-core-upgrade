@@ -7,10 +7,6 @@
 
 #include <interfaces/wallet.h>
 #include <QWidget>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QTimer>
-#include <QLabel>
 #include <memory>
 
 class ClientModel;
@@ -53,21 +49,6 @@ private:
     WalletModel *walletModel;
     interfaces::WalletBalances m_balances;
 
-    // Phase 3 추가 멤버
-    QNetworkAccessManager *networkManager;
-    QTimer *apiTimer;
-    QLabel *labelStakingTimeCorrection;
-    QWidget *walletStatusRow;
-    QLabel *labelFormatChip;
-    QLabel *labelFileChip;
-    QLabel *labelTypeChip;
-    QLabel *labelLockChip;
-
-    // Phase 5 추가 멤버 (웹지갑 잔고 관찰)
-    QNetworkAccessManager *watchNetworkManager;
-    QTimer *watchTimer;
-    double m_watchOnlyWebWalletBalance;
-
     TxViewDelegate *txdelegate;
     std::unique_ptr<TransactionFilterProxy> filter;
 
@@ -77,17 +58,6 @@ private Q_SLOTS:
     void updateAlerts(const QString &warnings);
     void updateWatchOnlyLabels(bool showWatchOnly);
     void handleOutOfSyncWarningClicks();
-
-    // Phase 3 추가 슬롯
-    void requestStakingData();
-    void onStakingDataReceived(QNetworkReply* reply);
-    void updateStakingTime(double networkWeight);
-    void updateWalletStatusChips();
-
-    // Phase 5 추가 슬롯
-    void onWatchAddressButtonClicked();
-    void requestWatchAddressBalances();
-    void onWatchAddressBalanceReceived(QNetworkReply* reply);
 };
 
 #endif // XPCHAIN_QT_OVERVIEWPAGE_H
