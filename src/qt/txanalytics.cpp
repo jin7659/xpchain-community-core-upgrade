@@ -17,8 +17,8 @@ void TxAnalytics::destroy()
 {
     if (m_instance) {
         delete m_instance;
-        m_instance = nullptr;
     }
+    m_instance = nullptr;
 }
 
 TxAnalytics::TxAnalytics(QObject* parent)
@@ -28,20 +28,11 @@ TxAnalytics::TxAnalytics(QObject* parent)
 
 TxAnalytics::~TxAnalytics()
 {
-    if (m_memDb.isOpen()) {
-        m_memDb.close();
-    }
     if (m_fileDb.isOpen()) {
         m_fileDb.close();
     }
 
-    // QSqlDatabase가 살아있는 상태에서 removeDatabase를 하면 경고가 발생하므로,
-    // 빈 데이터베이스 객체 대입을 통해 내부 참조 자원을 완전히 회수시킵니다.
-    m_memDb = QSqlDatabase();
     m_fileDb = QSqlDatabase();
-
-    // 등록한 SQLite 커넥션 명칭을 완전히 삭제하여 드라이버 언로드 안전성 확보
-    QSqlDatabase::removeDatabase("memory_db");
     QSqlDatabase::removeDatabase("file_db");
 }
 
@@ -51,26 +42,6 @@ bool TxAnalytics::init(const QString& dataDir)
         return true;
     }
 
-    // 1. 인메모리 SQLite DB 초기화
-    m_memDb = QSqlDatabase::addDatabase("QSQLITE", "memory_db");
-    m_memDb.setDatabaseName(":memory:");
-    if (!m_memDb.open()) {
-        qWarning() << "Failed to open In-Memory Database:" << m_memDb.lastError().text();
-        return false;
-    }
-
-    QSqlQuery memQuery(m_memDb);
-    if (!memQuery.exec("CREATE TABLE IF NOT EXISTS tx_history ("
-                        "txid TEXT PRIMARY KEY, "
-                        "time INTEGER, "
-                        "type INTEGER, "
-                        "amount REAL, "
-                        "address TEXT)")) {
-        qWarning() << "Failed to create tx_history table:" << memQuery.lastError().text();
-        return false;
-    }
-
-    // 2. 로컬 메타데이터 파일 SQLite DB 초기화
     m_fileDb = QSqlDatabase::addDatabase("QSQLITE", "file_db");
     QString filePath = QDir(dataDir).filePath("tx_metadata.db");
     m_fileDb.setDatabaseName(filePath);
@@ -101,36 +72,6 @@ bool TxAnalytics::init(const QString& dataDir)
     return true;
 }
 
-void TxAnalytics::clearHistory()
-{
-    if (!m_initialized) return;
-
-    QSqlQuery query(m_memDb);
-    if (!query.exec("DELETE FROM tx_history")) {
-        qWarning() << "Failed to clear tx_history:" << query.lastError().text();
-    }
-}
-
-bool TxAnalytics::addHistory(const QString& txid, qint64 time, int type, double amount, const QString& address)
-{
-    if (!m_initialized) return false;
-
-    QSqlQuery query(m_memDb);
-    query.prepare("INSERT OR REPLACE INTO tx_history (txid, time, type, amount, address) "
-                  "VALUES (:txid, :time, :type, :amount, :address)");
-    query.bindValue(":txid", txid);
-    query.bindValue(":time", time);
-    query.bindValue(":type", type);
-    query.bindValue(":amount", amount);
-    query.bindValue(":address", address);
-
-    if (!query.exec()) {
-        qWarning() << "Failed to add history row:" << query.lastError().text();
-        return false;
-    }
-    return true;
-}
-
 bool TxAnalytics::setTag(const QString& txid, const QString& tag)
 {
     if (!m_initialized) return false;
@@ -139,11 +80,9 @@ bool TxAnalytics::setTag(const QString& txid, const QString& tag)
     qint64 now = QDateTime::currentSecsSinceEpoch();
 
     if (tag.trimmed().isEmpty()) {
-        // 태그가 비어있으면 삭제
         query.prepare("DELETE FROM tx_tags WHERE txid = :txid");
         query.bindValue(":txid", txid);
     } else {
-        // 태그 삽입 또는 교체
         query.prepare("INSERT OR REPLACE INTO tx_tags (txid, tag, updated_at) "
                       "VALUES (:txid, :tag, :updated_at)");
         query.bindValue(":txid", txid);
@@ -189,31 +128,6 @@ QList<QString> TxAnalytics::searchTxIdsByTag(const QString& tagQuery)
         qWarning() << "Failed to search txids by tag:" << query.lastError().text();
     }
     return results;
-}
-
-QList<QPair<QString, double>> TxAnalytics::getMonthlyMiningRewards()
-{
-    QList<QPair<QString, double>> rewards;
-    if (!m_initialized) return rewards;
-
-    QSqlQuery query(m_memDb);
-    // Generated = 1 (TransactionRecord::Generated)
-    if (!query.exec("SELECT strftime('%Y-%m', datetime(time, 'unixepoch', 'localtime')) AS month, "
-                    "SUM(amount) AS total "
-                    "FROM tx_history "
-                    "WHERE type = 1 " // Generated
-                    "GROUP BY month "
-                    "ORDER BY month ASC")) {
-        qWarning() << "Failed to aggregate monthly mining rewards:" << query.lastError().text();
-        return rewards;
-    }
-
-    while (query.next()) {
-        QString month = query.value(0).toString();
-        double total = query.value(1).toDouble();
-        rewards.append(qMakePair(month, total));
-    }
-    return rewards;
 }
 
 bool TxAnalytics::addWatchAddress(const QString& address, const QString& label)
