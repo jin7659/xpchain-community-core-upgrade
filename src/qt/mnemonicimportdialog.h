@@ -24,6 +24,10 @@ public:
     explicit MnemonicImportDialog(QWidget *parent = nullptr, WalletModel *model = nullptr);
     ~MnemonicImportDialog();
 
+Q_SIGNALS:
+    /** User asked to create an empty wallet before restoring. */
+    void createEmptyWalletRequested();
+
 protected:
     void showEvent(QShowEvent *event) override;
 

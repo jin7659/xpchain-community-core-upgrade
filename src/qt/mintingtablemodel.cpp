@@ -267,7 +267,7 @@ MintingTableModel::MintingTableModel(const PlatformStyle *_platformStyle, Wallet
         //cachedNumBlocks(0),
         platformStyle(_platformStyle)
 {
-    columns << tr("Transaction") <<  tr("Address") << tr("Balance") << tr("Age") << tr("CoinDay") << tr("MintProbability") << tr("MintReward");
+    columns << tr("Transaction") <<  tr("Address") << tr("Balance") << tr("Age") << tr("CoinDay") << tr("Stake Probability") << tr("Stake Reward");
 
     // Initialize records
     std::vector<interfaces::WalletTx> wtxs = walletModel->wallet().getWalletTxs();

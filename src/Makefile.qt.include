@@ -176,7 +176,10 @@ QT_MOC_CPP = \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp \
   qt/moc_mnemonicimportdialog.cpp \
-  qt/moc_mnemonicbackupdialog.cpp
+  qt/moc_mnemonicbackupdialog.cpp \
+  qt/moc_walletsetupdialog.cpp \
+  qt/moc_importaddressdialog.cpp
+
 XPCHAIN_MM = \
   qt/macdockiconhandler.mm \
   qt/macnotificationhandler.mm
@@ -263,6 +266,8 @@ XPCHAIN_QT_H = \
   qt/winshutdownmonitor.h \
   qt/mnemonicimportdialog.h \
   qt/mnemonicbackupdialog.h \
+  qt/walletsetupdialog.h \
+  qt/importaddressdialog.h \
   qt/res/bip39_words.h
 
 RES_ICONS = \
@@ -386,7 +391,9 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp \
   qt/mnemonicimportdialog.cpp \
-  qt/mnemonicbackupdialog.cpp
+  qt/mnemonicbackupdialog.cpp \
+  qt/walletsetupdialog.cpp \
+  qt/importaddressdialog.cpp
 
 XPCHAIN_QT_CPP = $(XPCHAIN_QT_BASE_CPP)
 if TARGET_WINDOWS

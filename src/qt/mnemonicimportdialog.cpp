@@ -96,12 +96,7 @@ void MnemonicImportDialog::on_cancelButton_clicked()
 
 void MnemonicImportDialog::on_createEmptyWalletButton_clicked()
 {
-    QMessageBox::information(this, tr("Create an empty wallet first"),
-        tr("This dialog will close.\n\n"
-           "1. Use File → Create Wallet to make a new empty wallet.\n"
-           "2. Select that wallet.\n"
-           "3. Open File → Restore Wallet from Mnemonic again.\n\n"
-           "That keeps restored keys separate from your current wallet."));
+    Q_EMIT createEmptyWalletRequested();
     reject();
 }
 

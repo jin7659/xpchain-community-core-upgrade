@@ -106,10 +106,14 @@ private:
     QToolBar* appToolBar = nullptr;
     QAction *createWalletAction = nullptr;
     QAction *openWalletAction = nullptr;
+    QAction *closeWalletAction = nullptr;
+    QAction *walletSetupAction = nullptr;
     QAction *generateMnemonicAction = nullptr;
     QAction *importMnemonicAction = nullptr;
     QAction *migrateWalletAction = nullptr;
     QAction *backupAllWalletsAction = nullptr;
+    QAction *importAddressAction = nullptr;
+    QAction *rescanWalletAction = nullptr;
     QAction* overviewAction = nullptr;
     QAction* historyAction = nullptr;
     QAction* quitAction = nullptr;
@@ -269,6 +273,8 @@ private Q_SLOTS:
     void showDebugWindowActivateConsole();
     /** Create a new wallet */
     void createWallet();
+    /** Show unified wallet setup chooser */
+    void walletSetup();
     /** Generate BIP39 mnemonic, confirm backup, create seeded wallet */
     void generateMnemonicWallet();
     /** Restore wallet using BIP39 mnemonic */
@@ -277,6 +283,12 @@ private Q_SLOTS:
     void migrateWallet();
     /** Open a wallet */
     void openWallet();
+    /** Close (unload) the current wallet */
+    void closeWallet();
+    /** Import a watch-only address into the current wallet */
+    void importAddress();
+    /** Rescan the blockchain for the current wallet */
+    void rescanWallet();
     /** Backup all wallets */
     void backupAllWallets();
     /** Show help message dialog */
