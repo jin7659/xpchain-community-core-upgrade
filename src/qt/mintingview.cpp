@@ -98,6 +98,8 @@ MintingView::MintingView(const PlatformStyle *platformStyle, QWidget *parent) :
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     view->setTabKeyNavigation(false);
     view->setContextMenuPolicy(Qt::CustomContextMenu);
+    view->setAttribute(Qt::WA_MacShowFocusRect, false);
+    view->setFocusPolicy(Qt::ClickFocus);
 
     mintingView = view;
     mintingView->setObjectName("mintingView");
@@ -193,6 +195,9 @@ void MintingView::chooseMintingInterval(int idx)
             interval = 60*24*60;
             break;
     }
+    if (!model || !mintingProxyModel)
+        return;
+
     model->getMintingTableModel()->setMintingInterval(interval);
     mintingProxyModel->invalidate();
 }

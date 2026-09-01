@@ -209,6 +209,13 @@ void OverviewPage::setClientModel(ClientModel *model)
 
 void OverviewPage::setWalletModel(WalletModel *model)
 {
+    if (walletModel) {
+        disconnect(walletModel, nullptr, this, nullptr);
+    }
+
+    ui->listTransactions->setModel(nullptr);
+    filter.reset();
+
     this->walletModel = model;
     if(model && model->getOptionsModel())
     {
