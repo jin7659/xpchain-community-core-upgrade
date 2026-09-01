@@ -142,6 +142,8 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     view->setTabKeyNavigation(false);
     view->setContextMenuPolicy(Qt::CustomContextMenu);
+    view->setAttribute(Qt::WA_MacShowFocusRect, false);
+    view->setFocusPolicy(Qt::ClickFocus);
 
     view->installEventFilter(this);
 
