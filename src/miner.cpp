@@ -239,8 +239,14 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     if(fPoSHeight)
     {
-        assert(txCoinStake);
-        assert(txCoinStake->vout.size() == 1);
+        // A template above nSwitchHeight is only meaningful with a coinstake. The
+        // proof-of-work entry point has none, so both getblocktemplate and
+        // generatetoaddress reach here with a null coinstake once the chain is past the
+        // switch height. Report failure to the caller, which turns it into an RPC error,
+        // rather than aborting the process.
+        if (!txCoinStake || txCoinStake->vout.size() != 1) {
+            return nullptr;
+        }
         pblock->vtx[1] = txCoinStake;
         nBlockTx++;
         scriptPubKey = pblock->vtx[1]->vout[0].scriptPubKey;
