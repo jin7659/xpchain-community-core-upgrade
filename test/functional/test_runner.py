@@ -65,6 +65,7 @@ BASE_SCRIPTS = [
     'wallet_sqlite_default.py',
     'wallet_sqlite_encryption.py',
     'wallet_backup.py',
+    'feature_pos_staking.py',
     # vv Tests less than 5m vv
     'feature_block.py',
     'rpc_fundrawtransaction.py',
@@ -253,7 +254,9 @@ def main():
     if not (enable_wallet and enable_utils and enable_xpchaind):
         print("No functional tests to run. Wallet, utils, and xpchaind must all be enabled")
         print("Rerun `configure` with -enable-wallet, -with-utils and -with-daemon and rerun make")
-        sys.exit(0)
+        # Exit non-zero: a build that cannot run the functional suite must not be reported
+        # as a passing test run. A broken test/config.ini used to make CI silently green.
+        sys.exit(1)
 
     # Build list of tests
     test_list = []
@@ -285,7 +288,9 @@ def main():
     if not test_list:
         print("No valid test scripts specified. Check that your test is in one "
               "of the test lists in test_runner.py, or run test_runner.py with no arguments to run all tests")
-        sys.exit(0)
+        # Exit non-zero for the same reason as above: naming tests that do not resolve is
+        # a configuration error, not a successful run of zero tests.
+        sys.exit(1)
 
     if args.help:
         # Print help for test_runner.py, then print help of the first script (with args removed) and exit.
