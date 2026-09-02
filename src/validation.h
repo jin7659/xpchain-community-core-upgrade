@@ -20,6 +20,7 @@
 #include <versionbits.h>
 
 #include <algorithm>
+#include <cmath>
 #include <exception>
 #include <list>
 #include <map>
@@ -277,6 +278,8 @@ bool GetTransaction(const uint256& hash, CTransactionRef& tx, const Consensus::P
  */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
+/** Annual staking rate for a PoS height, as a fraction (0.10 .. 0.05). Zero below nSwitchHeight. */
+double_t GetAnnualRate(int nHeight, const Consensus::Params& consensusParams);
 CAmount GetProofOfStakeReward(int nHeight, CAmount nAmount, uint32_t nTime, const Consensus::Params& consensusParams);
 
 /** Guess verification progress (as a fraction between 0.0=genesis and 1.0=current tip). */
