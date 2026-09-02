@@ -31,7 +31,7 @@
 #ifdef USE_SQLITE
 #include <wallet/sqlite.h>
 #endif
-#include <kernel.h>
+#include <pos/kernel.h>
 
 #include <algorithm>
 #include <assert.h>

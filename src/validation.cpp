@@ -49,8 +49,8 @@
 #include <boost/bind/bind.hpp>
 #include <boost/thread.hpp>
 
-#include <kernel.h>
-#include <policy/stake.h>
+#include <pos/kernel.h>
+#include <pos/stake_policy.h>
 #include <pubkey.h>
 #include <key_io.h>
 #include <outputtype.h>

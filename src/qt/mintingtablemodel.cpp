@@ -30,7 +30,7 @@
 #include <rpc/blockchain.h>
 
 #include <kernelrecord.h>
-#include <kernel.h>
+#include <pos/kernel.h>
 
 #include <QAbstractItemDelegate>
 #include <QPainter>

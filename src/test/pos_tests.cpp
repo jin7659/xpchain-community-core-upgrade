@@ -18,9 +18,9 @@
 #include <arith_uint256.h>
 #include <chainparams.h>
 #include <hash.h>
-#include <kernel.h>
+#include <pos/kernel.h>
 #include <key.h>
-#include <policy/stake.h>
+#include <pos/stake_policy.h>
 #include <primitives/transaction.h>
 #include <script/standard.h>
 #include <uint256.h>
