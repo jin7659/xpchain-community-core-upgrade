@@ -111,6 +111,19 @@ jobs:
           CONFIG_SITE=$PWD/depends/x86_64-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=no
           make -j"$(nproc)"
 
+      - name: Check that the functional suite is actually enabled
+        run: |
+          # test_runner.py exits early when test/config.ini says the wallet, utils or
+          # daemon are missing. Fail here with a clear message instead of discovering it
+          # as a zero-test run. See doc/architecture-separation-roadmap.md (P0-1).
+          grep -q '^ENABLE_WALLET=true' test/config.ini
+          grep -q '^ENABLE_UTILS=true' test/config.ini
+          grep -q '^ENABLE_XPCHAIND=true' test/config.ini
+
+      - name: Proof-of-stake functional test
+        run: |
+          python3 test/functional/test_runner.py feature_pos_staking.py
+
       - name: Wallet functional tests
         run: |
           python3 test/functional/test_runner.py \
