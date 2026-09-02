@@ -24,11 +24,24 @@ Regression coverage lives in `src/test/pos_tests.cpp` and
 Moving these is the rest of stage P1 and stage P5 of the roadmap. Listed here so the
 boundary is honest about where it currently stops:
 
-- `IsPoSHeight`, `GetAnnualRate`, `GetProofOfStakeReward` — `validation.cpp` (P1-3)
-- `VerifyCoinBaseTx`, `GetRewardHash`, `CheckBlockSignature`, `GetPubKeysFromCoinStakeTx` — `validation.cpp` (P1-3)
-- The PoS branches of `ConnectBlock` and `CheckBlock` — `validation.cpp` (P1-4, P5-1)
-- The staking thread and the PoS `CreateNewBlock` overloads — `miner.cpp` (P2, P5-3)
-- `CWallet::CreateCoinStake` — `wallet/wallet.cpp` (P2)
+| Still elsewhere | Where | Roadmap stage |
+|---|---|---|
+| `IsPoSHeight`, `GetAnnualRate`, `GetProofOfStakeReward` | `validation.cpp` | P1-3 |
+| `VerifyCoinBaseTx`, `GetRewardHash`, `CheckBlockSignature`, `GetPubKeysFromCoinStakeTx`, `GetPubKeyFromScript`, `MakeBlockHashExcludedSignature` | `validation.cpp` | P1-3 |
+| The PoS branches of `ConnectBlock` and `CheckBlock`, and the `fProofOfStake` parameter on `ReadBlockFromDisk` | `validation.cpp` | P1-4, P5-1 |
+| The height-gated `CheckProofOfWork` call when loading the block index | `txdb.cpp` | P1-4 |
+| The PoS difficulty branches of `GetNextWorkRequired` and `CalculateNextWorkRequired`, plus `GetnBits` which reimplements the same rule | `pow.cpp`, `miner.cpp` | P5-2 |
+| The staking thread, `SignBlock`, `CreateTxSig`, `GetRewardPct` and the PoS `CreateNewBlock` overloads | `miner.cpp` | P2, P5-3 |
+| `CWallet::CreateCoinStake`, `m_coinstaketx`, `vRewardDistributionPcts` | `wallet/wallet.cpp` | P2 |
+| Stake probability and coin-day estimation | `kernelrecord.{h,cpp}` | P2-3 |
+| `listmintings` | `wallet/rpcwallet.cpp` | P2-5 |
+| Minting tab and staking reward distribution UI | `src/qt/minting*`, `src/qt/stakingrewardsetting*` | P2-3 |
+
+`nSwitchHeight`, `nStakeMinAge` and `nStakeMaxAge` stay in `consensus/params.h` alongside the
+other consensus parameters; they are not moved here.
+
+A side benefit of the `pos/` prefix: upstream Bitcoin Core now has its own `src/kernel/`
+directory for `libbitcoinkernel`, which a top-level `kernel.h` would have collided with.
 
 ## Rules for code in here
 
