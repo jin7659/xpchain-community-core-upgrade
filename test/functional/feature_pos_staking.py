@@ -92,12 +92,13 @@ class PoSStakingTest(BitcoinTestFramework):
         # Move the clock past the tip so the candidate coins clear nStakeMinAge. Staying
         # well inside DEFAULT_MAX_TIP_AGE keeps IsInitialBlockDownload() false, which the
         # minter thread requires.
-        mocktime = tip_time + REGTEST_STAKE_MIN_AGE + 120
+        mocktime = tip_time + REGTEST_STAKE_MIN_AGE + 300
+        self.mocktime = mocktime
         for node in self.nodes:
             node.setmocktime(mocktime)
 
         self.log.info("Restarting node 0 with minting enabled")
-        self.restart_node(0, extra_args=['-txindex', '-minting=1'])
+        self.restart_node(0, extra_args=['-txindex', '-minting=1', '-mocktime={}'.format(mocktime)])
         connect_nodes(self.nodes[0], 1)
         self.nodes[0].setmocktime(mocktime)
 
@@ -106,7 +107,7 @@ class PoSStakingTest(BitcoinTestFramework):
 
         # Stop staking so the rest of the test runs against a fixed tip.
         self.log.info("Restarting node 0 with minting disabled")
-        self.restart_node(0, extra_args=['-txindex', '-minting=0'])
+        self.restart_node(0, extra_args=['-txindex', '-minting=0', '-mocktime={}'.format(mocktime)])
         connect_nodes(self.nodes[0], 1)
         self.nodes[0].setmocktime(mocktime)
         return staked_hash
@@ -170,7 +171,7 @@ class PoSStakingTest(BitcoinTestFramework):
     def check_reindex_revalidates(self, block_hash):
         """-reindex re-runs CheckBlock/ConnectBlock over the PoS block from disk."""
         self.log.info("Checking that node 1 revalidates the proof-of-stake block after -reindex")
-        self.restart_node(1, extra_args=['-txindex', '-minting=0', '-reindex'])
+        self.restart_node(1, extra_args=['-txindex', '-minting=0', '-reindex', '-mocktime={}'.format(self.mocktime)])
         wait_until(lambda: self.nodes[1].getblockcount() == REGTEST_SWITCH_HEIGHT + 1, timeout=300)
         assert_equal(self.nodes[1].getbestblockhash(), block_hash)
         connect_nodes(self.nodes[0], 1)
