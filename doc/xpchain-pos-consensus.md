@@ -42,7 +42,7 @@ PoS 고유 데이터는 **블록 헤더가 아니라 코인베이스 출력과 �
 
 ### 1.2 작업증명 검사의 우회
 
-PoS 높이에서는 `CheckProofOfWork()`를 호출하지 않는다. 현재 이 분기는 아래 네 지점에 흩어져 있다.
+PoS 높이에서는 `CheckProofOfWork()`를 호출하지 않는다. 현재 이 분기는 아래 다섯 지점에 흩어져 있다.
 
 | 위치 | 방식 |
 |---|---|
@@ -50,6 +50,11 @@ PoS 높이에서는 `CheckProofOfWork()`를 호출하지 않는다. 현재 이 �
 | `AcceptBlockHeader()` 경로 | `CheckBlockHeader(..., !IsPoSHeight(pindexPrev->nHeight + 1))` |
 | `ReadBlockFromDisk(pos, ...)` | `bool fProofOfStake` 인자로 PoW 검사 생략 |
 | `ReadBlockFromDisk(pindex, ...)` | `IsPoSHeight(pindex->nHeight)`를 계산해 위로 전달 |
+| `CBlockTreeDB::LoadBlockIndexGuts()` (`src/txdb.cpp:277`) | `nHeight <= nSwitchHeight`일 때만 검사 |
+
+마지막 지점은 `IsPoSHeight()`를 쓰지 않고 `<= nSwitchHeight` 비교를 직접 손으로 적어놨다.
+의미는 동일하지만(§1의 `>` 비교의 여집합) **비교 방향이 헷갈리기 쉬운 중복 표현**이므로,
+P1에서 나머지 네 지점과 함께 단일 헬퍼로 모아야 한다.
 
 **관찰 (P1-4에서 정리 대상):** `CheckBlock()`은 Bitcoin에서 문맥 독립(context-free) 함수인데,
 XPChain은 그 안에서 `mapBlockIndex.find(block.hashPrevBlock)`로 높이를 역추적한다.
@@ -97,6 +102,13 @@ PoS 높이의 블록은 다음을 만족해야 한다.
 ```
 GetRewardHash := Hash( Σ(scriptPubKey ‖ nValue) ‖ nTime ‖ vtx[1]->vin[0] )   // SER_GETHASH
 ```
+
+이 형태는 예외가 아니라 **기본 경로**다. 마인터의 `GetRewardPct()`(`src/miner.cpp`)가
+지갑의 `vRewardDistributionPcts`(스테이킹 보상 분배 설정)로 수령자 목록을 만들고,
+남은 지분을 기본 목적지에 배정하므로 목록은 항상 최소 1개다. 따라서 분배를 설정하지 않은
+지갑도 코인베이스 출력이 3개(`OP_RETURN` + 보상 1개 + witness commitment)가 되고
+`VerifyCoinBaseTx()`를 통과해야 한다. §2의 5번(출력 1~2개 경로)은 다른 구현이 만든
+블록을 위한 경로다.
 
 ### 2.2 블록 서명 (`CheckBlockSignature`)
 
@@ -354,15 +366,37 @@ reward      = (CAmount)( nAmount * GetAnnualRate(nHeight) * coefficient * nAge /
 
 ## 6. 난이도 (`pow.cpp`)
 
-`GetnBits()`(`src/miner.cpp`)는 PoS 높이에서도 동일한 `CalculateNextWorkRequired()`를 쓴다.
-단 두 번째 인자로 `pindexLast->pprev->GetBlockTime()`을 넘긴다.
+**PoS는 별도의 난이도 조정 알고리즘을 가진다.** 함수 이름과 `nBits` 필드를 PoW와 공유하기
+때문에 눈에 잘 안 띄지만, `GetNextWorkRequired()`와 `CalculateNextWorkRequired()` 양쪽에
+`pindexLast->nHeight > nSwitchHeight` 분기가 들어 있다.
+
+| 항목 | PoW | PoS |
+|---|---|---|
+| 조정 주기 | `DifficultyAdjustmentInterval()`(2016)의 배수 높이에서만 | **매 블록** (주기 스킵 분기가 PoW 전용) |
+| 관측 창 | 직전 2015블록 (`nHeight - (interval - 1)`) | **직전 1블록** (`nHeight - 1`) |
+| `nActualTimespan` 클램프 | `[timespan/4, timespan*4]` | **없음** |
+| 최소난이도 예외 (`fPowAllowMinDifficultyBlocks`) | 적용 | 미적용 |
+| 재타깃 식 | `bnNew *= actual; bnNew /= nPowTargetTimespan` | 아래 |
 
 ```
+nInterval = nPowTargetTimespan / nPowTargetSpacing
 bnNew *= ((nInterval - 1) * nPowTargetSpacing + nActualTimespan + nActualTimespan);
 bnNew /= ((nInterval + 1) * nPowTargetSpacing);
 ```
 
-PoS 전용 `posLimit`이나 별도 재타깃 알고리즘은 없다. `nBits`는 커널 해시 목표로 재사용된다.
+즉 매 블록 이전 블록과의 간격만 보고 목표 간격(`nPowTargetSpacing`, 60초)으로 끌어당기는
+1차 필터다. `nActualTimespan`이 0에 가까우면 배율이 `(nInterval-1)/(nInterval+1)`로 수렴하므로
+블록당 최대 감쇠폭이 유한하다. 상한은 PoW와 동일한 `powLimit`이다.
+
+`fPowNoRetargeting`(regtest)은 `CalculateNextWorkRequired()` 진입 즉시 `pindexLast->nBits`를
+반환하므로 PoS 경로에도 그대로 적용된다.
+
+PoS 전용 `posLimit`은 없고, 계산된 `nBits`가 §3.3의 커널 해시 목표로 재사용된다.
+
+**관찰:** 스테이킹 측 `GetnBits()`(`src/miner.cpp`)는 `GetNextWorkRequired()`를 거치지 않고
+`CalculateNextWorkRequired(pindexLast, pindexLast->pprev->GetBlockTime(), params)`를 직접
+호출한다. PoS 분기의 관측 창이 1블록이므로 결과는 같지만, **두 곳에 같은 규칙이 중복 표현되어
+있다.** 로드맵 P5-2(`pos/difficulty.cpp`)에서 하나로 합쳐야 한다.
 
 ---
 
@@ -394,6 +428,8 @@ PoS 전용 `posLimit`이나 별도 재타깃 알고리즘은 없다. `nBits`는 
 | 8 | 보상 공식의 상수·연산 순서·최종 절단 | §5.2 |
 | 9 | PoS 보상에 **수수료를 더하지 않음** | §5 |
 | 10 | `CheckProofOfStake` → 보상 계산의 **호출 순서** | §5.4 |
+| 11 | PoS 재타깃: 매 블록 / 1블록 창 / 클램프 없음 / 전용 식 | §6 |
+| 12 | PoW 검사를 건너뛰는 다섯 지점 (`txdb.cpp` 포함) | §1.2 |
 
 ---
 
