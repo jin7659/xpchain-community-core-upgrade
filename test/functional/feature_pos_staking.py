@@ -26,6 +26,7 @@ from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
     assert_equal,
     assert_greater_than,
+    assert_raises_rpc_error,
     connect_nodes,
     sync_blocks,
     wait_until,
@@ -66,16 +67,23 @@ class PoSStakingTest(BitcoinTestFramework):
         sync_blocks(self.nodes)
 
     def assert_pow_rejected_above_switch(self, address):
-        """A proof-of-work block at nSwitchHeight + 1 has no coinstake and must be rejected."""
-        self.log.info("Checking that a proof-of-work block is rejected above the switch height")
+        """Above the switch height a template needs a coinstake, which mining RPCs lack.
+
+        BlockAssembler used to assert on the missing coinstake, which aborted the daemon
+        for any getblocktemplate or generatetoaddress call on a chain past the switch
+        height. It must report a plain RPC error instead.
+        """
+        self.log.info("Checking that proof-of-work mining is refused above the switch height")
         height_before = self.nodes[0].getblockcount()
-        try:
-            self.nodes[0].generatetoaddress(1, address)
-        except Exception as e:
-            self.log.info("generatetoaddress rejected as expected: %s", e)
-        else:
-            raise AssertionError(
-                "a proof-of-work block was accepted at height {}".format(height_before + 1))
+
+        assert_raises_rpc_error(-32603, "Couldn't create new block",
+                                self.nodes[0].generatetoaddress, 1, address)
+        # getblocktemplate maps a failed template to RPC_OUT_OF_MEMORY, as upstream does.
+        assert_raises_rpc_error(-7, "Out of memory",
+                                self.nodes[0].getblocktemplate,
+                                {'rules': ['segwit']})
+
+        # The node is still alive and the tip did not move.
         assert_equal(self.nodes[0].getblockcount(), height_before)
 
     def stake_one_block(self):
@@ -117,6 +125,7 @@ class PoSStakingTest(BitcoinTestFramework):
         assert_equal(len(coinstake['vin']), 1)
         assert_equal(len(coinstake['vout']), 1)
         assert 'coinbase' not in coinstake['vin'][0]
+        staked_script = coinstake['vout'][0]['scriptPubKey']['hex']
 
         # Section 2.2: with BLOCK_SIGNATURE_ADDITION active the nonce must be zero.
         assert_equal(block['nonce'], 0)
@@ -124,18 +133,25 @@ class PoSStakingTest(BitcoinTestFramework):
         # Section 2: the coinstake returns the value to the destination it came from.
         prev = self.nodes[0].getrawtransaction(coinstake['vin'][0]['txid'], True)
         staked_out = prev['vout'][coinstake['vin'][0]['vout']]
-        assert_equal(staked_out['scriptPubKey']['hex'],
-                     coinstake['vout'][0]['scriptPubKey']['hex'])
+        assert_equal(staked_out['scriptPubKey']['hex'], staked_script)
 
-        # Section 2: with a single-output coinbase, it must pay the same destination.
-        if len(coinbase['vout']) <= 2:
-            assert_equal(coinbase['vout'][0]['scriptPubKey']['hex'],
-                         coinstake['vout'][0]['scriptPubKey']['hex'])
+        # Section 2.1: the minter builds the multi-recipient coinbase, so vout[0] is the
+        # OP_RETURN carrying the recipient count, signature and pubkey, and the last
+        # output is the witness commitment. Both must carry no value.
+        assert_greater_than(len(coinbase['vout']), 2)
+        assert_equal(coinbase['vout'][0]['scriptPubKey']['type'], 'nulldata')
+        assert_equal(coinbase['vout'][0]['value'], 0)
+        assert_equal(coinbase['vout'][-1]['value'], 0)
 
-        # Section 5: the block pays a staking reward, and it is far below the
-        # proof-of-work subsidy for the same height.
-        reward = coinbase['vout'][0]['value']
-        assert_greater_than(float(reward), 0)
+        # Section 5: the reward outputs sit between those two and pay the staker.
+        reward_outputs = coinbase['vout'][1:-1]
+        assert_equal(len(reward_outputs), 1)
+        assert_equal(reward_outputs[0]['scriptPubKey']['hex'], staked_script)
+
+        reward = float(reward_outputs[0]['value'])
+        assert_greater_than(reward, 0)
+        # Section 5: the staking reward is a small yield on the stake, not a subsidy.
+        assert_greater_than(float(staked_out['value']), reward)
         return block
 
     def check_reward_is_immature(self):
@@ -160,7 +176,11 @@ class PoSStakingTest(BitcoinTestFramework):
         connect_nodes(self.nodes[0], 1)
 
     def run_test(self):
-        address = self.nodes[0].getnewaddress()
+        # Stake to a v0 segwit address. The wallet's default address type is bech32m, and
+        # GetPubKeysFromCoinStakeTx has no Taproot case, so a coinstake paying to a
+        # bech32m output can never produce a valid block signature. See
+        # doc/xpchain-pos-consensus.md section 2.3.
+        address = self.nodes[0].getnewaddress("", "bech32")
 
         self.mine_pow_range(address)
         self.assert_pow_rejected_above_switch(address)
