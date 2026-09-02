@@ -106,6 +106,45 @@ GetRewardHash := Hash( Σ(scriptPubKey ‖ nValue) ‖ nTime ‖ vtx[1]->vin[0] 
 
 이 방식 덕분에 헤더 포맷이 바닐라로 유지된다. 이식 시 이 성질을 깨지 않아야 한다.
 
+### 2.3 Taproot 출력은 스테이킹할 수 없다 (제품 영향 있음)
+
+`GetPubKeysFromCoinStakeTx()` → `GetPubKeyFromScript()`(`src/validation.cpp`)가 처리하는
+스크립트 타입은 다음뿐이다.
+
+`TX_PUBKEY`, `TX_MULTISIG`, `TX_PUBKEYHASH`, `TX_WITNESS_V0_KEYHASH`,
+`TX_SCRIPTHASH`(재귀), `TX_WITNESS_V0_SCRIPTHASH`(재귀)
+
+`TX_WITNESS_V1_TAPROOT`는 `default: return false`로 떨어진다. 따라서
+**코인스테이크 출력이 bech32m(Taproot)이면 `CheckBlockSignature()`가 절대 성공할 수 없고,
+그 블록은 유효할 수 없다.** §2.1의 `EqualDestination()`도 P2SH-P2WPKH / P2PKH / P2WPKH만 안다.
+
+그런데 지갑의 기본 주소 타입은 Taproot다.
+
+```
+src/wallet/wallet.h:87
+constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32M};
+```
+
+이 기본값에는 `TaprootHeight` 활성 여부에 대한 게이트가 없다(`src/wallet/` 전체에
+`TaprootHeight` 참조가 없다). 즉 **`getnewaddress`를 기본값으로 받은 주소의 코인은 스테이킹할 수
+없다.** 스테이킹하려면 `-addresstype=bech32`(또는 legacy / p2sh-segwit)를 쓰거나
+`getnewaddress "" "bech32"`로 주소를 받아야 한다.
+
+증상이 늦게 드러나는 것도 문제다. 코인스테이크 **구조** 검사(`IsCoinStakeTx`,
+`IsDestinationSame`)는 Taproot 목적지를 정상 수락하므로, 마인터는 커널을 찾고 코인스테이크를
+만들고 블록을 조립한 뒤 서명 단계에서 조용히 실패한다. 로그에는
+`SignStep: CreateSig failed for Taproot` / `pubkey hash not found`만 남는다.
+
+이 제약은 다음 두 로드맵 항목의 선행 조건이다.
+
+- **P3-5 (Taproot 지갑 경로)** — 기본 주소 타입을 이대로 두면 신규 사용자의 잔고가
+ 스테이킹 불가 상태가 된다. 기본값 변경 또는 PoS 서명 경로의 Taproot 지원 중 하나를 골라야 한다.
+- **P5-5 (`TaprootHeight` 메인넷 활성 정책)** — PoS 서명 규칙에 Taproot를 추가하는 것은
+ **합의 변경**이다. 활성 높이 결정과 함께 다뤄야 한다.
+
+현재 동작은 `src/test/pos_tests.cpp`의 `coinstake_pubkey_extraction_rejects_taproot`가
+고정하고 있다. 지원을 추가하려면 이 테스트를 의도적으로 갱신해야 한다.
+
 ---
 
 ## 3. 커널 해시 (`CheckStakeKernelHash`)

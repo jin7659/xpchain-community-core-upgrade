@@ -501,6 +501,69 @@ BOOST_AUTO_TEST_CASE(destination_same_rejects_different_destinations)
     BOOST_CHECK(!IsDestinationSame(CScript(), CScript()));
 }
 
+BOOST_AUTO_TEST_CASE(coinstake_pubkey_extraction_supported_types)
+{
+    const CKey key = MakeKey();
+    const CPubKey pubkey = key.GetPubKey();
+
+    // Bare pubkey: the key is in the output script itself.
+    {
+        CMutableTransaction coinstake;
+        coinstake.vin.resize(1);
+        coinstake.vout.resize(1);
+        coinstake.vout[0].scriptPubKey = GetScriptForRawPubKey(pubkey);
+
+        std::vector<CPubKey> keys;
+        BOOST_CHECK(GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
+        BOOST_REQUIRE_EQUAL(keys.size(), 1U);
+        BOOST_CHECK(keys[0] == pubkey);
+    }
+
+    // P2WPKH: the key is the last witness stack element of the coinstake input.
+    {
+        CMutableTransaction coinstake;
+        coinstake.vin.resize(1);
+        coinstake.vin[0].scriptWitness.stack.push_back({0x30, 0x00});
+        coinstake.vin[0].scriptWitness.stack.push_back(
+            std::vector<unsigned char>(pubkey.begin(), pubkey.end()));
+        coinstake.vout.resize(1);
+        coinstake.vout[0].scriptPubKey = GetScriptForDestination(WitnessV0KeyHash(pubkey.GetID()));
+
+        std::vector<CPubKey> keys;
+        BOOST_CHECK(GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
+        BOOST_REQUIRE_EQUAL(keys.size(), 1U);
+        BOOST_CHECK(keys[0] == pubkey);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(coinstake_pubkey_extraction_rejects_taproot)
+{
+    // A coinstake paying to a v1 witness program yields no public key, so
+    // CheckBlockSignature can never succeed for it and a block staked from a bech32m
+    // output cannot be valid. The wallet's DEFAULT_ADDRESS_TYPE is BECH32M, so coins on
+    // default addresses are not stakeable today -- see doc/xpchain-pos-consensus.md.
+    //
+    // If Taproot staking is ever added, this test must be updated deliberately: it is a
+    // consensus-visible change to the block signature rule.
+    CMutableTransaction coinstake;
+    coinstake.vin.resize(1);
+    coinstake.vout.resize(1);
+    coinstake.vout[0].scriptPubKey = CScript() << OP_1 << std::vector<unsigned char>(32, 0x02);
+
+    txnouttype type;
+    std::vector<std::vector<unsigned char>> solutions;
+    BOOST_REQUIRE(Solver(coinstake.vout[0].scriptPubKey, type, solutions));
+    BOOST_REQUIRE(type == TX_WITNESS_V1_TAPROOT);
+
+    std::vector<CPubKey> keys;
+    BOOST_CHECK(!GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
+
+    // The rejection is specific to the block signature rule: the coinstake shape check
+    // itself does accept a Taproot destination, which is why the failure only shows up
+    // once a block has already been assembled.
+    BOOST_CHECK(IsDestinationSame(coinstake.vout[0].scriptPubKey, coinstake.vout[0].scriptPubKey));
+}
+
 BOOST_AUTO_TEST_CASE(reward_hash_preimage_layout)
 {
     const CKey key = MakeKey();
