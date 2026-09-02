@@ -121,7 +121,6 @@ XPCHAIN_CORE_H = \
   index/txindex.h \
   indirectmap.h \
   init.h \
-  kernel.h \
   kernelrecord.h \
   interfaces/handler.h \
   interfaces/node.h \
@@ -146,7 +145,8 @@ XPCHAIN_CORE_H = \
   policy/fees.h \
   policy/policy.h \
   policy/rbf.h \
-  policy/stake.h \
+  pos/kernel.h \
+  pos/stake_policy.h \
   pow.h \
   protocol.h \
   random.h \
@@ -238,7 +238,6 @@ libxpchain_server_a_SOURCES = \
   index/base.cpp \
   index/txindex.cpp \
   init.cpp \
-  kernel.cpp \
   dbwrapper.cpp \
   merkleblock.cpp \
   miner.cpp \
@@ -249,7 +248,8 @@ libxpchain_server_a_SOURCES = \
   policy/fees.cpp \
   policy/policy.cpp \
   policy/rbf.cpp \
-  policy/stake.cpp \
+  pos/kernel.cpp \
+  pos/stake_policy.cpp \
   pow.cpp \
   rest.cpp \
   rpc/blockchain.cpp \

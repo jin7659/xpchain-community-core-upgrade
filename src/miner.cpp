@@ -31,7 +31,7 @@
 #include <txdb.h>
 #include <index/txindex.h>
 #include <key_io.h>
-#include <kernel.h>
+#include <pos/kernel.h>
 #include <warnings.h>
 #include <boost/thread.hpp>
 #ifdef ENABLE_WALLET

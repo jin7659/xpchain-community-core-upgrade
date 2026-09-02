@@ -2,7 +2,7 @@
 #include <chainparams.h>
 #include <index/txindex.h>
 #include <init.h>
-#include <kernel.h>
+#include <pos/kernel.h>
 #include <script/interpreter.h>
 #include <timedata.h>
 #include <txdb.h>

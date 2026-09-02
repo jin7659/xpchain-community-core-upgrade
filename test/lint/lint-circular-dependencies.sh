@@ -44,10 +44,10 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "qt/addressbookpage -> qt/bitcoingui -> qt/walletview -> qt/signverifymessagedialog -> qt/addressbookpage"
     "qt/guiutil -> qt/walletmodel -> qt/optionsmodel -> qt/intro -> qt/guiutil"
     "qt/addressbookpage -> qt/bitcoingui -> qt/walletview -> qt/sendcoinsdialog -> qt/sendcoinsentry -> qt/addressbookpage"
-    "kernel -> validation -> kernel"
-    "init -> miner -> kernel -> init"
+    "pos/kernel -> validation -> pos/kernel"
+    "init -> miner -> pos/kernel -> init"
     "keystore -> script/sign -> policy/policy -> validation -> outputtype -> keystore"
-    "policy/stake -> validation -> policy/stake"
+    "pos/stake_policy -> validation -> pos/stake_policy"
 )
 
 EXIT_CODE=0
