@@ -16,16 +16,10 @@ fs::path GetWalletDir()
             path = "";
         }
     } else {
-        fs::path datadir = GetDataDir();
-        // If 'wallets' directory exists, or if there is no 'wallet.dat' in the root,
-        // we use and ensure the 'wallets' subdirectory.
-        if (fs::is_directory(datadir / "wallets") || !fs::exists(datadir / "wallet.dat")) {
-            path = datadir / "wallets";
-            if (!fs::exists(path)) {
-                fs::create_directories(path);
-            }
-        } else {
-            path = datadir;
+        path = GetDataDir();
+        // If a wallets directory exists, use that, otherwise use the parent
+        if (fs::is_directory(path / "wallets")) {
+            path /= "wallets";
         }
     }
 

@@ -12,7 +12,12 @@
 
 #include <amount.h>
 #include <coins.h>
+#include <crypto/common.h> // for ReadLE64
 #include <fs.h>
+#include <pos/height.h>
+#include <pos/kernel.h>
+#include <pos/reward.h>
+#include <pos/stake.h>
 #include <protocol.h> // For CMessageHeader::MessageStartChars
 #include <policy/feerate.h>
 #include <script/script_error.h>
@@ -278,9 +283,6 @@ bool GetTransaction(const uint256& hash, CTransactionRef& tx, const Consensus::P
  */
 bool ActivateBestChain(CValidationState& state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock = std::shared_ptr<const CBlock>());
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
-/** Annual staking rate for a PoS height, as a fraction (0.10 .. 0.05). Zero below nSwitchHeight. */
-double_t GetAnnualRate(int nHeight, const Consensus::Params& consensusParams);
-CAmount GetProofOfStakeReward(int nHeight, CAmount nAmount, uint32_t nTime, const Consensus::Params& consensusParams);
 
 /** Guess verification progress (as a fraction between 0.0=genesis and 1.0=current tip). */
 double GuessVerificationProgress(const ChainTxData& data, const CBlockIndex* pindex);
@@ -401,7 +403,6 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
 bool ReadRawBlockFromDisk(std::vector<uint8_t>& block, const CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& message_start);
 bool ReadRawBlockFromDisk(std::vector<uint8_t>& block, const CBlockIndex* pindex, const CMessageHeader::MessageStartChars& message_start);
 
-bool GetPubKeysFromCoinStakeTx(CTransactionRef txCoinStake, std::vector<CPubKey>& vPubKeys);
 bool CheckBlockSignature(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams);
 /** Functions for validating blocks and updating the block tree */
 
@@ -509,8 +510,6 @@ inline bool IsBlockPruned(const CBlockIndex* pblockindex)
     return (fHavePruned && !(pblockindex->nStatus & BLOCK_HAVE_DATA) && pblockindex->nTx > 0);
 }
 
-bool IsPoSHeight(int n, const Consensus::Params& params);
-uint256 GetRewardHash(const std::vector<std::pair<CScript, CAmount>>& vReward,CTransactionRef txCoinStake, uint32_t nTime);
 bool VerifyCoinBaseTx(const CBlock& block, CValidationState& state);
 
 #endif // XPCHAIN_VALIDATION_H

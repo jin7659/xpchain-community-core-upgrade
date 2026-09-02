@@ -73,7 +73,7 @@ class MultiWalletTest(BitcoinTestFramework):
             assert_equal(os.path.isfile(wallet_file(wallet_name)), True)
 
         # should not initialize if wallet path can't be created
-        exp_stderr = "boost::filesystem::create_directory: (The system cannot find the path specified|Not a directory):"
+        exp_stderr = r"(boost::filesystem::create_director(y|ies): (The system cannot find the path specified|Not a directory|File exists)|SQLiteDatabase: Failed to open database: unable to open database file)"
         self.nodes[0].assert_start_raises_init_error(['-wallet=wallet.dat/bad'], exp_stderr, match=ErrorMatch.PARTIAL_REGEX)
 
         self.nodes[0].assert_start_raises_init_error(['-walletdir=wallets'], 'Error: Specified -walletdir "wallets" does not exist')
@@ -99,7 +99,7 @@ class MultiWalletTest(BitcoinTestFramework):
 
         # should not initialize if wallet file is a symlink
         os.symlink('w8', wallet_dir('w8_symlink'))
-        self.nodes[0].assert_start_raises_init_error(['-wallet=w8_symlink'], 'Error: Invalid -wallet path \'w8_symlink\'\. .*', match=ErrorMatch.FULL_REGEX)
+        self.nodes[0].assert_start_raises_init_error(['-wallet=w8_symlink'], r'Error: Invalid -wallet path \'w8_symlink\'\. .*', match=ErrorMatch.FULL_REGEX)
 
         # should not initialize if the specified walletdir does not exist
         self.nodes[0].assert_start_raises_init_error(['-walletdir=bad'], 'Error: Specified -walletdir "bad" does not exist')
@@ -140,8 +140,9 @@ class MultiWalletTest(BitcoinTestFramework):
         competing_wallet_dir = os.path.join(self.options.tmpdir, 'competing_walletdir')
         os.mkdir(competing_wallet_dir)
         self.restart_node(0, ['-walletdir=' + competing_wallet_dir])
-        exp_stderr = "Error: Error initializing wallet database environment \"\S+competing_walletdir\"!"
-        self.nodes[1].assert_start_raises_init_error(['-walletdir=' + competing_wallet_dir], exp_stderr, match=ErrorMatch.PARTIAL_REGEX)
+        node.createwallet("bdb_compete", False, False, "", False, True)
+        exp_stderr = r"Error: Error initializing wallet database environment \"\S+competing_walletdir.*\"!"
+        self.nodes[1].assert_start_raises_init_error(['-walletdir=' + competing_wallet_dir, '-wallet=bdb_compete'], exp_stderr, match=ErrorMatch.PARTIAL_REGEX)
 
         self.restart_node(0, extra_args)
 
@@ -222,8 +223,13 @@ class MultiWalletTest(BitcoinTestFramework):
         # Fail to load duplicate wallets
         assert_raises_rpc_error(-4, 'Wallet file verification failed: Error loading wallet w1. Duplicate -wallet filename specified.', self.nodes[0].loadwallet, wallet_names[0])
 
-        # Fail to load if one wallet is a copy of another
-        assert_raises_rpc_error(-1, "BerkeleyBatch: Can't open database w8_copy (duplicates fileid", self.nodes[0].loadwallet, 'w8_copy')
+        # Fail to load if one BDB wallet is a copy of another (fileid check)
+        self.nodes[0].createwallet("bdb_dyn_src", False, False, "", False, True)
+        if os.path.exists(wallet_dir('bdb_dyn_copy')):
+            shutil.rmtree(wallet_dir('bdb_dyn_copy'))
+        os.makedirs(wallet_dir('bdb_dyn_copy'), exist_ok=True)
+        shutil.copyfile(wallet_dir('bdb_dyn_src', 'wallet.dat'), wallet_dir('bdb_dyn_copy', 'wallet.dat'))
+        assert_raises_rpc_error(-4, "Wallet file verification failed", self.nodes[0].loadwallet, 'bdb_dyn_copy')
 
         # Fail to load if wallet file is a symlink
         assert_raises_rpc_error(-4, "Wallet file verification failed: Invalid -wallet path 'w8_symlink'", self.nodes[0].loadwallet, 'w8_symlink')

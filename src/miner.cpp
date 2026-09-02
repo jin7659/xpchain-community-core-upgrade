@@ -31,13 +31,14 @@
 #include <txdb.h>
 #include <index/txindex.h>
 #include <key_io.h>
+#include <pos/height.h>
+#include <pos/kernel.h>
+#include <pos/reward.h>
+#include <pos/stake.h>
 #include <kernel.h>
 #include <warnings.h>
 #include <boost/thread.hpp>
-#ifdef ENABLE_WALLET
-#include <wallet/wallet.h>
-#include <wallet/coincontrol.h>
-#endif
+#include <pos/staker.h>
 
 // Unconfirmed transactions in the memory pool often depend on other
 // transactions in the memory pool. When we select transactions from the
@@ -105,65 +106,17 @@ void BlockAssembler::resetBlock()
     nBlockTx = 0;
     nFees = 0;
 }
-#ifdef ENABLE_WALLET
-static std::vector<std::pair<CTxDestination, int>> GetRewardPct(const CWallet& wallet, const CTxDestination& defaultDestination)
-{
-    std::vector<std::pair<CTxDestination, int>> result;
-    int remainder = 100;
-    for(std::pair<std::string, uint8_t> p:wallet.vRewardDistributionPcts)
-    {
-        result.push_back(std::make_pair(DecodeDestination(p.first), (int)p.second));
-        remainder -= (int)p.second;
-        assert(remainder >= 0);
-    }
-    if(remainder > 0)
-    {
-        result.push_back(std::make_pair(defaultDestination, remainder));
-    }
-    return result;
-}
-static bool SignBlock(CBlock* pblock, const CWallet& wallet)
-{
-    assert(pblock->vtx.size() >= 2);
-    CMutableTransaction coinbaseTx(*pblock->vtx[0]);
-    std::vector<CPubKey> vPubKeys;
-    LogPrintf("get pubkey\n");
-    if (!GetPubKeysFromCoinStakeTx(pblock->vtx[1], vPubKeys)) {
-        LogPrintf("could not get pubkey from TX\n");
-        return false;
-    }
-    std::vector<unsigned char> sig;
-    for (CPubKey pubkey : vPubKeys) {
-        CKey privkey;
-        if (wallet.GetKey(pubkey.GetID(), privkey)) {
-            LogPrintf("sign block\n");
-            if (privkey.Sign(pblock->GetBlockHeader().GetHash(), sig)) {
-                //ScriptSig = Height Signature
-                coinbaseTx.vin[0].scriptSig = coinbaseTx.vin[0].scriptSig << sig;
-                pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
-                pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
-                LogPrintf("sign hash = %s signature = %s\n", pblock->GetBlockHeader().GetHash().ToString().c_str(), HexStr(sig.begin(), sig.end()));
-                return true;
-            }
-        }
-    }
-    LogPrintf("could not get pubkey from wallet\n");
-    return false;
-}
-#endif
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx)
 {
-#ifdef ENABLE_WALLET
     return CreateNewBlock(scriptPubKeyIn, nullptr, 0, 0, nullptr, 0, nullptr, fMineWitnessTx);
-#else
-    return CreateNewBlock(scriptPubKeyIn, 0, 0, nullptr, 0, nullptr, fMineWitnessTx);
-#endif
 }
-#ifdef ENABLE_WALLET
-std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, uint32_t nTime, unsigned int nBits, CTransactionRef txCoinStake, CAmount nCoinStakeFee, CBlockIndex* pIndexLast, bool fMineWitnessTx)
-#else
+
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, uint32_t nTime, unsigned int nBits, CTransactionRef txCoinStake, CAmount nCoinStakeFee, CBlockIndex* pIndexLast, bool fMineWitnessTx)
-#endif
+{
+    return CreateNewBlock(scriptPubKeyIn, nullptr, nTime, nBits, txCoinStake, nCoinStakeFee, pIndexLast, fMineWitnessTx);
+}
+
+std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, pos::IStakeableWallet* pwallet, uint32_t nTime, unsigned int nBits, CTransactionRef txCoinStake, CAmount nCoinStakeFee, CBlockIndex* pIndexLast, bool fMineWitnessTx)
 {
     int64_t nTimeStart = GetTimeMicros();
 
@@ -281,56 +234,48 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         {
             return nullptr;
         }
-#ifdef ENABLE_WALLET
-        CWalletTx* pprevTx;
-        {
+        if (pwallet) {
+            CTransactionRef prevTx;
+            uint256 hashBlock;
             assert(txCoinStake->vin.size() == 1);
-            LOCK(pwallet->cs_wallet);
-            auto it = pwallet->mapWallet.find(txCoinStake->vin[0].prevout.hash);
-            if(it == pwallet->mapWallet.end()){
+            if (!pwallet->GetPrevTx(txCoinStake->vin[0].prevout.hash, prevTx, hashBlock)) {
                 splitcoinbase = false;
+            } else {
+                CBlockIndex* pprevBlockIndex = LookupBlockIndex(hashBlock);
+                CAmount nBlockReward = GetProofOfStakeReward(nHeight, prevTx->vout[txCoinStake->vin[0].prevout.n].nValue, pblock->nTime - pprevBlockIndex->nTime, chainparams.GetConsensus());
+
+                CTxDestination defaultDest;
+                if (!ExtractDestination(scriptPubKey, defaultDest)) {
+                    return nullptr;
+                }
+                std::vector<std::pair<CTxDestination, int>> rewardPct = pwallet->GetRewardPct(defaultDest);
+                std::vector<std::pair<CScript, CAmount>> rewardValue;
+                rewardValue.resize(rewardPct.size());
+                for (size_t i = 0; i < rewardPct.size(); i++) {
+                    rewardValue[i].first = GetScriptForDestination(rewardPct[i].first);
+                    rewardValue[i].second = nBlockReward * rewardPct[i].second / 100;
+                }
+                coinbaseTx.vout.resize(rewardPct.size() + 1);
+                for (size_t i = 0; i < rewardPct.size(); i++) {
+                    coinbaseTx.vout[i + 1].scriptPubKey = rewardValue[i].first;
+                    coinbaseTx.vout[i + 1].nValue = rewardValue[i].second;
+                }
+
+                CScript txSig;
+                if (!pwallet->SignReward(pblock->nTime, pblock->vtx[1], rewardValue, txSig)) {
+                    splitcoinbase = false;
+                } else {
+                    coinbaseTx.vout[0].nValue = 0;
+                    coinbaseTx.vout[0].scriptPubKey = txSig;
+                }
             }
-            pprevTx = &(it->second);
-        }
-        CBlockIndex* pprevBlockIndex = LookupBlockIndex(pprevTx->hashBlock);
-        CAmount nBlockReward = GetProofOfStakeReward(nHeight, pprevTx->tx->vout[txCoinStake->vin[0].prevout.n].nValue, pblock->nTime - pprevBlockIndex->nTime, chainparams.GetConsensus());
-
-        CTxDestination defaultDest;
-        if(!ExtractDestination(scriptPubKey, defaultDest)) {
-            return nullptr;
-        }
-        std::vector<std::pair<CTxDestination, int>>rewardPct = GetRewardPct(*pwallet, defaultDest);
-        //TODO:Implement function calc reward
-        std::vector<std::pair<CScript, CAmount>> rewardValue;
-        rewardValue.clear();
-        rewardValue.resize(rewardPct.size());
-        for(size_t i = 0;i<rewardPct.size();i++)
-        {
-            rewardValue[i].first = GetScriptForDestination(rewardPct[i].first);
-            rewardValue[i].second = nBlockReward * rewardPct[i].second / 100;
-        }
-        coinbaseTx.vout.resize(rewardPct.size()+1);
-        for(size_t i = 0;i<rewardPct.size();i++)
-        {
-            coinbaseTx.vout[i+1].scriptPubKey = rewardValue[i].first;
-            coinbaseTx.vout[i+1].nValue = rewardValue[i].second;
-        }
-
-        CScript txSig;
-        if(!CreateTxSig(*pwallet, pblock->nTime, pblock->vtx[1], rewardValue, txSig))
-        {
+        } else {
             splitcoinbase = false;
         }
-        coinbaseTx.vout[0].nValue = 0;
-        coinbaseTx.vout[0].scriptPubKey = txSig;
-#else
-        splitcoinbase = false;
-#endif
-        if(!splitcoinbase)
-        {
+        if (!splitcoinbase) {
             uint256 hashBlock;
             CTransactionRef prevTx;
-            if(!GetTransaction(txCoinStake->vin[0].prevout.hash, prevTx, chainparams.GetConsensus(), hashBlock, true)) {
+            if (!GetTransaction(txCoinStake->vin[0].prevout.hash, prevTx, chainparams.GetConsensus(), hashBlock, true)) {
                 return nullptr;
             }
             assert(prevTx);
@@ -356,21 +301,19 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
-    if(!fPoSHeight)
-    {
+    if (!fPoSHeight) {
         UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
     }
     pblock->nNonce         = 0;
     pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);
     if (fPoSHeight) {
-#ifdef ENABLE_WALLET
-        pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
-        if (!SignBlock(pblock, *pwallet)) {
+        if (!pwallet) {
             return nullptr;
         }
-#else
-        return nullptr;
-#endif
+        pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
+        if (!pwallet->SignBlock(pblock)) {
+            return nullptr;
+        }
     }
 
     CValidationState state;
@@ -652,209 +595,3 @@ void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned
     pblock->vtx[0] = MakeTransactionRef(std::move(txCoinbase));
     pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
 }
-#ifdef ENABLE_WALLET
-
-static unsigned int GetnBits(const CBlockIndex* pIndexLast, Consensus::Params params)
-{
-    assert(pIndexLast);
-    assert(pIndexLast->pprev);
-    assert(pIndexLast->nHeight + 1 > params.nSwitchHeight);
-    return CalculateNextWorkRequired(pIndexLast, pIndexLast->pprev->GetBlockTime(), params);
-}
-
-static bool GetPrevBlockIndex(const COutput& coin, CBlockIndex** pIndex)
-{
-    LOCK(cs_main);
-    *pIndex = LookupBlockIndex(coin.tx->hashBlock);
-    if (*pIndex == nullptr) {
-        return false;
-    }
-    return true;
-}
-
-void XPChainMinter(const std::shared_ptr<CWallet>& wallet)
-{
-    LogPrintf("CPUMiner started for proof-of-stake\n");
-    RenameThread("xpchain-stake-minter");
-
-    /*
-    TODO:write warning if cannot stake
-    */
-    try
-    {
-        while (true)
-        {
-            int64_t start = GetTimeMillis();
-            /*TODO:
-            regtest always stake
-            others always mint GetBoolArg or !vNodes.empty()
-            */
-
-            if(wallet->IsLocked())
-            {
-                MilliSleep(1000);
-                continue;
-            }
-
-            if(IsInitialBlockDownload()) {
-                MilliSleep(1000);
-                continue;
-            }
-
-            //
-            // Create new block
-            //
-            if(!IsPoSHeight(chainActive.Height()+1,Params().GetConsensus()))
-            {
-                MilliSleep(1000);
-                continue;
-            }
-
-            CBlockIndex* pIndexLast = chainActive.Tip();
-            assert(pIndexLast);
-
-            unsigned int nBits = GetnBits(pIndexLast, Params().GetConsensus());
-            uint32_t nTime = std::max(GetAdjustedTime(), pIndexLast->GetMedianTimePast()+1);
-
-            std::vector<COutput> vCoins;
-            {
-                LOCK2(cs_main,wallet->cs_wallet);
-                wallet->AvailableCoins(vCoins);
-            }
-
-            for (COutput coin : vCoins) {
-                CBlockIndex* pprevIndex;
-                if(!GetPrevBlockIndex(coin, &pprevIndex)){
-                    continue;
-                }
-                uint256 hashProofOfStake;
-                CBlock prevblock;
-                assert(pprevIndex);
-                if(!ReadBlockFromDisk(prevblock, pprevIndex, Params().GetConsensus())) {
-                    continue;
-                }
-                if(CheckStakeKernelHash(nBits, pprevIndex->GetBlockTime(), GetSizeOfCompactSize(prevblock.vtx.size())+sizeof(CBlockHeader), coin.tx->tx->vout[coin.i].nValue, coin.i, nTime, hashProofOfStake))
-                {
-                    CScript scriptDummy;
-                    CAmount nFees;
-                    CTransactionRef txCoinStake;
-                    txnouttype t;
-                    std::vector<std::vector<unsigned char>> a;
-                    Solver(coin.GetInputCoin().txout.scriptPubKey, t, a);
-                    if(!wallet->CreateCoinStake(coin, txCoinStake, nFees))
-                    {
-                        continue;
-                    }
-                    std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(scriptDummy, wallet.get(), nTime, nBits, txCoinStake, nFees, pIndexLast));
-                    if(!pblocktemplate.get())
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        CBlock *pblock = &pblocktemplate->block;
-                        std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
-                        if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
-                        {
-                            continue;
-                        }
-                        LogPrintf("success! hash = %s\n", pblock->GetHash().ToString().c_str());
-                        break;
-                    }
-                }
-            }
-            int64_t end = GetTimeMillis();
-            MilliSleep(std::max(0ll, 1000ll - (end - start)));
-        }
-    }
-    catch (boost::thread_interrupted)
-    {
-        LogPrintf("XPChainMiner terminated\n");
-        return;
-    }
-}
-
-void static ThreadStakeMinter(const std::shared_ptr<CWallet>& wallet)
-{
-    LogPrintf("ThreadStakeMinter started %s\n", wallet->GetName());
-    if (!gArgs.GetBoolArg("-minting", true))
-    {
-        LogPrintf("nominting\n");
-        return;
-    }
-
-    while(true){
-        try
-        {
-            XPChainMinter(wallet);
-            LogPrintf("ThreadStakeMinter exiting\n");
-            return; // correct exiting
-        }
-        catch (std::exception& e) {
-            PrintExceptionContinue(&e, "ThreadStakeMinter()");
-        } catch (...) {
-            PrintExceptionContinue(NULL, "ThreadStakeMinter()");
-        }
-        LogPrintf("ThreadStakeMinter restarting...\n");
-        MilliSleep(1000);
-    }
-}
-
-void MintStake(boost::thread_group& threadGroup, const std::shared_ptr<CWallet>& wallet)
-{
-    threadGroup.create_thread(boost::bind(&ThreadStakeMinter, wallet));
-}
-
-bool CreateTxSig(const CWallet& wallet, uint32_t nTime, CTransactionRef txCoinStake, const std::vector<std::pair<CScript, CAmount>>& vValues, CScript& script)
-{
-    txnouttype type;
-    std::vector<std::vector<unsigned char>>ret;
-    if(!Solver(txCoinStake->vout[0].scriptPubKey, type, ret))
-    {
-        LogPrintf("solver failed\n");
-        return false;
-    }
-    if(type == WITNESS_V0_SCRIPTHASH_SIZE || type == TX_MULTISIG || type == TX_PUBKEY)
-    {
-        return false;
-    }
-    CTxDestination dest;
-    if(!ExtractDestination(txCoinStake->vout[0].scriptPubKey, dest))
-    {
-        LogPrintf("address not found\n");
-        return false;
-    }
-
-    //TODO: vValues size < 2^32-1
-
-    //get pubkey hash from dest
-    CKeyID keyID =  GetKeyForDestination(wallet, dest);
-    if(keyID.IsNull())
-    {
-        LogPrintf("pubkey hash not found\n");
-        return false;
-    }
-
-    //get privkey of pubkeyhash from wallet
-    CKey key;
-    if(!wallet.GetKey(keyID, key))
-    {
-        LogPrintf("privkey not found\n");
-        return false;
-    }
-
-    //calc pubkey
-    CPubKey pubkey = key.GetPubKey();
-    std::vector<unsigned char> vchSig;
-    uint256 hash = GetRewardHash(vValues, txCoinStake, nTime);
-    bool result = key.Sign(hash, vchSig, 0);
-
-    //script is  OP_RETURN CScriptNum.size() vValues.size() signature_size vchSig pubkey_size pubkey
-    script = CScript() << OP_RETURN << CScriptNum((int64_t)vValues.size()) << vchSig << ToByteVector(pubkey);
-    if(!result)
-    {
-        LogPrintf("sign failed\n");
-    }
-    return result;
-}
-#endif
