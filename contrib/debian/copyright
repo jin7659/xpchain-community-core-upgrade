@@ -102,9 +102,9 @@ Copyright: WEbrick
 License: webrick-license
 Comment: Site: https://www.webrick.co.kr/
 
-Files: src/policy/stake.cpp
-       src/policy/stake.h
-       src/policy/stake.h
+Files: src/pos/stake_policy.cpp
+       src/pos/stake_policy.h
+       src/pos/stake_policy.h
        src/qt/stakingrewardsettingentrydelegate.cpp
        src/qt/stakingrewardsettingentrydelegate.h
 Copyright: 2018, XPChain Core Developers
