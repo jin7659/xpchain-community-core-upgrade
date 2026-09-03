@@ -35,7 +35,7 @@
 #include <wallet/walletutil.h>
 #include <support/cleanse.h>
 
-#ifdef USE_SQLCIPHER
+#if defined(USE_SQLITE) || defined(USE_SQLCIPHER)
 #include <wallet/sqlite.h>
 #endif
 
@@ -2655,12 +2655,14 @@ static UniValue migratewallet(const JSONRPCRequest& request)
         }
 
         if (in_place) {
+#if defined(USE_SQLITE) || defined(USE_SQLCIPHER)
             // Checkpoint any WAL records and convert to standard single-file mode before closing and renaming
             auto* sqlite_dest = dynamic_cast<SQLiteDatabase*>(dest_db.get());
             if (sqlite_dest && sqlite_dest->Db()) {
                 sqlite3_exec(sqlite_dest->Db(), "PRAGMA wal_checkpoint(TRUNCATE);", nullptr, nullptr, nullptr);
                 sqlite3_exec(sqlite_dest->Db(), "PRAGMA journal_mode=DELETE;", nullptr, nullptr, nullptr);
             }
+#endif
 
             // Close the temporary SQLite database handle so we can atomically rename it
             dest_db.reset();
