@@ -153,16 +153,17 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
     unitDisplayControl = new UnitDisplayStatusBarControl(platformStyle);
     labelWalletEncryptionIcon = new QLabel();
     labelWalletHDStatusIcon = new QLabel();
-    labelWalletFormatStatus = new GUIUtil::ClickableLabel();
+    GUIUtil::ClickableLabel* clickableFormatStatus = new GUIUtil::ClickableLabel();
+    labelWalletFormatStatus = clickableFormatStatus;
     labelWalletFormatStatus->setStyleSheet(
         "QLabel { font-size: 10px; font-weight: 600; color: #6cb6ff; "
         "background-color: transparent; border: 1px solid #1f6feb; "
         "border-radius: 3px; padding: 1px 6px; }");
     labelWalletFormatStatus->hide();
-    connect(labelWalletFormatStatus, &GUIUtil::ClickableLabel::clicked, [this]() {
-        if (walletFrame) {
-            WalletModel* model = walletFrame->currentWalletModel();
-            if (model && model->wallet().getDatabaseFormat() != "sqlite") {
+    connect(clickableFormatStatus, &GUIUtil::ClickableLabel::clicked, [this]() {
+        if (walletFrame && walletFrame->currentWalletView()) {
+            WalletModel* model = walletFrame->currentWalletView()->getWalletModel();
+            if (model && model->wallet().databaseFormat() != "sqlite") {
                 migrateWallet();
             }
         }
@@ -1361,7 +1362,10 @@ void XPChainGUI::updateStakingIcon()
     if (!labelStakingIcon) {
         return;
     }
-    WalletModel* model = walletFrame ? walletFrame->currentWalletModel() : nullptr;
+    WalletModel* model = nullptr;
+    if (walletFrame && walletFrame->currentWalletView()) {
+        model = walletFrame->currentWalletView()->getWalletModel();
+    }
     if (!model) {
         labelStakingIcon->hide();
         return;

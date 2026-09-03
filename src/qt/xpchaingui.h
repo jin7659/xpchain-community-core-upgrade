@@ -94,7 +94,7 @@ private:
     UnitDisplayStatusBarControl* unitDisplayControl = nullptr;
     QLabel* labelWalletEncryptionIcon = nullptr;
     QLabel* labelWalletHDStatusIcon = nullptr;
-    GUIUtil::ClickableLabel* labelWalletFormatStatus = nullptr;
+    QLabel* labelWalletFormatStatus = nullptr;
     QLabel* labelStakingIcon = nullptr;
     QLabel* labelProxyIcon = nullptr;
     QLabel* connectionsControl = nullptr;
