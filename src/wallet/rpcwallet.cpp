@@ -2561,11 +2561,19 @@ static UniValue migratewallet(const JSONRPCRequest& request)
 
     bool do_backup = true;
     bool load_new = false;
+    bool overwrite = false;
+    bool in_place = false;
     if (options.exists("backup") && !options["backup"].isNull()) {
         do_backup = options["backup"].get_bool();
     }
     if (options.exists("load_new") && !options["load_new"].isNull()) {
         load_new = options["load_new"].get_bool();
+    }
+    if (options.exists("overwrite") && !options["overwrite"].isNull()) {
+        overwrite = options["overwrite"].get_bool();
+    }
+    if (options.exists("in_place") && !options["in_place"].isNull()) {
+        in_place = options["in_place"].get_bool();
     }
 
     int records_copied = 0;
@@ -2589,17 +2597,24 @@ static UniValue migratewallet(const JSONRPCRequest& request)
         source_str = src_path.string();
 
         fs::path dest_path;
-        if (options.exists("destination") && !options["destination"].isNull()) {
+        if (in_place) {
+            dest_path = src_path.string() + ".migrate_tmp.sqlite";
+        } else if (options.exists("destination") && !options["destination"].isNull()) {
             dest_path = fs::absolute(options["destination"].get_str(), GetWalletDir());
         } else {
             dest_path = GetWalletDir() / (pwallet->GetName() + ".sqlite");
         }
 
-        if (dest_path.extension() != ".sqlite") {
+        if (!in_place && dest_path.extension() != ".sqlite") {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Destination path must use the .sqlite extension");
         }
         if (fs::exists(dest_path)) {
-            throw JSONRPCError(RPC_WALLET_ERROR, "Destination wallet already exists: " + dest_path.string());
+            if (overwrite) {
+                fs::path old_dest_bak = dest_path.string() + ".bak_" + std::to_string(GetTime());
+                fs::rename(dest_path, old_dest_bak);
+            } else {
+                throw JSONRPCError(RPC_WALLET_ERROR, "Destination wallet already exists: " + dest_path.string());
+            }
         }
 
         if (do_backup) {
@@ -2639,9 +2654,28 @@ static UniValue migratewallet(const JSONRPCRequest& request)
             }
         }
 
-        dest_str = dest_path.string();
-        if (load_new) {
-            load_name = dest_path.lexically_relative(GetWalletDir()).string();
+        if (in_place) {
+            // Close the temporary SQLite database handle so we can atomically rename it
+            dest_db.reset();
+
+            // Flush and close the source BDB environment so we can swap files safely
+            pwallet->Flush(true);
+
+            fs::path legacy_bak_path = src_path.string() + ".legacy.bak";
+            if (fs::exists(legacy_bak_path)) {
+                legacy_bak_path = src_path.string() + ".legacy." + std::to_string(GetTime()) + ".bak";
+            }
+            fs::rename(src_path, legacy_bak_path);
+            fs::rename(dest_path, src_path);
+
+            dest_str = src_path.string();
+            backup_str = legacy_bak_path.string();
+            load_name = pwallet->GetName();
+        } else {
+            dest_str = dest_path.string();
+            if (load_new) {
+                load_name = dest_path.lexically_relative(GetWalletDir()).string();
+            }
         }
     }
 
@@ -2653,8 +2687,10 @@ static UniValue migratewallet(const JSONRPCRequest& request)
         result.pushKV("backup", backup_str);
     }
     result.pushKV("records_copied", records_copied);
+    result.pushKV("in_place", in_place);
 
     if (load_new) {
+        pwallet->Flush(true);
         if (!RemoveWallet(wallet)) {
             throw JSONRPCError(RPC_MISC_ERROR, "Failed to unload wallet for migration switch");
         }

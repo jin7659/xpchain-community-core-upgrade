@@ -2004,8 +2004,12 @@ void XPChainGUI::migrateWallet()
 
     UniValue options(UniValue::VOBJ);
     options.pushKV("backup", dlg.doBackup());
-    options.pushKV("load_new", dlg.loadNew());
-    options.pushKV("destination", dlg.destination().toStdString());
+    options.pushKV("in_place", dlg.inPlace());
+    options.pushKV("overwrite", dlg.overwrite());
+    options.pushKV("load_new", false); // Do not swap live in-process to avoid BDB/PoS thread deadlock
+    if (!dlg.inPlace()) {
+        options.pushKV("destination", dlg.destination().toStdString());
+    }
 
     UniValue params(UniValue::VARR);
     params.push_back(options);
@@ -2018,7 +2022,7 @@ void XPChainGUI::migrateWallet()
         UniValue result = m_node.executeRpc("migratewallet", params, uri);
         QString message = tr("Wallet migrated to SQLite successfully.");
         if (result.exists("destination")) {
-            message += tr("\n\nNew wallet: %1").arg(QString::fromStdString(result["destination"].get_str()));
+            message += tr("\n\nSQLite wallet: %1").arg(QString::fromStdString(result["destination"].get_str()));
         }
         if (result.exists("backup")) {
             message += tr("\nBackup: %1").arg(QString::fromStdString(result["backup"].get_str()));
@@ -2026,14 +2030,10 @@ void XPChainGUI::migrateWallet()
         if (result.exists("records_copied")) {
             message += tr("\nRecords copied: %1").arg(result["records_copied"].get_int());
         }
-        if (result.exists("loaded_wallet")) {
-            message += tr("\n\nSwitched to: %1\nVerify your balance on Overview before sending.")
-                           .arg(QString::fromStdString(result["loaded_wallet"].get_str()));
-        } else {
-            message += tr("\n\nThe original Berkeley DB wallet is still loaded. "
-                          "Unload it and open the .sqlite file when you are ready.");
-        }
+        message += tr("\n\nXPChain will now close safely to complete the SQLite format upgrade.\n"
+                      "Please restart XPChain to use your modern SQLite wallet.");
         QMessageBox::information(this, tr("Migration Complete"), message);
+        qApp->quit();
     } catch (const UniValue& e) {
         QString err = e.exists("message") ? QString::fromStdString(e["message"].get_str())
                                           : QString::fromStdString(e.write());

@@ -735,6 +735,12 @@ Your wallet is participating in Proof-of-Stake consensus.</source>
         <translation>스테이킹 활성 상태입니다.
 지갑이 지분증명(Proof-of-Stake) 합의에 참여하고 있습니다.</translation>
     </message>
+    <message>
+        <source>XPChain will now close safely to complete the SQLite format upgrade.
+Please restart XPChain to use your modern SQLite wallet.</source>
+        <translation>SQLite 포맷 업그레이드를 안전하게 완료하기 위해 XPChain을 정상 종료합니다.
+최신 SQLite 지갑을 사용하려면 지갑을 다시 시작해 주세요.</translation>
+    </message>
 </context>
 <context>
     <name>CoinControlDialog</name>
@@ -4283,6 +4289,34 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>After migration, verify your balance and send a small test transaction before relying on the new file.</source>
         <translation>마이그레이션 후 잔액을 확인하고, 새 파일을 기본으로 사용하기 전에 소액 테스트 거래를 전송해 보세요.</translation>
+    </message>
+    <message>
+        <source>Replace current wallet with SQLite in-place (recommended)</source>
+        <translation>기본 지갑을 SQLite로 교체 (권장)</translation>
+    </message>
+    <message>
+        <source>Safely replaces the source wallet with the modern SQLite file, keeping the original as .legacy.bak. This ensures SQLite is loaded automatically on next start.</source>
+        <translation>원본을 .legacy.bak으로 안전 보존하면서 현재 지갑을 최신 SQLite 파일로 교체합니다. 다음 실행 시 SQLite 지갑이 자동으로 열립니다.</translation>
+    </message>
+    <message>
+        <source>Overwrite destination file if it already exists (back up existing first)</source>
+        <translation>대상 파일이 이미 존재하는 경우 덮어쓰기 (기존 파일 자동 백업)</translation>
+    </message>
+    <message>
+        <source>The current wallet will be upgraded to SQLite in-place, and the original will be backed up as .legacy.bak.&lt;br/&gt;&lt;b&gt;This guarantees SQLite is automatically recognized on next start.&lt;/b&gt;</source>
+        <translation>현재 지갑이 SQLite로 제자리 교체 업그레이드되며, 원본은 .legacy.bak으로 안전 보관됩니다.&lt;br/&gt;&lt;b&gt;다음 실행 시 최신 SQLite 지갑이 자동으로 열립니다.&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Confirm wallet migration</source>
+        <translation>지갑 마이그레이션 확인</translation>
+    </message>
+    <message>
+        <source>In-place upgrade (auto-load SQLite on restart)</source>
+        <translation>제자리 업그레이드 (재시작 시 SQLite 자동 로드)</translation>
+    </message>
+    <message>
+        <source>The original wallet file will be safely kept as a backup. Verify balances after migration.</source>
+        <translation>원본 지갑 파일은 백업으로 안전하게 보관됩니다. 마이그레이션 완료 후 잔액을 확인해 주세요.</translation>
     </message>
 </context>
 </TS>

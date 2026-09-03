@@ -29,9 +29,12 @@ public:
     QString destination() const;
     bool doBackup() const;
     bool loadNew() const;
+    bool inPlace() const;
+    bool overwrite() const;
 
 private Q_SLOTS:
     void updateOkButton();
+    void onReplaceSourceToggled(bool checked);
 
 private:
     Ui::MigrateWalletDialog* ui;
