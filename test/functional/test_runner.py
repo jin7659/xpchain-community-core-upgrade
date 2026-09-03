@@ -64,6 +64,7 @@ BASE_SCRIPTS = [
     'wallet_migrate_sqlite.py',
     'wallet_sqlite_default.py',
     'wallet_sqlite_encryption.py',
+    'wallet_tool.py',
     'wallet_backup.py',
     'feature_pos_staking.py',
     # vv Tests less than 5m vv
