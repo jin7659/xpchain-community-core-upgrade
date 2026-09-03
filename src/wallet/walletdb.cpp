@@ -851,7 +851,30 @@ bool WalletBatch::VerifyDatabaseFile(const fs::path& wallet_path, std::string& w
         return true;
     }
     if (IsSQLiteFile(db_file)) {
-        return SQLiteDatabase::Verify(db_file, errorStr);
+        if (!SQLiteDatabase::Verify(db_file, errorStr)) {
+            // Check if an intact legacy backup exists to automatically recover from incomplete migration
+            fs::path legacy_bak = db_file.string() + ".legacy.bak";
+            if (!fs::exists(legacy_bak)) {
+                legacy_bak = wallet_path.string() + ".legacy.bak";
+            }
+            if (fs::exists(legacy_bak)) {
+                LogPrintf("Wallet verification failed for %s (%s). Found intact legacy backup %s, auto-restoring...\n",
+                          db_file.string(), errorStr, legacy_bak.string());
+                try {
+                    fs::path corrupt_dest = db_file.string() + ".unreadable." + std::to_string(GetTime());
+                    fs::rename(db_file, corrupt_dest);
+                    fs::copy_file(legacy_bak, db_file);
+                    warningStr = strprintf(_("Wallet was unreadable; safely restored from legacy backup: %s"), legacy_bak.string());
+                    errorStr.clear();
+                    return BerkeleyBatch::VerifyDatabaseFile(wallet_path, warningStr, errorStr, WalletBatch::Recover);
+                } catch (const std::exception& e) {
+                    errorStr = strprintf("Failed to auto-restore legacy backup: %s", e.what());
+                    return false;
+                }
+            }
+            return false;
+        }
+        return true;
     }
     return BerkeleyBatch::VerifyDatabaseFile(wallet_path, warningStr, errorStr, WalletBatch::Recover);
 }

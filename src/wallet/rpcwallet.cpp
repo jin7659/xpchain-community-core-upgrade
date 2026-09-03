@@ -2655,8 +2655,19 @@ static UniValue migratewallet(const JSONRPCRequest& request)
         }
 
         if (in_place) {
+            // Checkpoint any WAL records and convert to standard single-file mode before closing and renaming
+            auto* sqlite_dest = dynamic_cast<SQLiteDatabase*>(dest_db.get());
+            if (sqlite_dest && sqlite_dest->Db()) {
+                sqlite3_exec(sqlite_dest->Db(), "PRAGMA wal_checkpoint(TRUNCATE);", nullptr, nullptr, nullptr);
+                sqlite3_exec(sqlite_dest->Db(), "PRAGMA journal_mode=DELETE;", nullptr, nullptr, nullptr);
+            }
+
             // Close the temporary SQLite database handle so we can atomically rename it
             dest_db.reset();
+
+            // Also clean up any lingering temporary wal/shm files if they exist
+            fs::remove(dest_path.string() + "-wal");
+            fs::remove(dest_path.string() + "-shm");
 
             // Flush and close the source BDB environment so we can swap files safely
             pwallet->Flush(true);
