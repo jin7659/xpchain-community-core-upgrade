@@ -637,6 +637,104 @@
         <source>Wallet Creation Failed</source>
         <translation>지갑 생성 실패</translation>
     </message>
+    <message>
+        <source>SQLite</source>
+        <translation>SQLite</translation>
+    </message>
+    <message>
+        <source>BDB</source>
+        <translation>BDB</translation>
+    </message>
+    <message>
+        <source>Spending keys: none (watch-only)</source>
+        <translation>출금 키: 없음 (조회 전용)</translation>
+    </message>
+    <message>
+        <source>Spending keys: unencrypted</source>
+        <translation>출금 키: 암호화되지 않음</translation>
+    </message>
+    <message>
+        <source>Spending keys: locked</source>
+        <translation>출금 키: 잠김</translation>
+    </message>
+    <message>
+        <source>Spending keys: unlocked for staking only</source>
+        <translation>출금 키: 스테이킹 전용 잠금 해제됨</translation>
+    </message>
+    <message>
+        <source>Spending keys: unlocked</source>
+        <translation>출금 키: 잠금 해제됨</translation>
+    </message>
+    <message>
+        <source>File: SQLCipher (encrypted at rest)</source>
+        <translation>파일: SQLCipher (저장소 암호화 적용)</translation>
+    </message>
+    <message>
+        <source>File: unencrypted SQLite</source>
+        <translation>파일: 비암호화 SQLite</translation>
+    </message>
+    <message>
+        <source>File: Berkeley DB (use File → Migrate Wallet to SQLite…)</source>
+        <translation>파일: Berkeley DB (파일 → 지갑을 SQLite로 마이그레이션… 사용)</translation>
+    </message>
+    <message>
+        <source>Click to migrate this wallet to SQLite…</source>
+        <translation>이 지갑을 SQLite로 마이그레이션하려면 클릭하세요…</translation>
+    </message>
+    <message>
+        <source>Wallet status</source>
+        <translation>지갑 상태</translation>
+    </message>
+    <message>
+        <source>Database: %1</source>
+        <translation>데이터베이스: %1</translation>
+    </message>
+    <message>
+        <source>Berkeley DB</source>
+        <translation>Berkeley DB</translation>
+    </message>
+    <message>
+        <source>Type: %1</source>
+        <translation>유형: %1</translation>
+    </message>
+    <message>
+        <source>watch-only</source>
+        <translation>조회 전용</translation>
+    </message>
+    <message>
+        <source>descriptor</source>
+        <translation>디스크립터</translation>
+    </message>
+    <message>
+        <source>legacy HD</source>
+        <translation>구형 HD</translation>
+    </message>
+    <message>
+        <source>Staking is disabled (-minting=0).</source>
+        <translation>스테이킹이 비활성화되어 있습니다 (-minting=0).</translation>
+    </message>
+    <message>
+        <source>Staking is paused: blockchain is synchronizing.</source>
+        <translation>스테이킹 일시정지: 블록체인 동기화 진행 중입니다.</translation>
+    </message>
+    <message>
+        <source>Staking is disabled: watch-only wallet has no private keys.</source>
+        <translation>스테이킹 비활성화: 조회 전용 지갑에는 개인 키가 없습니다.</translation>
+    </message>
+    <message>
+        <source>Staking is paused: wallet is locked. Unlock for staking to enable.</source>
+        <translation>스테이킹 일시정지: 지갑이 잠겨 있습니다. 스테이킹을 위해 잠금을 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Staking is waiting: no mature coins available in this wallet.</source>
+        <translation>스테이킹 대기 중: 이 지갑에 사용 가능한 숙성 코인이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Staking is active.
+Your wallet is participating in Proof-of-Stake consensus.</source>
+        <translation>스테이킹 활성 상태입니다.
+지갑이 지분증명(Proof-of-Stake) 합의에 참여하고 있습니다.</translation>
+    </message>
 </context>
 <context>
     <name>CoinControlDialog</name>
@@ -1604,6 +1702,14 @@
     <message>
         <source>Current total balance in watch-only addresses</source>
         <translation>조회전용 주소의 현재 잔액</translation>
+    </message>
+    <message>
+        <source>⚠️ This wallet uses the legacy Berkeley DB format. Migrate to the modern SQLite format for enhanced security and performance.</source>
+        <translation>⚠️ 이 지갑은 구형 Berkeley DB 포맷을 사용하고 있습니다. 향상된 보안과 성능을 위해 최신 SQLite 포맷으로 마이그레이션하세요.</translation>
+    </message>
+    <message>
+        <source>Migrate Now…</source>
+        <translation>지금 마이그레이션…</translation>
     </message>
 </context>
 <context>
@@ -4115,6 +4221,68 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>Label:</source>
         <translation>라벨:</translation>
+    </message>
+</context>
+<context>
+    <name>StakingRewardChartWidget</name>
+    <message>
+        <source>Monthly Staking Rewards</source>
+        <translation>월별 스테이킹 보상</translation>
+    </message>
+    <message>
+        <source>This month: %1</source>
+        <translation>이번 달: %1</translation>
+    </message>
+    <message>
+        <source>No staking rewards recorded yet in the past 6 months.</source>
+        <translation>최근 6개월간 기록된 스테이킹 보상이 없습니다.</translation>
+    </message>
+    <message>
+        <source>stakes</source>
+        <translation>회 스테이킹</translation>
+    </message>
+</context>
+<context>
+    <name>MigrateWalletDialog</name>
+    <message>
+        <source>Migrate Wallet to SQLite</source>
+        <translation>지갑을 SQLite로 마이그레이션</translation>
+    </message>
+    <message>
+        <source>Migrate Berkeley DB → SQLite</source>
+        <translation>Berkeley DB → SQLite 마이그레이션</translation>
+    </message>
+    <message>
+        <source>Copy this wallet into a new SQLite file. The original Berkeley DB file is kept.</source>
+        <translation>이 지갑을 새 SQLite 파일로 복사합니다. 원본 Berkeley DB 파일은 그대로 보존됩니다.</translation>
+    </message>
+    <message>
+        <source>Destination</source>
+        <translation>대상 경로</translation>
+    </message>
+    <message>
+        <source>name.sqlite (under the wallets directory)</source>
+        <translation>이름.sqlite (wallets 디렉터리 하위)</translation>
+    </message>
+    <message>
+        <source>Must end with .sqlite. Relative paths are under the wallets data directory.</source>
+        <translation>.sqlite 확장자로 끝나야 합니다. 상대 경로는 wallets 데이터 디렉터리 기준입니다.</translation>
+    </message>
+    <message>
+        <source>Backup source wallet before migration (recommended)</source>
+        <translation>마이그레이션 전 원본 지갑 백업 (권장)</translation>
+    </message>
+    <message>
+        <source>Unload the Berkeley DB wallet and open the new SQLite wallet in this session.</source>
+        <translation>현재 세션에서 Berkeley DB 지갑을 언로드하고 새 SQLite 지갑을 엽니다.</translation>
+    </message>
+    <message>
+        <source>Switch to the migrated SQLite wallet after success</source>
+        <translation>성공 후 마이그레이션된 SQLite 지갑으로 전환</translation>
+    </message>
+    <message>
+        <source>After migration, verify your balance and send a small test transaction before relying on the new file.</source>
+        <translation>마이그레이션 후 잔액을 확인하고, 새 파일을 기본으로 사용하기 전에 소액 테스트 거래를 전송해 보세요.</translation>
     </message>
 </context>
 </TS>

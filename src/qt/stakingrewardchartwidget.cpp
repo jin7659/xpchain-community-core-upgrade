@@ -14,6 +14,7 @@
 #include <QPainterPath>
 #include <QMouseEvent>
 #include <QDateTime>
+#include <QLocale>
 #include <QFontMetrics>
 #include <cmath>
 
@@ -24,7 +25,7 @@ StakingRewardChartWidget::StakingRewardChartWidget(QWidget *parent)
       m_currentMonthTotal(0)
 {
     setMouseTracking(true);
-    setMinimumHeight(170);
+    setMinimumHeight(185);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 }
 
@@ -68,7 +69,7 @@ void StakingRewardChartWidget::updateData()
     for (int i = 5; i >= 0; --i) {
         QDateTime dt = now.addMonths(-i);
         QString key = dt.toString("yyyy-MM");
-        QString label = dt.toString("M월");
+        QString label = QLocale().monthName(dt.date().month(), QLocale::ShortFormat);
         MonthlyStakingStats stat;
         stat.monthKey = key;
         stat.monthLabel = label;
@@ -117,7 +118,7 @@ void StakingRewardChartWidget::calculateLayout()
 
     const int paddingLeft = 16;
     const int paddingRight = 16;
-    const int paddingTop = 48;
+    const int paddingTop = 54;
     const int paddingBottom = 26;
 
     const int w = width();
@@ -177,7 +178,7 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
     // 우측 이번 달 요약
     int unit = walletModel && walletModel->getOptionsModel() ? walletModel->getOptionsModel()->getDisplayUnit() : XPChainUnits::XPC;
     QString currentStr = tr("This month: %1").arg(XPChainUnits::formatWithUnit(unit, m_currentMonthTotal, false, XPChainUnits::separatorAlways));
-    painter.setPen(QColor(63, 185, 80));
+    painter.setPen(QColor(88, 166, 255));
     QFont fontSub = font();
     fontSub.setPointSize(9);
     fontSub.setBold(true);
@@ -207,7 +208,7 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
         QFont fontEmpty = font();
         fontEmpty.setPointSize(9);
         painter.setFont(fontEmpty);
-        painter.drawText(QRect(16, 48, w - 32, h - 80), Qt::AlignCenter,
+        painter.drawText(QRect(16, 54, w - 32, h - 90), Qt::AlignCenter,
                          tr("No staking rewards recorded yet in the past 6 months."));
     }
 
@@ -218,7 +219,7 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
         bool isHovered = (i == m_hoveredIndex);
 
         // X축 월 라벨
-        painter.setPen(isHovered ? QColor(240, 246, 252) : QColor(139, 148, 158));
+        painter.setPen(isHovered ? QColor(88, 166, 255) : QColor(139, 148, 158));
         QFont fontX = font();
         fontX.setPointSize(8);
         fontX.setBold(isHovered);
@@ -227,14 +228,14 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
                          Qt::AlignCenter, stat.monthLabel);
 
         if (rect.height() > 0) {
-            // 부드러운 에메랄드/청록 그라데이션 막대
+            // 테크 블루 그라데이션 막대
             QLinearGradient barGradient(rect.topLeft(), rect.bottomLeft());
             if (isHovered) {
-                barGradient.setColorAt(0.0, QColor(86, 211, 100));
-                barGradient.setColorAt(1.0, QColor(46, 160, 67));
+                barGradient.setColorAt(0.0, QColor(88, 166, 255));
+                barGradient.setColorAt(1.0, QColor(31, 111, 235));
             } else {
-                barGradient.setColorAt(0.0, QColor(46, 160, 67));
-                barGradient.setColorAt(1.0, QColor(35, 134, 54, 180));
+                barGradient.setColorAt(0.0, QColor(56, 139, 253));
+                barGradient.setColorAt(1.0, QColor(31, 111, 235, 190));
             }
 
             QPainterPath barPath;
@@ -248,7 +249,7 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
         }
     }
 
-    // 호버 시 세련된 툴팁 카드 렌더링
+    // 호버 시 그래프 위에 선명하게 뜨는 툴팁 카드 렌더링
     if (m_hoveredIndex >= 0 && m_hoveredIndex < m_barRects.size()) {
         const QRect &rect = m_barRects[m_hoveredIndex];
         const auto &stat = m_monthlyData[m_hoveredIndex];
@@ -261,27 +262,27 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
         fontTip.setPointSize(8);
         QFontMetrics fm(fontTip);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-        int tipW = qMax(fm.horizontalAdvance(tipLine1), fm.horizontalAdvance(tipLine2)) + 16;
+        int tipW = qMax(fm.horizontalAdvance(tipLine1), fm.horizontalAdvance(tipLine2)) + 18;
 #else
-        int tipW = qMax(fm.width(tipLine1), fm.width(tipLine2)) + 16;
+        int tipW = qMax(fm.width(tipLine1), fm.width(tipLine2)) + 18;
 #endif
         int tipH = 38;
 
         int tipX = rect.center().x() - tipW / 2;
         tipX = qBound(8, tipX, w - tipW - 8);
-        int tipY = rect.top() - tipH - 8;
-        if (tipY < 32) tipY = rect.bottom() + 8;
+        // 그래프 위로 항상 선명하게 표시 (바닥으로 처박혀 잘리는 현상 방지)
+        int tipY = qMax(34, rect.top() - tipH - 6);
 
         QRect tipRect(tipX, tipY, tipW, tipH);
-        painter.setBrush(QColor(13, 17, 23, 240));
-        painter.setPen(QPen(QColor(86, 211, 100), 1));
-        painter.drawRoundedRect(tipRect, 5, 5);
+        painter.setBrush(QColor(13, 17, 23, 245));
+        painter.setPen(QPen(QColor(56, 139, 253), 1));
+        painter.drawRoundedRect(tipRect, 6, 6);
 
         painter.setPen(QColor(201, 209, 217));
         painter.setFont(fontTip);
         painter.drawText(QRect(tipX + 8, tipY + 4, tipW - 16, 14), Qt::AlignLeft, tipLine1);
 
-        painter.setPen(QColor(63, 185, 80));
+        painter.setPen(QColor(88, 166, 255));
         fontTip.setBold(true);
         painter.setFont(fontTip);
         painter.drawText(QRect(tipX + 8, tipY + 18, tipW - 16, 14), Qt::AlignLeft, tipLine2);
