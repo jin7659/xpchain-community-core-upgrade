@@ -107,7 +107,7 @@ void SQLiteDatabase::Open()
 {
     if (m_db) return;
 
-    int flags = SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_SHAREDCACHE;
+    int flags = SQLITE_OPEN_FULLMUTEX;
     if (m_writable) {
         flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
     } else {
@@ -201,8 +201,10 @@ void SQLiteDatabase::Open()
         LogPrintf("SQLiteDatabase: quick_check passed successfully for %s.\n", m_path);
     }
 
-    // 파일 소유자 전용 최소 권한 강제화 (owner read/write only)
+#ifndef WIN32
+    // 파일 소유자 전용 최소 권한 강제화 (owner read/write only, Unix only to prevent Windows locking)
     chmod(m_path.c_str(), 0600);
+#endif
     
     LogPrintf("SQLiteDatabase: Opened wallet file %s\n", m_path);
 }
@@ -210,6 +212,7 @@ void SQLiteDatabase::Open()
 void SQLiteDatabase::Close()
 {
     if (m_db) {
+        sqlite3_exec(m_db, "PRAGMA wal_checkpoint(TRUNCATE);", nullptr, nullptr, nullptr);
         sqlite3_close(m_db);
         m_db = nullptr;
     }
@@ -604,8 +607,14 @@ bool IsSQLiteFile(const fs::path& path)
 bool SQLiteDatabase::Verify(const fs::path& path, std::string& error)
 {
     sqlite3* db = nullptr;
-    if (sqlite3_open_v2(path.string().c_str(), &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
-        error = "SQLiteDatabase: Failed to open for verification";
+    int rc = sqlite3_open_v2(path.string().c_str(), &db, SQLITE_OPEN_READONLY, nullptr);
+    if (rc != SQLITE_OK) {
+        if (db) sqlite3_close(db);
+        db = nullptr;
+        rc = sqlite3_open_v2(path.string().c_str(), &db, SQLITE_OPEN_READWRITE, nullptr);
+    }
+    if (rc != SQLITE_OK) {
+        error = "SQLiteDatabase: Failed to open for verification: " + std::string(db ? sqlite3_errmsg(db) : "unable to open database file");
         if (db) sqlite3_close(db);
         return false;
     }
@@ -622,7 +631,7 @@ bool SQLiteDatabase::Verify(const fs::path& path, std::string& error)
     };
 
     bool integrity_ok = false;
-    int rc = sqlite3_exec(db, "PRAGMA integrity_check;", callback, &integrity_ok, &errmsg);
+    rc = sqlite3_exec(db, "PRAGMA integrity_check;", callback, &integrity_ok, &errmsg);
     if (rc != SQLITE_OK) {
         if (rc == SQLITE_NOTADB) {
             // SQLCipher 암호화 지갑인 경우, 키 입력 전에는 SQLITE_NOTADB(26) 오류가 발생합니다.
