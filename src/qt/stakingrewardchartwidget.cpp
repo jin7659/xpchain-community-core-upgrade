@@ -8,6 +8,7 @@
 #include <qt/transactionrecord.h>
 #include <qt/xpchainunits.h>
 #include <qt/optionsmodel.h>
+#include <amount.h>
 
 #include <QPainter>
 #include <QPainterPath>
@@ -58,7 +59,7 @@ void StakingRewardChartWidget::updateData()
     }
 
     TransactionTableModel *ttm = walletModel->getTransactionTableModel();
-    int rows = ttm->rowCount();
+    int rows = ttm->rowCount(QModelIndex());
 
     // 최근 6개월 슬롯 사전 준비
     QDateTime now = QDateTime::currentDateTime();
