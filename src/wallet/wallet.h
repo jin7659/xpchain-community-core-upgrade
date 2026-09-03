@@ -17,6 +17,7 @@
 #include <script/ismine.h>
 #include <script/sign.h>
 #include <util.h>
+#include <pos/staker.h>
 #include <wallet/crypter.h>
 #include <wallet/coinselection.h>
 #include <wallet/walletutil.h>
@@ -599,7 +600,7 @@ class WalletRescanReserver; //forward declarations for ScanForWalletTransactions
  * CWallet also implements WalletStorage to allow ScriptPubKeyMan instances
  * to interact with the wallet database and flags without a circular dependency.
  */
-class CWallet final : public CCryptoKeyStore, public CValidationInterface, public WalletStorage
+class CWallet final : public CCryptoKeyStore, public CValidationInterface, public WalletStorage, public pos::IStakeableWallet
 {
 private:
     std::atomic<bool> fAbortRescan{false};
@@ -734,6 +735,17 @@ public:
     const CKeyingMaterial& GetEncryptionKey() const override { LOCK(cs_KeyStore); return GetMasterKey(); }
     bool HasEncryptionKeys() const override { return !mapMasterKeys.empty(); }
     bool IsLocked() const override { return CCryptoKeyStore::IsLocked(); }
+
+    // ── IStakeableWallet interface implementation ──────────────────────────────
+    std::string GetWalletName() const override { return GetName(); }
+    void GetStakeCandidates(std::vector<pos::StakeCandidate>& vCandidates) override;
+    bool CreateCoinStake(const pos::StakeCandidate& candidate, CTransactionRef& txNew, CAmount& nFees) override;
+    bool SignReward(uint32_t nTime, CTransactionRef txCoinStake,
+                    const std::vector<std::pair<CScript, CAmount>>& vValues,
+                    CScript& script) const override;
+    bool SignBlock(CBlock* pblock) const override;
+    std::vector<std::pair<CTxDestination, int>> GetRewardPct(const CTxDestination& defaultDestination) const override;
+    bool GetPrevTx(const uint256& hash, CTransactionRef& txOut, uint256& hashBlock) const override;
 
     // ── ScriptPubKeyMan access ────────────────────────────────────────────────
     /** Returns the LegacyScriptPubKeyMan, or nullptr if not initialized */

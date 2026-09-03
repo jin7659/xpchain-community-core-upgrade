@@ -25,7 +25,9 @@ class WalletMigrateSQLiteTest(BitcoinTestFramework):
 
         self.log.info("Create legacy Berkeley DB wallet (non-wallet.dat name)")
         # createwallet defaults to SQLite; pass berkeley=true for a BDB source wallet.
-        node.createwallet("legacy_bdb", False, False, "", False, True)
+        cw_res = node.createwallet("legacy_bdb", False, False, "", False, True)
+        assert "warning" in cw_res
+        assert "deprecated" in cw_res["warning"]
         legacy = node.get_wallet_rpc("legacy_bdb")
 
         self.log.info("Fund legacy BDB wallet")

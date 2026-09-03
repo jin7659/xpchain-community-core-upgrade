@@ -21,6 +21,10 @@
 #include <kernel.h>
 #include <key.h>
 #include <policy/stake.h>
+#include <pos/height.h>
+#include <pos/kernel.h>
+#include <pos/reward.h>
+#include <pos/stake.h>
 #include <primitives/transaction.h>
 #include <script/standard.h>
 #include <uint256.h>
@@ -138,15 +142,18 @@ BOOST_AUTO_TEST_CASE(pos_switch_heights_are_unchanged)
 
 BOOST_AUTO_TEST_CASE(stake_age_limits_are_unchanged)
 {
-    const Consensus::Params& main = CreateChainParams(CBaseChainParams::MAIN)->GetConsensus();
+    const auto main_params = CreateChainParams(CBaseChainParams::MAIN);
+    const Consensus::Params& main = main_params->GetConsensus();
     BOOST_CHECK_EQUAL(main.nStakeMinAge, 60 * 60 * 24 * 3);
     BOOST_CHECK_EQUAL(main.nStakeMaxAge, 60 * 60 * 24 * 60);
 
-    const Consensus::Params& test = CreateChainParams(CBaseChainParams::TESTNET)->GetConsensus();
+    const auto test_params = CreateChainParams(CBaseChainParams::TESTNET);
+    const Consensus::Params& test = test_params->GetConsensus();
     BOOST_CHECK_EQUAL(test.nStakeMinAge, 60 * 60 * 24 * 3);
     BOOST_CHECK_EQUAL(test.nStakeMaxAge, 60 * 60 * 24 * 60);
 
-    const Consensus::Params& regtest = CreateChainParams(CBaseChainParams::REGTEST)->GetConsensus();
+    const auto regtest_params = CreateChainParams(CBaseChainParams::REGTEST);
+    const Consensus::Params& regtest = regtest_params->GetConsensus();
     BOOST_CHECK_EQUAL(regtest.nStakeMinAge, 10);
     BOOST_CHECK_EQUAL(regtest.nStakeMaxAge, 60 * 60 * 24 * 100);
 }
@@ -639,6 +646,55 @@ BOOST_AUTO_TEST_CASE(reward_hash_is_sensitive_to_reward_details)
     CMutableTransaction other_input = coinstake;
     other_input.vin[0].prevout = COutPoint(uint256S("0x02"), 0);
     BOOST_CHECK(GetRewardHash(base, MakeTransactionRef(other_input), nTime) != base_hash);
+}
+
+BOOST_AUTO_TEST_CASE(check_proof_of_stake_pure_basic)
+{
+    const auto params = CreateChainParams(CBaseChainParams::REGTEST);
+    const Consensus::Params& consensus = params->GetConsensus();
+
+    CKey key = MakeKey();
+    CScript script = P2PKH(key);
+
+    // Create a previous transaction with output
+    CMutableTransaction txPrev;
+    txPrev.vout.resize(1);
+    txPrev.vout[0].nValue = 1000 * COIN;
+    txPrev.vout[0].scriptPubKey = script;
+
+    // Create a coinstake transaction spending txPrev
+    CMutableTransaction coinstake;
+    coinstake.vin.resize(1);
+    coinstake.vin[0].prevout = COutPoint(txPrev.GetHash(), 0);
+    coinstake.vout.resize(1);
+    coinstake.vout[0].nValue = 1000 * COIN;
+    coinstake.vout[0].scriptPubKey = script;
+
+    // Sign the coinstake input
+    uint256 hash = SignatureHash(script, coinstake, 0, SIGHASH_ALL, 0, SigVersion::BASE);
+    std::vector<unsigned char> vchSig;
+    BOOST_REQUIRE(key.Sign(hash, vchSig));
+    vchSig.push_back((unsigned char)SIGHASH_ALL);
+    coinstake.vin[0].scriptSig = CScript() << vchSig << ToByteVector(key.GetPubKey());
+
+    uint32_t nTimeBlockFrom = 1000000;
+    uint32_t nTimeTx = nTimeBlockFrom + consensus.nStakeMinAge + 100;
+    unsigned int nTxPrevOffset = 100;
+    unsigned int nBits = 0x207fffff; // regtest max target
+
+    uint256 hashProofOfStake;
+    bool valid = pos::CheckProofOfStakePure(coinstake, txPrev, nBits, nTimeTx, nTimeBlockFrom, nTxPrevOffset, hashProofOfStake, consensus);
+    BOOST_CHECK(valid);
+
+    // Too young stake should fail
+    uint32_t nTimeTxTooYoung = nTimeBlockFrom + consensus.nStakeMinAge - 1;
+    uint256 hashProofOfStakeFail;
+    BOOST_CHECK(!pos::CheckProofOfStakePure(coinstake, txPrev, nBits, nTimeTxTooYoung, nTimeBlockFrom, nTxPrevOffset, hashProofOfStakeFail, consensus));
+
+    // Invalid signature should fail
+    CMutableTransaction badCoinstake = coinstake;
+    badCoinstake.vin[0].scriptSig = CScript() << OP_0;
+    BOOST_CHECK(!pos::CheckProofOfStakePure(badCoinstake, txPrev, nBits, nTimeTx, nTimeBlockFrom, nTxPrevOffset, hashProofOfStakeFail, consensus));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

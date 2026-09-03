@@ -991,6 +991,7 @@ std::unique_ptr<WalletDatabase> CreateWalletDatabase(const fs::path& path, uint6
 
     // Existing Berkeley DB wallets must keep using BDB.
     if (is_bdb) {
+        LogPrintf("Wallet [%s] is using legacy Berkeley DB format. It is recommended to migrate to SQLite using 'migratewallet' RPC or GUI menu.\n", path.string());
         return std::make_unique<BerkeleyDatabase>(path);
     }
 

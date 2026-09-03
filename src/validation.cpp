@@ -49,6 +49,10 @@
 #include <boost/bind/bind.hpp>
 #include <boost/thread.hpp>
 
+#include <pos/height.h>
+#include <pos/reward.h>
+#include <pos/kernel.h>
+#include <pos/stake.h>
 #include <kernel.h>
 #include <policy/stake.h>
 #include <pubkey.h>
@@ -1178,69 +1182,6 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     CAmount nSubsidy = 11000000 * COIN;
     nSubsidy >>= halvings;
     return nSubsidy;
-}
-
-double_t GetAnnualRate(int nHeight, const Consensus::Params& consensusParams)
-{
-    int nSubsidyReducingInterval = 60 * 24 * 365;
-    if(!IsPoSHeight(nHeight, consensusParams))
-    {
-        return 0;
-    }
-    else if(IsPoSHeight(nHeight, consensusParams) && nHeight <= nSubsidyReducingInterval)
-    {
-        return 0.10;
-    }
-    else if(nSubsidyReducingInterval < nHeight && nHeight <= nSubsidyReducingInterval * 2)
-    {
-        return 0.09;
-    }
-    else if(nSubsidyReducingInterval * 2 < nHeight && nHeight <= nSubsidyReducingInterval * 3)
-    {
-        return 0.08;
-    }
-    else if(nSubsidyReducingInterval * 3 < nHeight && nHeight <= nSubsidyReducingInterval * 4)
-    {
-        return 0.07;
-    }
-    else if(nSubsidyReducingInterval * 4 < nHeight && nHeight <= nSubsidyReducingInterval * 5)
-    {
-        return 0.06;
-    }
-    else if(nSubsidyReducingInterval * 5 < nHeight)
-    {
-        return 0.05;
-    }
-
-    // Defensive fallback for compiler return-path analysis.
-    return 0.05;
-}
-
-CAmount GetProofOfStakeReward(int nHeight, CAmount nAmount, uint32_t nTime, const Consensus::Params& consensusParams)
-{
-    if(!IsPoSHeight(nHeight, consensusParams))
-    {
-        return 0;
-    }
-
-    double_t dRewardCurveMaximum = 1.02500000;
-    double_t dRewardCurveLimit = 1.00000000;
-    double_t dRewardCurveBase = 0.01800000;
-    double_t dRewardCurveSteepness = 0.00000285;
-
-    if(nTime < consensusParams.nStakeMinAge)
-    {
-        return 0;
-    }
-
-    nTime = std::min(nTime, (uint32_t)consensusParams.nStakeMaxAge);
-
-    CAmount annual = nAmount * GetAnnualRate(nHeight, consensusParams);
-
-    double_t coefficient = dRewardCurveMaximum / (1.0 + (dRewardCurveMaximum / dRewardCurveBase - 1.0) * exp(-dRewardCurveSteepness * nTime));
-    coefficient = std::min(coefficient, dRewardCurveLimit);
-
-    return (CAmount) (annual * coefficient * nTime / (365 * 24 * 60 * 60));
 }
 
 bool IsInitialBlockDownload()
@@ -3241,128 +3182,12 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     return true;
 }
 
-static bool GetPubKeyFromScript(CScript scriptPubKey, const CTxIn& txIn, std::vector<CPubKey>& vPubKey, int depth = 0)
-{
-    assert(depth <= 2);
-    txnouttype type;
-    std::vector<std::vector<unsigned char>>vSolutions;
-    if (!Solver(scriptPubKey, type, vSolutions)) {
-        return false;
-    }
-    vPubKey.clear();
-    switch (type) {
-        case TX_PUBKEY:
-            vPubKey.push_back(CPubKey(vSolutions[0].begin(), vSolutions[0].end()));
-            break;
-        case TX_MULTISIG:
-            for (auto itr = vSolutions.begin() + 1; itr != vSolutions.end() - 1; itr++) {
-                vPubKey.push_back(CPubKey(itr->begin(), itr->end()));
-            }
-            break;
-        case TX_PUBKEYHASH:
-        {
-            std::vector<std::vector<unsigned char>> stack;
-            if (!EvalScript(stack, txIn.scriptSig, SCRIPT_VERIFY_NONE, BaseSignatureChecker(), SigVersion::BASE)) {
-                return false;
-            }
-            vPubKey.push_back(CPubKey(stack.back().begin(), stack.back().end()));
-        }
-        break;
-        case TX_WITNESS_V0_KEYHASH:
-            vPubKey.push_back(CPubKey(txIn.scriptWitness.stack.back().begin(), txIn.scriptWitness.stack.back().end()));
-            break;
-        case TX_SCRIPTHASH:
-        {
-            std::vector<std::vector<unsigned char>> stack;
-            if (!EvalScript(stack, txIn.scriptSig, SCRIPT_VERIFY_NONE, BaseSignatureChecker(), SigVersion::BASE)) {
-                return false;
-            }
-            CScript redeemScript;
-            redeemScript = CScript(stack.back().begin(), stack.back().end());
-            if (!GetPubKeyFromScript(redeemScript, txIn, vPubKey, depth + 1)) {
-                return false;
-            }
-        }
-        break;
-        case TX_WITNESS_V0_SCRIPTHASH:
-        {
-            std::vector<std::vector<unsigned char>> stack;
-            stack = txIn.scriptWitness.stack;
-            CScript redeemScript;
-            redeemScript = CScript(stack.back().begin(), stack.back().end());
-            if (!GetPubKeyFromScript(redeemScript, txIn, vPubKey, depth + 1)) {
-                return false;
-            }
-        }
-        break;
-        default:
-            return false;
-    }
-    return true;
-}
-
-bool GetPubKeysFromCoinStakeTx(CTransactionRef txCoinStake, std::vector<CPubKey>& vPubKeys)
-{
-
-    if(!GetPubKeyFromScript(txCoinStake->vout[0].scriptPubKey, txCoinStake->vin[0], vPubKeys))
-    {
-        return false;
-    }
-
-    for (CPubKey v_pub_key : vPubKeys) {
-        if (!v_pub_key.IsValid())
-            return false;
-    }
-
-    return true;
-}
-
-static bool MakeBlockHashExcludedSignature(const CBlock& block, uint256& hashBlock, std::vector<unsigned char>& sig)
-{
-    const CScript& scriptSig = block.vtx[0]->vin[0].scriptSig;
-
-    auto itr = scriptSig.begin();
-    opcodetype op;
-    //get last element
-    while (GetScriptOp(itr, scriptSig.end(), op, &sig)) {
-        if(itr == scriptSig.end())
-        {
-            break;
-        }
-    }
-
-    if(op >= OP_PUSHDATA1)
-    {
-        return error("MakeBlockHashExcludedSignature(): the last element of scriptSig is not signature");
-    }
-
-    CMutableTransaction txCoinBase(*block.vtx[0]);
-    txCoinBase.vin[0].scriptSig = CScript(scriptSig.begin(), scriptSig.end() - (op + 1));
-    CBlock cpBlock = block;
-    cpBlock.vtx[0] = MakeTransactionRef(std::move(txCoinBase));
-    cpBlock.hashMerkleRoot = BlockMerkleRoot(cpBlock);
-
-    hashBlock = cpBlock.GetBlockHeader().GetHash();
-
-    return true;
-}
-
 bool CheckBlockSignature(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams)
 {
-    std::vector<CPubKey> pubkeys;
-    if (!GetPubKeysFromCoinStakeTx(block.vtx[1], pubkeys)) {
-        return error("CheckBlockSignature(): could not get the public key");
+    if (!pos::CheckBlockSignature(block, consensusParams)) {
+        return state.DoS(100, false, REJECT_INVALID, "bad-block-signature", false, "block signature verification failed");
     }
-    uint256 hashBlock;
-    std::vector<unsigned char> signature;
-    if (!MakeBlockHashExcludedSignature(block, hashBlock, signature)) {
-        return error("CheckBlockSignature(): could not get the signature and hashblock");
-    }
-    for (CPubKey pubkey : pubkeys) {
-        if (pubkey.Verify(hashBlock, signature))
-            return true;
-    }
-    return error("CheckBlockSignature(): Verify Failed signature = %s, hashblock = %s", HexStr(signature), HexStr(hashBlock));
+    return true;
 }
 
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot)
@@ -5154,21 +4979,6 @@ public:
         mapBlockIndex.clear();
     }
 } instance_of_cmaincleanup;
-
-bool IsPoSHeight(int n, const Consensus::Params& params)
-{
-    return n > params.nSwitchHeight;
-}
-uint256 GetRewardHash(const std::vector<std::pair<CScript, CAmount>>& vReward, CTransactionRef txCoinStake, uint32_t nTime)
-{
-    CDataStream ss(SER_GETHASH, 0);
-    for(std::pair<CScript, CAmount> p:vReward)
-    {
-        ss << p.first << p.second;
-    }
-    ss << nTime << txCoinStake->vin[0];
-    return Hash(ss.begin(), ss.end());
-}
 
 static bool EqualDestination(CTransactionRef txCoinStake, CPubKey pubkey)
 {

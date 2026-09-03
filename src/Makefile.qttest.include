@@ -60,7 +60,7 @@ nodist_qt_test_test_xpchain_qt_SOURCES = $(TEST_QT_MOC_CPP)
 
 qt_test_test_xpchain_qt_LDADD = $(LIBXPCHAIN_QT) $(LIBXPCHAIN_SERVER)
 if ENABLE_WALLET
-qt_test_test_xpchain_qt_LDADD += $(LIBXPCHAIN_UTIL) $(LIBXPCHAIN_WALLET)
+qt_test_test_xpchain_qt_LDADD += $(LIBXPCHAIN_UTIL) $(LIBXPCHAIN_WALLET) $(LIBXPCHAIN_SERVER)
 endif
 if ENABLE_ZMQ
 qt_test_test_xpchain_qt_LDADD += $(LIBXPCHAIN_ZMQ) $(ZMQ_LIBS)

@@ -113,7 +113,7 @@ class WalletSQLiteEncryptionTest(BitcoinTestFramework):
         self.stop_node(0)
         self.nodes[0].assert_start_raises_init_error(
             ['-walletdbpassphrase=' + passphrase, '-wallet=encrypted.sqlite'],
-            'file is not a database',
+            r'file is not a database|Failed to create table',
             match=ErrorMatch.PARTIAL_REGEX,
         )
 

@@ -3412,6 +3412,7 @@ static UniValue createwallet(const JSONRPCRequest& request)
         (request.params[5].isStr() && request.params[5].get_str() == "true") ||
         (request.params[5].isNum() && request.params[5].get_int() > 0))) {
         force_berkeley = true;
+        warning = "Creating legacy Berkeley DB wallets is deprecated and will be removed in future versions. Use SQLite wallets instead.";
     }
 
     if (force_berkeley && (flags & WALLET_FLAG_DESCRIPTORS)) {

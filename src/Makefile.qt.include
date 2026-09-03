@@ -449,7 +449,7 @@ if TARGET_WINDOWS
 endif
 qt_xpchain_qt_LDADD = qt/libxpchainqt.a $(LIBXPCHAIN_SERVER)
 if ENABLE_WALLET
-qt_xpchain_qt_LDADD += $(LIBXPCHAIN_UTIL) $(LIBXPCHAIN_WALLET)
+qt_xpchain_qt_LDADD += $(LIBXPCHAIN_UTIL) $(LIBXPCHAIN_WALLET) $(LIBXPCHAIN_SERVER)
 endif
 if ENABLE_ZMQ
 qt_xpchain_qt_LDADD += $(LIBXPCHAIN_ZMQ) $(ZMQ_LIBS)

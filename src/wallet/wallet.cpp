@@ -9,7 +9,10 @@
 #include <chain.h>
 #include <wallet/coincontrol.h>
 #include <consensus/consensus.h>
+#include <consensus/merkle.h>
 #include <consensus/validation.h>
+#include <pos/reward.h>
+#include <pos/staker.h>
 #include <fs.h>
 #include <key.h>
 #include <key_io.h>
@@ -4725,4 +4728,140 @@ std::vector<OutputGroup> CWallet::GroupOutputs(const std::vector<COutput>& outpu
         for (const auto& it : gmap) groups.push_back(it.second);
     }
     return groups;
+}
+
+void CWallet::GetStakeCandidates(std::vector<pos::StakeCandidate>& vCandidates)
+{
+    std::vector<COutput> vCoins;
+    {
+        LOCK2(cs_main, cs_wallet);
+        AvailableCoins(vCoins);
+    }
+    vCandidates.reserve(vCoins.size());
+    for (const COutput& coin : vCoins) {
+        if (!coin.tx || !coin.tx->tx) continue;
+        pos::StakeCandidate sc;
+        sc.outpoint = COutPoint(coin.tx->GetHash(), coin.i);
+        sc.txout = coin.tx->tx->vout[coin.i];
+        sc.hashBlock = coin.tx->hashBlock;
+        vCandidates.push_back(sc);
+    }
+}
+
+bool CWallet::CreateCoinStake(const pos::StakeCandidate& candidate, CTransactionRef& txNew, CAmount& nFees)
+{
+    CCoinControl coin_control;
+    coin_control.m_feerate = minRelayTxFee;
+    coin_control.fOverrideFeeRate = true;
+    coin_control.Select(candidate.outpoint);
+
+    int nChangePosRet = -1;
+    CRecipient recipient {candidate.txout.scriptPubKey, candidate.txout.nValue, true};
+    std::vector<CRecipient> vecSend;
+    std::string strError;
+    vecSend.push_back(recipient);
+    {
+        LOCK2(cs_main, cs_wallet);
+        CReserveKey reserve_key(this);
+        if (!CreateTransaction(vecSend, txNew, reserve_key, nFees, nChangePosRet, strError, coin_control, true, true))
+            return error("%s: %s", __func__, strError);
+    }
+    return true;
+}
+
+bool CWallet::SignReward(uint32_t nTime, CTransactionRef txCoinStake,
+                         const std::vector<std::pair<CScript, CAmount>>& vValues,
+                         CScript& script) const
+{
+    txnouttype type;
+    std::vector<std::vector<unsigned char>> ret;
+    if (!Solver(txCoinStake->vout[0].scriptPubKey, type, ret)) {
+        LogPrintf("solver failed\n");
+        return false;
+    }
+    if (type == TX_WITNESS_V0_SCRIPTHASH || type == TX_MULTISIG || type == TX_PUBKEY) {
+        return false;
+    }
+    CTxDestination dest;
+    if (!ExtractDestination(txCoinStake->vout[0].scriptPubKey, dest)) {
+        LogPrintf("address not found\n");
+        return false;
+    }
+
+    CKeyID keyID = GetKeyForDestination(*this, dest);
+    if (keyID.IsNull()) {
+        LogPrintf("pubkey hash not found\n");
+        return false;
+    }
+
+    CKey key;
+    if (!GetKey(keyID, key)) {
+        LogPrintf("privkey not found\n");
+        return false;
+    }
+
+    CPubKey pubkey = key.GetPubKey();
+    std::vector<unsigned char> vchSig;
+    uint256 hash = pos::GetRewardHash(vValues, txCoinStake, nTime);
+    bool result = key.Sign(hash, vchSig, 0);
+
+    script = CScript() << OP_RETURN << CScriptNum((int64_t)vValues.size()) << vchSig << ToByteVector(pubkey);
+    if (!result) {
+        LogPrintf("sign failed\n");
+    }
+    return result;
+}
+
+bool CWallet::SignBlock(CBlock* pblock) const
+{
+    assert(pblock->vtx.size() >= 2);
+    CMutableTransaction coinbaseTx(*pblock->vtx[0]);
+    std::vector<CPubKey> vPubKeys;
+    LogPrintf("get pubkey\n");
+    if (!GetPubKeysFromCoinStakeTx(pblock->vtx[1], vPubKeys)) {
+        LogPrintf("could not get pubkey from TX\n");
+        return false;
+    }
+    std::vector<unsigned char> sig;
+    for (const CPubKey& pubkey : vPubKeys) {
+        CKey privkey;
+        if (GetKey(pubkey.GetID(), privkey)) {
+            LogPrintf("sign block\n");
+            if (privkey.Sign(pblock->GetBlockHeader().GetHash(), sig)) {
+                coinbaseTx.vin[0].scriptSig = coinbaseTx.vin[0].scriptSig << sig;
+                pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
+                pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
+                LogPrintf("sign hash = %s signature = %s\n", pblock->GetBlockHeader().GetHash().ToString().c_str(), HexStr(sig.begin(), sig.end()));
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+std::vector<std::pair<CTxDestination, int>> CWallet::GetRewardPct(const CTxDestination& defaultDestination) const
+{
+    std::vector<std::pair<CTxDestination, int>> result;
+    int remainder = 100;
+    for (const std::pair<std::string, uint8_t>& p : vRewardDistributionPcts) {
+        result.push_back(std::make_pair(DecodeDestination(p.first), (int)p.second));
+        remainder -= (int)p.second;
+        assert(remainder >= 0);
+    }
+    if (remainder > 0) {
+        result.push_back(std::make_pair(defaultDestination, remainder));
+    }
+    return result;
+}
+
+bool CWallet::GetPrevTx(const uint256& hash, CTransactionRef& txOut, uint256& hashBlock) const
+{
+    LOCK(cs_wallet);
+    auto it = mapWallet.find(hash);
+    if (it == mapWallet.end()) {
+        return false;
+    }
+    txOut = it->second.tx;
+    hashBlock = it->second.hashBlock;
+    return true;
 }

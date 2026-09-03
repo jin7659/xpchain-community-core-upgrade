@@ -8,6 +8,8 @@
 
 #include <primitives/block.h>
 #include <txmempool.h>
+#include <consensus/params.h>
+#include <pos/staker.h>
 #include <validation.h>
 
 #include <stdint.h>
@@ -163,7 +165,7 @@ public:
 
     /** Construct a new block template with coinbase to scriptPubKeyIn */
     std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx=true);
-    std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, uint32_t nTime, unsigned int nBits, CTransactionRef txCoinStake, CAmount nFees, CBlockIndex* pIndexLast, bool fMineWitnessTx = true);
+    std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, pos::IStakeableWallet* pwallet, uint32_t nTime, unsigned int nBits, CTransactionRef txCoinStake, CAmount nFees, CBlockIndex* pIndexLast, bool fMineWitnessTx = true);
     std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, uint32_t nTime, unsigned int nBits, CTransactionRef txCoinStake, CAmount nFees, CBlockIndex* pindexLast, bool fMineWitnessTx = true);
 
 private:
@@ -204,6 +206,4 @@ private:
 void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev);
 
-void MintStake(boost::thread_group& threadGroup, const std::shared_ptr<CWallet>& wallet);
-bool CreateTxSig(const CWallet& wallet, uint32_t nTime, CTransactionRef txCoinStake, const std::vector<std::pair<CScript, CAmount>>& vValues, CScript& script);
 #endif // XPCHAIN_MINER_H

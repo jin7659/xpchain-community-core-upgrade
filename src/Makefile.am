@@ -147,6 +147,11 @@ XPCHAIN_CORE_H = \
   policy/policy.h \
   policy/rbf.h \
   policy/stake.h \
+  pos/height.h \
+  pos/kernel.h \
+  pos/reward.h \
+  pos/stake.h \
+  pos/staker.h \
   pow.h \
   protocol.h \
   random.h \
@@ -250,6 +255,11 @@ libxpchain_server_a_SOURCES = \
   policy/policy.cpp \
   policy/rbf.cpp \
   policy/stake.cpp \
+  pos/height.cpp \
+  pos/kernel.cpp \
+  pos/reward.cpp \
+  pos/stake.cpp \
+  pos/staker.cpp \
   pow.cpp \
   rest.cpp \
   rpc/blockchain.cpp \
@@ -471,6 +481,7 @@ endif
 xpchaind_LDADD = \
   $(LIBXPCHAIN_SERVER) \
   $(LIBXPCHAIN_WALLET) \
+  $(LIBXPCHAIN_SERVER) \
   $(LIBXPCHAIN_COMMON) \
   $(LIBUNIVALUE) \
   $(LIBXPCHAIN_UTIL) \
