@@ -87,6 +87,10 @@ if BUILD_XPCHAIN_UTILS
   bin_PROGRAMS += xpchain-cli xpchain-tx
 endif
 
+if ENABLE_WALLET
+  bin_PROGRAMS += xpchain-wallet
+endif
+
 .PHONY: FORCE check-symbols check-security
 # xpchain core #
 XPCHAIN_CORE_H = \
@@ -533,6 +537,34 @@ xpchain_tx_LDADD = \
   $(LIBSECP256K1)
 
 xpchain_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+#
+
+# xpchain-wallet binary #
+if ENABLE_WALLET
+xpchain_wallet_SOURCES = xpchain-wallet.cpp wallet/wallettool.cpp wallet/wallettool.h
+xpchain_wallet_CPPFLAGS = $(AM_CPPFLAGS) $(XPCHAIN_INCLUDES)
+xpchain_wallet_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+xpchain_wallet_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+
+if TARGET_WINDOWS
+xpchain_wallet_SOURCES += xpchain-wallet-res.rc
+endif
+
+xpchain_wallet_LDADD = \
+  $(LIBXPCHAIN_WALLET) \
+  $(LIBXPCHAIN_SERVER) \
+  $(LIBXPCHAIN_COMMON) \
+  $(LIBXPCHAIN_UTIL) \
+  $(LIBUNIVALUE) \
+  $(LIBXPCHAIN_CONSENSUS) \
+  $(LIBXPCHAIN_CRYPTO) \
+  $(LIBLEVELDB) \
+  $(LIBLEVELDB_SSE42) \
+  $(LIBMEMENV) \
+  $(LIBSECP256K1)
+
+xpchain_wallet_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SQLITE3_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
+endif
 #
 
 # xpchainconsensus library #

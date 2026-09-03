@@ -76,6 +76,9 @@ CMainSignals& GetMainSignals()
 }
 
 void RegisterValidationInterface(CValidationInterface* pwalletIn) {
+    if (!g_signals.m_internals) {
+        return;
+    }
     g_signals.m_internals->UpdatedBlockTip.connect(boost::bind(&CValidationInterface::UpdatedBlockTip, pwalletIn, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
     g_signals.m_internals->TransactionAddedToMempool.connect(boost::bind(&CValidationInterface::TransactionAddedToMempool, pwalletIn, boost::placeholders::_1));
     g_signals.m_internals->BlockConnected.connect(boost::bind(&CValidationInterface::BlockConnected, pwalletIn, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3));
@@ -88,6 +91,9 @@ void RegisterValidationInterface(CValidationInterface* pwalletIn) {
 }
 
 void UnregisterValidationInterface(CValidationInterface* pwalletIn) {
+    if (!g_signals.m_internals) {
+        return;
+    }
     g_signals.m_internals->BlockChecked.disconnect(boost::bind(&CValidationInterface::BlockChecked, pwalletIn, boost::placeholders::_1, boost::placeholders::_2));
     g_signals.m_internals->Broadcast.disconnect(boost::bind(&CValidationInterface::ResendWalletTransactions, pwalletIn, boost::placeholders::_1, boost::placeholders::_2));
     g_signals.m_internals->ChainStateFlushed.disconnect(boost::bind(&CValidationInterface::ChainStateFlushed, pwalletIn, boost::placeholders::_1));

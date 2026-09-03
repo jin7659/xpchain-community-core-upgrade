@@ -1329,6 +1329,9 @@ void CWallet::BlockUntilSyncedToCurrentChain() {
         // cs_main here anyway, it's easier to just call it cs_main-protected.
         LOCK(cs_main);
         const CBlockIndex* initialChainTip = chainActive.Tip();
+        if (!initialChainTip) {
+            return;
+        }
 
         if (m_last_block_processed && m_last_block_processed->GetAncestor(initialChainTip->nHeight) == initialChainTip) {
             return;
@@ -4312,7 +4315,9 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
             return nullptr;
         }
 
-        walletInstance->ChainStateFlushed(chainActive.GetLocator());
+        if (chainActive.Tip()) {
+            walletInstance->ChainStateFlushed(chainActive.GetLocator());
+        }
     } else if (wallet_creation_flags & WALLET_FLAG_DISABLE_PRIVATE_KEYS) {
         // Make it impossible to disable private keys after creation
         InitError(strprintf(_("Error loading %s: Private keys can only be disabled during creation"), walletFile));
