@@ -218,13 +218,6 @@ void SQLiteDatabase::Close()
     }
 }
 
-void SQLiteDatabase::Flush()
-{
-    if (m_db) {
-        sqlite3_exec(m_db, "PRAGMA wal_checkpoint(PASSIVE);", nullptr, nullptr, nullptr);
-    }
-}
-
 std::unique_ptr<DatabaseBatch> SQLiteDatabase::MakeBatch(bool flush_on_close)
 {
     return std::make_unique<SQLiteBatch>(*this);
@@ -638,7 +631,7 @@ bool SQLiteDatabase::Verify(const fs::path& path, std::string& error)
     };
 
     bool integrity_ok = false;
-    int rc = sqlite3_exec(db, "PRAGMA integrity_check;", callback, &integrity_ok, &errmsg);
+    rc = sqlite3_exec(db, "PRAGMA integrity_check;", callback, &integrity_ok, &errmsg);
     if (rc != SQLITE_OK) {
         if (rc == SQLITE_NOTADB) {
             // SQLCipher 암호화 지갑인 경우, 키 입력 전에는 SQLITE_NOTADB(26) 오류가 발생합니다.
