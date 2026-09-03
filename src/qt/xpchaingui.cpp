@@ -153,12 +153,22 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
     unitDisplayControl = new UnitDisplayStatusBarControl(platformStyle);
     labelWalletEncryptionIcon = new QLabel();
     labelWalletHDStatusIcon = new QLabel();
-    labelWalletFormatStatus = new QLabel();
+    labelWalletFormatStatus = new GUIUtil::ClickableLabel();
     labelWalletFormatStatus->setStyleSheet(
         "QLabel { font-size: 10px; font-weight: 600; color: #6cb6ff; "
         "background-color: transparent; border: 1px solid #1f6feb; "
         "border-radius: 3px; padding: 1px 6px; }");
     labelWalletFormatStatus->hide();
+    connect(labelWalletFormatStatus, &GUIUtil::ClickableLabel::clicked, [this]() {
+        if (walletFrame) {
+            WalletModel* model = walletFrame->currentWalletModel();
+            if (model && model->wallet().getDatabaseFormat() != "sqlite") {
+                migrateWallet();
+            }
+        }
+    });
+    labelStakingIcon = new QLabel();
+    labelStakingIcon->hide();
     labelProxyIcon = new QLabel();
     connectionsControl = new GUIUtil::ClickableLabel();
     labelBlocksIcon = new GUIUtil::ClickableLabel();
@@ -170,6 +180,7 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
         frameBlocksLayout->addWidget(labelWalletEncryptionIcon);
         frameBlocksLayout->addWidget(labelWalletHDStatusIcon);
         frameBlocksLayout->addWidget(labelWalletFormatStatus);
+        frameBlocksLayout->addWidget(labelStakingIcon);
     }
     frameBlocksLayout->addWidget(labelProxyIcon);
     frameBlocksLayout->addStretch();
@@ -1270,17 +1281,20 @@ void XPChainGUI::updateWalletStatus()
 {
     if (!walletFrame) {
         if (labelWalletFormatStatus) labelWalletFormatStatus->hide();
+        if (labelStakingIcon) labelStakingIcon->hide();
         return;
     }
     WalletView * const walletView = walletFrame->currentWalletView();
     if (!walletView) {
         if (labelWalletFormatStatus) labelWalletFormatStatus->hide();
+        if (labelStakingIcon) labelStakingIcon->hide();
         return;
     }
     WalletModel * const walletModel = walletView->getWalletModel();
     setEncryptionStatus(walletModel->getEncryptionStatus());
     setHDStatus(walletModel->wallet().hdEnabled());
     setWalletFormatStatus(walletModel);
+    updateStakingIcon();
 }
 
 void XPChainGUI::setWalletFormatStatus(WalletModel* walletModel)
@@ -1290,6 +1304,7 @@ void XPChainGUI::setWalletFormatStatus(WalletModel* walletModel)
     }
     if (!walletModel) {
         labelWalletFormatStatus->hide();
+        if (labelStakingIcon) labelStakingIcon->hide();
         return;
     }
 
@@ -1308,6 +1323,7 @@ void XPChainGUI::setWalletFormatStatus(WalletModel* walletModel)
         "QLabel { font-size: 10px; font-weight: 600; color: %1; "
         "background-color: transparent; border: 1px solid %2; "
         "border-radius: 3px; padding: 1px 6px; }").arg(color, border));
+    labelWalletFormatStatus->setCursor(sqlite ? Qt::ArrowCursor : Qt::PointingHandCursor);
 
     QString keys_line;
     if (watch_only) {
@@ -1329,13 +1345,61 @@ void XPChainGUI::setWalletFormatStatus(WalletModel* walletModel)
         file_line = tr("File: Berkeley DB (use File → Migrate Wallet to SQLite…)");
     }
 
+    QString click_hint = sqlite ? QString() : (QStringLiteral("<br/><b>") + tr("Click to migrate this wallet to SQLite…") + QStringLiteral("</b>"));
+
     labelWalletFormatStatus->setToolTip(
         tr("Wallet status") + QStringLiteral("<br/>") +
         tr("Database: %1").arg(sqlite ? tr("SQLite") : tr("Berkeley DB")) + QStringLiteral("<br/>") +
         file_line + QStringLiteral("<br/>") +
         tr("Type: %1").arg(watch_only ? tr("watch-only") : (descriptor ? tr("descriptor") : tr("legacy HD"))) + QStringLiteral("<br/>") +
-        keys_line);
+        keys_line + click_hint);
     labelWalletFormatStatus->show();
+}
+
+void XPChainGUI::updateStakingIcon()
+{
+    if (!labelStakingIcon) {
+        return;
+    }
+    WalletModel* model = walletFrame ? walletFrame->currentWalletModel() : nullptr;
+    if (!model) {
+        labelStakingIcon->hide();
+        return;
+    }
+
+    const bool fMinting = gArgs.GetBoolArg("-minting", true);
+    const bool isIBD = clientModel ? clientModel->node().isInitialBlockDownload() : true;
+    const int enc = model->getEncryptionStatus();
+    const bool isLocked = (enc == WalletModel::Locked);
+    const bool watch_only = model->privateKeysDisabled();
+    interfaces::WalletBalances balances = model->wallet().getBalances();
+    const bool hasBalance = balances.balance > 0;
+
+    bool stakingActive = false;
+    QString tooltip;
+
+    if (!fMinting) {
+        tooltip = tr("Staking is disabled (-minting=0).");
+    } else if (isIBD) {
+        tooltip = tr("Staking is paused: blockchain is synchronizing.");
+    } else if (watch_only) {
+        tooltip = tr("Staking is disabled: watch-only wallet has no private keys.");
+    } else if (isLocked && !fWalletUnlockMintOnly) {
+        tooltip = tr("Staking is paused: wallet is locked. Unlock for staking to enable.");
+    } else if (!hasBalance) {
+        tooltip = tr("Staking is waiting: no mature coins available in this wallet.");
+    } else {
+        stakingActive = true;
+        tooltip = tr("Staking is active.\nYour wallet is participating in Proof-of-Stake consensus.");
+    }
+
+    if (stakingActive) {
+        labelStakingIcon->setPixmap(QIcon(":/icons/staking_active").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
+    } else {
+        labelStakingIcon->setPixmap(QIcon(":/icons/staking_inactive").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
+    }
+    labelStakingIcon->setToolTip(tooltip);
+    labelStakingIcon->show();
 }
 #endif // ENABLE_WALLET
 

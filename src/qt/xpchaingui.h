@@ -94,7 +94,8 @@ private:
     UnitDisplayStatusBarControl* unitDisplayControl = nullptr;
     QLabel* labelWalletEncryptionIcon = nullptr;
     QLabel* labelWalletHDStatusIcon = nullptr;
-    QLabel* labelWalletFormatStatus = nullptr;
+    GUIUtil::ClickableLabel* labelWalletFormatStatus = nullptr;
+    QLabel* labelStakingIcon = nullptr;
     QLabel* labelProxyIcon = nullptr;
     QLabel* connectionsControl = nullptr;
     QLabel* labelBlocksIcon = nullptr;
@@ -230,6 +231,9 @@ private:
 
     /** Compact status-bar chip: SQLite/BDB plus tooltip for SQLCipher, descriptor, lock. */
     void setWalletFormatStatus(WalletModel* walletModel);
+
+    /** Update staking status icon in the status bar */
+    void updateStakingIcon();
 
 public Q_SLOTS:
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);

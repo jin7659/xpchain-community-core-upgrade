@@ -108,6 +108,9 @@ void WalletView::setXPChainGUI(XPChainGUI *gui)
         // Clicking on a transaction on the overview page simply sends you to transaction history page
         connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), gui, SLOT(gotoHistoryPage()));
 
+        // Clicking migrate on the overview BDB banner opens the migration dialog
+        connect(overviewPage, &OverviewPage::migrateWalletClicked, gui, &XPChainGUI::migrateWallet);
+
         // Navigate to transaction history page after send
         connect(sendCoinsPage, SIGNAL(coinsSent(uint256)), gui, SLOT(gotoHistoryPage()));
 

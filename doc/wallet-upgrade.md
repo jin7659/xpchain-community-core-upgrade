@@ -7,8 +7,17 @@ This document describes how to upgrade XPChain Core wallet releases safely, with
 | Source | Target | Notes |
 |--------|--------|-------|
 | 0.17.0-2 / 0.17.0-3 / 0.17.0-4 | 0.27.0+ | Recommended upgrade path |
-| Legacy BDB `wallet.dat` | Same release | Use `-upgradewallet` for feature version bump |
+| Legacy BDB `wallet.dat` | Same release | Deprecated in transitional phase; migrate to SQLite via `migratewallet` |
 | Web wallet mnemonic | Desktop `xpchain-qt` / `xpchain-cli` | BIP44 with `coin_type=0` |
+
+### Transitional Phase Policy (Berkeley DB → SQLite)
+
+In this release cycle, XPChain Core is in a **transitional phase**:
+* **New wallets** default to SQLite (encrypted at rest with SQLCipher if password protected).
+* **Legacy Berkeley DB wallets** remain fully supported and readable to prevent asset loss.
+* Loading a BDB wallet prints an informational recommendation to migrate.
+* Creating new BDB wallets (`createwallet ... force_berkeley=true`) issues a deprecation warning and will be phased out in future releases.
+* Users can migrate to SQLite at any time via **File → Migrate Wallet to SQLite…** in the GUI or `migratewallet` via RPC.
 
 ## Before You Upgrade
 
