@@ -139,6 +139,7 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     showOutOfSyncWarning(true);
     connect(ui->labelWalletStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
     connect(ui->labelTransactionsStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
+    connect(ui->buttonMigrateBDB, &QPushButton::clicked, this, &OverviewPage::migrateWalletClicked);
 }
 
 void OverviewPage::handleTransactionClicked(const QModelIndex &index)
@@ -219,6 +220,8 @@ void OverviewPage::setWalletModel(WalletModel *model)
     this->walletModel = model;
     if(model && model->getOptionsModel())
     {
+        ui->frameBDBWarning->setVisible(model->wallet().databaseFormat() != "sqlite");
+
         // Set up transaction list
         filter.reset(new TransactionFilterProxy());
         filter->setSourceModel(model->getTransactionTableModel());
@@ -241,6 +244,8 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
         updateWatchOnlyLabels(wallet.haveWatchOnly());
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
+    } else {
+        ui->frameBDBWarning->setVisible(false);
     }
 
     // update the display unit, to not use the default ("BTC")

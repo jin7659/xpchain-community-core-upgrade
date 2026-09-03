@@ -42,6 +42,7 @@ public Q_SLOTS:
 Q_SIGNALS:
     void transactionClicked(const QModelIndex &index);
     void outOfSyncWarningClicked();
+    void migrateWalletClicked();
 
 private:
     Ui::OverviewPage *ui;

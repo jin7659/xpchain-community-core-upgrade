@@ -34,6 +34,50 @@
     </widget>
    </item>
    <item>
+    <widget class="QFrame" name="frameBDBWarning">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QFrame#frameBDBWarning { background-color: rgba(210, 153, 34, 0.15); border: 1px solid #d29922; border-radius: 6px; } QLabel#labelBDBWarningText { color: #d29922; font-weight: 500; }</string>
+     </property>
+     <layout class="QHBoxLayout" name="layoutBDBWarning">
+      <property name="leftMargin">
+       <number>12</number>
+      </property>
+      <property name="topMargin">
+       <number>6</number>
+      </property>
+      <property name="rightMargin">
+       <number>12</number>
+      </property>
+      <property name="bottomMargin">
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="labelBDBWarningText">
+        <property name="text">
+         <string>⚠️ This wallet uses the legacy Berkeley DB format. Migrate to the modern SQLite format for enhanced security and performance.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonMigrateBDB">
+        <property name="text">
+         <string>Migrate Now…</string>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_2">

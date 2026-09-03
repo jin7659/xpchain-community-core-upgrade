@@ -95,6 +95,7 @@ private:
     QLabel* labelWalletEncryptionIcon = nullptr;
     QLabel* labelWalletHDStatusIcon = nullptr;
     QLabel* labelWalletFormatStatus = nullptr;
+    QLabel* labelStakingIcon = nullptr;
     QLabel* labelProxyIcon = nullptr;
     QLabel* connectionsControl = nullptr;
     QLabel* labelBlocksIcon = nullptr;
@@ -231,11 +232,17 @@ private:
     /** Compact status-bar chip: SQLite/BDB plus tooltip for SQLCipher, descriptor, lock. */
     void setWalletFormatStatus(WalletModel* walletModel);
 
+    /** Update staking status icon in the status bar */
+    void updateStakingIcon();
+
 public Q_SLOTS:
     bool handlePaymentRequest(const SendCoinsRecipient& recipient);
 
     /** Show incoming transaction notification for new transactions. */
     void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label, const QString& walletName);
+
+    /** Migrate current Berkeley DB wallet to SQLite */
+    void migrateWallet();
 #endif // ENABLE_WALLET
 
 private:
@@ -279,8 +286,6 @@ private Q_SLOTS:
     void generateMnemonicWallet();
     /** Restore wallet using BIP39 mnemonic */
     void importMnemonic();
-    /** Migrate current Berkeley DB wallet to SQLite */
-    void migrateWallet();
     /** Open a wallet */
     void openWallet();
     /** Close (unload) the current wallet */
