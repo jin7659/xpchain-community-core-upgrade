@@ -74,6 +74,22 @@ class WalletMigrateSQLiteTest(BitcoinTestFramework):
             {"destination": os.path.basename(result["destination"])},
         )
 
+        self.log.info("Allow duplicate migration when overwrite=True")
+        res_over = legacy_again.migratewallet({
+            "destination": os.path.basename(result["destination"]),
+            "overwrite": True,
+            "backup": False,
+        })
+        assert_equal(res_over["success"], True)
+
+        self.log.info("Test in-place migration")
+        node.createwallet("legacy_inplace", False, False, "", False, True)
+        legacy_inp = node.get_wallet_rpc("legacy_inplace")
+        res_inp = legacy_inp.migratewallet({"in_place": True, "load_new": False})
+        assert_equal(res_inp["success"], True)
+        assert_equal(res_inp["in_place"], True)
+        assert os.path.isfile(res_inp["backup"])
+
 
 if __name__ == '__main__':
     WalletMigrateSQLiteTest().main()

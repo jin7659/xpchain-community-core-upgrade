@@ -79,12 +79,35 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="replaceSourceCheckBox">
+     <property name="toolTip">
+      <string>Safely replaces the source wallet with the modern SQLite file, keeping the original as .legacy.bak. This ensures SQLite is loaded automatically on next start.</string>
+     </property>
+     <property name="text">
+      <string>Replace current wallet with SQLite in-place (recommended)</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="backupCheckBox">
      <property name="text">
       <string>Backup source wallet before migration (recommended)</string>
      </property>
      <property name="checked">
       <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="overwriteCheckBox">
+     <property name="text">
+      <string>Overwrite destination file if it already exists (back up existing first)</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
      </property>
     </widget>
    </item>

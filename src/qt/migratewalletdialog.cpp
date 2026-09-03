@@ -46,7 +46,10 @@ MigrateWalletDialog::MigrateWalletDialog(QWidget* parent, WalletModel* _model) :
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     }
 
+    connect(ui->replaceSourceCheckBox, &QCheckBox::toggled, this, &MigrateWalletDialog::onReplaceSourceToggled);
     connect(ui->destinationEdit, &QLineEdit::textChanged, this, &MigrateWalletDialog::updateOkButton);
+    connect(ui->overwriteCheckBox, &QCheckBox::toggled, this, &MigrateWalletDialog::updateOkButton);
+    onReplaceSourceToggled(ui->replaceSourceCheckBox->isChecked());
     updateOkButton();
 }
 
@@ -75,10 +78,39 @@ bool MigrateWalletDialog::loadNew() const
     return ui->loadNewCheckBox->isChecked();
 }
 
+bool MigrateWalletDialog::inPlace() const
+{
+    return ui->replaceSourceCheckBox->isChecked();
+}
+
+bool MigrateWalletDialog::overwrite() const
+{
+    return ui->overwriteCheckBox->isChecked();
+}
+
+void MigrateWalletDialog::onReplaceSourceToggled(bool checked)
+{
+    ui->destinationEdit->setEnabled(!checked);
+    ui->overwriteCheckBox->setEnabled(!checked);
+    if (checked) {
+        ui->destinationHintLabel->setText(
+            tr("The current wallet will be upgraded to SQLite in-place, and the original will be backed up as .legacy.bak.<br/>"
+               "<b>This guarantees SQLite is automatically recognized on next start.</b>"));
+    } else {
+        ui->destinationHintLabel->setText(
+            tr("Must end with .sqlite. Relative paths are under the wallets data directory."));
+    }
+    updateOkButton();
+}
+
 void MigrateWalletDialog::updateOkButton()
 {
     if (!m_can_migrate) {
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+        return;
+    }
+    if (inPlace()) {
+        ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
         return;
     }
     const QString dest = destination();
@@ -91,22 +123,22 @@ void MigrateWalletDialog::accept()
     if (!m_can_migrate) {
         return;
     }
-    const QString dest = destination();
-    if (dest.isEmpty() || !dest.endsWith(QStringLiteral(".sqlite"), Qt::CaseInsensitive)) {
-        QMessageBox::warning(this, tr("Invalid destination"),
-                             tr("Destination must be a non-empty path ending in .sqlite."));
-        return;
+    if (!inPlace()) {
+        const QString dest = destination();
+        if (dest.isEmpty() || !dest.endsWith(QStringLiteral(".sqlite"), Qt::CaseInsensitive)) {
+            QMessageBox::warning(this, tr("Invalid destination"),
+                                 tr("Destination must be a non-empty path ending in .sqlite."));
+            return;
+        }
     }
 
     const auto btn = QMessageBox::question(this, tr("Confirm wallet migration"),
         tr("Migrate this Berkeley DB wallet to SQLite?\n\n"
-           "Destination: %1\n"
-           "Backup source: %2\n"
-           "Switch after migration: %3\n\n"
-           "The original wallet file will be kept. Verify balances after migration.")
-            .arg(dest)
-            .arg(doBackup() ? tr("Yes") : tr("No"))
-            .arg(loadNew() ? tr("Yes") : tr("No")),
+           "Mode: %1\n"
+           "Backup source: %2\n\n"
+           "The original wallet file will be safely kept as a backup. Verify balances after migration.")
+            .arg(inPlace() ? tr("In-place upgrade (auto-load SQLite on restart)") : destination())
+            .arg(doBackup() ? tr("Yes") : tr("No")),
         QMessageBox::Yes | QMessageBox::Cancel,
         QMessageBox::Cancel);
     if (btn != QMessageBox::Yes) {
