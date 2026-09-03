@@ -14,6 +14,7 @@ class TransactionFilterProxy;
 class TxViewDelegate;
 class PlatformStyle;
 class WalletModel;
+class StakingRewardChartWidget;
 
 namespace Ui {
     class OverviewPage;
@@ -52,6 +53,7 @@ private:
 
     TxViewDelegate *txdelegate;
     std::unique_ptr<TransactionFilterProxy> filter;
+    StakingRewardChartWidget *stakingRewardChart;
 
 private Q_SLOTS:
     void updateDisplayUnit();

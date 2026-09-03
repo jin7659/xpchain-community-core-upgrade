@@ -14,6 +14,7 @@
 #include <qt/transactionfilterproxy.h>
 #include <qt/transactiontablemodel.h>
 #include <qt/walletmodel.h>
+#include <qt/stakingrewardchartwidget.h>
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
@@ -140,6 +141,9 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     connect(ui->labelWalletStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
     connect(ui->labelTransactionsStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
     connect(ui->buttonMigrateBDB, &QPushButton::clicked, this, &OverviewPage::migrateWalletClicked);
+
+    stakingRewardChart = new StakingRewardChartWidget(this);
+    ui->verticalLayout_3->insertWidget(0, stakingRewardChart);
 }
 
 void OverviewPage::handleTransactionClicked(const QModelIndex &index)
@@ -248,6 +252,10 @@ void OverviewPage::setWalletModel(WalletModel *model)
         ui->frameBDBWarning->setVisible(false);
     }
 
+    if (stakingRewardChart) {
+        stakingRewardChart->setWalletModel(model);
+    }
+
     // update the display unit, to not use the default ("BTC")
     updateDisplayUnit();
 }
@@ -258,6 +266,9 @@ void OverviewPage::updateDisplayUnit()
     {
         if (m_balances.balance != -1) {
             setBalance(m_balances);
+        }
+        if (stakingRewardChart) {
+            stakingRewardChart->updateData();
         }
 
         // Update txdelegate->unit with the current unit

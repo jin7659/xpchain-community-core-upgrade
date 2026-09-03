@@ -162,6 +162,7 @@ QT_MOC_CPP = \
   qt/moc_sendcoinsentry.cpp \
   qt/moc_signverifymessagedialog.cpp \
   qt/moc_splashscreen.cpp \
+  qt/moc_stakingrewardchartwidget.cpp \
   qt/moc_stakingrewardsettingpage.cpp \
   qt/moc_stakingrewardsettingmodel.cpp \
   qt/moc_stakingrewardsettingentrydelegate.cpp \
@@ -248,6 +249,7 @@ XPCHAIN_QT_H = \
   qt/sendcoinsentry.h \
   qt/signverifymessagedialog.h \
   qt/splashscreen.h \
+  qt/stakingrewardchartwidget.h \
   qt/stakingrewardsettingpage.h \
   qt/stakingrewardsettingmodel.h \
   qt/stakingrewardsettingentrydelegate.h \
@@ -377,6 +379,7 @@ XPCHAIN_QT_WALLET_CPP = \
   qt/sendcoinsdialog.cpp \
   qt/sendcoinsentry.cpp \
   qt/signverifymessagedialog.cpp \
+  qt/stakingrewardchartwidget.cpp \
   qt/stakingrewardsettingpage.cpp \
   qt/stakingrewardsettingmodel.cpp \
   qt/stakingrewardsettingentrydelegate.cpp \
