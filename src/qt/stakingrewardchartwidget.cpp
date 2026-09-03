@@ -14,6 +14,7 @@
 #include <QPainterPath>
 #include <QMouseEvent>
 #include <QDateTime>
+#include <QLocale>
 #include <QFontMetrics>
 #include <cmath>
 
