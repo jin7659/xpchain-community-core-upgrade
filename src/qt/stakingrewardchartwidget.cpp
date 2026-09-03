@@ -68,7 +68,7 @@ void StakingRewardChartWidget::updateData()
     for (int i = 5; i >= 0; --i) {
         QDateTime dt = now.addMonths(-i);
         QString key = dt.toString("yyyy-MM");
-        QString label = dt.toString("M월");
+        QString label = QLocale().monthName(dt.date().month(), QLocale::ShortFormat);
         MonthlyStakingStats stat;
         stat.monthKey = key;
         stat.monthLabel = label;

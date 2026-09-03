@@ -47,6 +47,7 @@
         <file alias="ja">locale/xpchain_ja.qm</file>
         <file alias="ka">locale/xpchain_ka.qm</file>
         <file alias="kk_KZ">locale/xpchain_kk_KZ.qm</file>
+        <file alias="ko">locale/xpchain_ko_KR.qm</file>
         <file alias="ko_KR">locale/xpchain_ko_KR.qm</file>
         <file alias="ku_IQ">locale/xpchain_ku_IQ.qm</file>
         <file alias="ky">locale/xpchain_ky.qm</file>
