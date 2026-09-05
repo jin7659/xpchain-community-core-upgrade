@@ -10,6 +10,18 @@ on:
       - master
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Guards the PoS/non-PoS module boundary: any new edge that puts src/pos/
+      # back into a cycle with the node fails here instead of silently landing.
+      - name: Circular dependencies
+        run: ./test/lint/lint-circular-dependencies.sh
+
   linux-unit-tests:
     name: Linux unit tests
     runs-on: ubuntu-22.04

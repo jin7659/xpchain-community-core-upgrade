@@ -11,7 +11,6 @@
 #include <chain.h>
 #include <chainparams.h>
 #include <miner.h>
-#include <net.h>
 #include <pow.h>
 #include <timedata.h>
 #include <util.h>
@@ -91,9 +90,6 @@ static void XPChainMinter(const std::shared_ptr<IStakeableWallet>& wallet)
                     CScript scriptDummy;
                     CAmount nFees;
                     CTransactionRef txCoinStake;
-                    txnouttype t;
-                    std::vector<std::vector<unsigned char>> a;
-                    Solver(candidate.txout.scriptPubKey, t, a);
                     if (!wallet->CreateCoinStake(candidate, txCoinStake, nFees))
                     {
                         continue;

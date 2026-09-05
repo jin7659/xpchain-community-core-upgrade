@@ -53,8 +53,6 @@
 #include <pos/reward.h>
 #include <pos/kernel.h>
 #include <pos/stake.h>
-#include <kernel.h>
-#include <policy/stake.h>
 #include <pubkey.h>
 #include <key_io.h>
 #include <outputtype.h>
@@ -1118,7 +1116,7 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
         LOCK(cs_main);
         blockPos = pindex->GetBlockPos();
     }
-    if(!ReadBlockFromDisk(block, blockPos, consensusParams, IsPoSHeight(pindex->nHeight, consensusParams)))
+    if(!ReadBlockFromDisk(block, blockPos, consensusParams, pos::IsPoSHeight(pindex->nHeight, consensusParams)))
         return false;
     if (block.GetHash() != pindex->GetBlockHash())
         return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): GetHash() doesn't match index for %s at %s",
@@ -1846,7 +1844,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     assert(*pindex->phashBlock == block.GetHash());
     int64_t nTimeStart = GetTimeMicros();
     uint256 hashProofOfStake;
-    if(IsPoSHeight(pindex->nHeight, chainparams.GetConsensus()) && !CheckProofOfStake(block.vtx[1], block.nBits, hashProofOfStake, block.nTime))
+    if(pos::IsPoSHeight(pindex->nHeight, chainparams.GetConsensus()) && !pos::CheckProofOfStake(block.vtx[1], block.nBits, hashProofOfStake, block.nTime))
     {
         return state.DoS(100, error("%s: CheckProofOfStake failed", __func__), REJECT_INVALID, "bad-blk");
     }
@@ -2090,7 +2088,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(), MILLI * (nTime3 - nTime2), MILLI * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : MILLI * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * MICRO, nTimeConnect * MILLI / nBlocksTotal);
     CAmount blockReward;
-    if(!IsPoSHeight(pindex->nHeight, chainparams.GetConsensus()))
+    if(!pos::IsPoSHeight(pindex->nHeight, chainparams.GetConsensus()))
     {
         blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
     }
@@ -2099,7 +2097,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         uint256 hash;
         CTransactionRef tx;
 
-        if(block.vtx.size() < 2 || !IsCoinStakeTx(block.vtx[1], chainparams.GetConsensus(), hash, tx)){
+        if(block.vtx.size() < 2 || !pos::IsCoinStakeTx(block.vtx[1], chainparams.GetConsensus(), hash, tx)){
             return state.DoS(100, false, REJECT_INVALID, "bad-cs");
         }
 
@@ -2119,7 +2117,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
 
         uint32_t nTime = block.nTime - header.nTime;
 
-        blockReward = GetProofOfStakeReward(pindex->nHeight, tx->vout[block.vtx[1]->vin[0].prevout.n].nValue, nTime, chainparams.GetConsensus());
+        blockReward = pos::GetProofOfStakeReward(pindex->nHeight, tx->vout[block.vtx[1]->vin[0].prevout.n].nValue, nTime, chainparams.GetConsensus());
         if (block.vtx[0]->vout.size() >= 3) {
             if (!VerifyCoinBaseTx(block, state)) {
                 return false;
@@ -2132,7 +2130,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                                        __func__, block.vtx[0]->vout[0].nValue, blockReward),
                                  REJECT_INVALID, "bad-cb-amount");
             }
-            if (!IsDestinationSame(block.vtx[1]->vout[0].scriptPubKey, block.vtx[0]->vout[0].scriptPubKey)) {
+            if (!pos::IsDestinationSame(block.vtx[1]->vout[0].scriptPubKey, block.vtx[0]->vout[0].scriptPubKey)) {
                 return state.DoS(100, error("%s: coinstake and coinbase output mismatched", __func__), REJECT_INVALID,
                                  "bad-cs");
             }
@@ -3207,7 +3205,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         nHeight = (*itr).second->nHeight + 1;
     }
 
-    if (!CheckBlockHeader(block, state, consensusParams, (fCheckPOW && !IsPoSHeight(nHeight, consensusParams))))
+    if (!CheckBlockHeader(block, state, consensusParams, (fCheckPOW && !pos::IsPoSHeight(nHeight, consensusParams))))
         return false;
 
     // Check the merkle root.
@@ -3241,7 +3239,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         if (block.vtx[i]->IsCoinBase())
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-multiple", false, "more than one coinbase");
 
-    if(IsPoSHeight(nHeight, consensusParams))
+    if(pos::IsPoSHeight(nHeight, consensusParams))
     {
         if(block.vtx.size() < 2) // block doesn't include coinbase and coinstake
         {
@@ -3511,7 +3509,7 @@ bool CChainState::AcceptBlockHeader(const CBlockHeader& block, CValidationState&
         if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime()))
             return error("%s: Consensus::ContextualCheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
 
-        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), !IsPoSHeight(pindexPrev->nHeight + 1, chainparams.GetConsensus())))
+        if (!CheckBlockHeader(block, state, chainparams.GetConsensus(), !pos::IsPoSHeight(pindexPrev->nHeight + 1, chainparams.GetConsensus())))
             return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
 
         // If the previous block index isn't valid, determine if it descends from any block which
@@ -4576,7 +4574,7 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
                         std::multimap<uint256, CDiskBlockPos>::iterator it = range.first;
                         std::shared_ptr<CBlock> pblockrecursive = std::make_shared<CBlock>();
                         auto itr =  mapBlockIndex.find(head);
-                        if (ReadBlockFromDisk(*pblockrecursive, it->second, chainparams.GetConsensus(),IsPoSHeight((*itr).second->nHeight, chainparams.GetConsensus())))
+                        if (ReadBlockFromDisk(*pblockrecursive, it->second, chainparams.GetConsensus(),pos::IsPoSHeight((*itr).second->nHeight, chainparams.GetConsensus())))
                         {
                             LogPrint(BCLog::REINDEX, "%s: Processing out of order child %s of %s\n", __func__, pblockrecursive->GetHash().ToString(),
                                     head.ToString());
@@ -5083,7 +5081,7 @@ bool VerifyCoinBaseTx(const CBlock& block, CValidationState& state)
                          "bad-cb");
     }
 
-    uint256 hash = GetRewardHash(rewardValues, block.vtx[1], block.nTime);
+    uint256 hash = pos::GetRewardHash(rewardValues, block.vtx[1], block.nTime);
     //printf("verify hash = %s\n",hash.ToString().c_str());
     if (pubkey.Verify(hash, vchSig)) {
         return true;

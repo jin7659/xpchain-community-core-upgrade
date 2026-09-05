@@ -12,7 +12,7 @@
 #include <consensus/merkle.h>
 #include <consensus/validation.h>
 #include <pos/reward.h>
-#include <pos/staker.h>
+#include <pos/stakeable_wallet.h>
 #include <fs.h>
 #include <key.h>
 #include <key_io.h>
@@ -34,7 +34,7 @@
 #ifdef USE_SQLITE
 #include <wallet/sqlite.h>
 #endif
-#include <kernel.h>
+#include <pos/kernel.h>
 
 #include <algorithm>
 #include <assert.h>
@@ -4521,91 +4521,6 @@ bool CWallet::BackupWallet(const std::string& strDest)
     return database->Backup(strDest);
 }
 
-bool CWallet::CreateCoinStake(const COutput& coin, CTransactionRef& txNew, CAmount& nFees)
-{
-    CCoinControl coin_control;
-    coin_control.m_feerate = minRelayTxFee;
-    coin_control.fOverrideFeeRate = true;
-    coin_control.Select(coin.GetInputCoin().outpoint);
-
-    int nChangePosRet = -1;
-
-    CRecipient recipient {coin.GetInputCoin().txout.scriptPubKey, coin.GetInputCoin().txout.nValue, true};
-    std::vector<CRecipient> vecSend;
-    std::string strError;
-    vecSend.push_back(recipient);
-    {
-        LOCK2(cs_main, cs_wallet);
-        CReserveKey reserve_key(this);
-        if(!CreateTransaction(vecSend, txNew, reserve_key, nFees, nChangePosRet, strError, coin_control, true, true))
-            return error("%s: %s", __func__, strError);
-    }
-    return true;
-}
-
-bool CWallet::CreateCoinStake(unsigned int nBits, CTransactionRef& txNew, CScript& script, CAmount& nFees,unsigned int nBlockTime)
-{
-    //get utxo pool
-    std::map<CTxDestination, std::vector<COutput>> data = ListCoins();
-    for(auto aItr = data.begin(); aItr != data.end(); ++aItr)
-    {
-        CTxDestination address = aItr->first;
-        CScript scriptPubKey = GetScriptForDestination(address);
-        for(auto cItr = aItr->second.begin(); cItr != aItr->second.end(); ++cItr)
-        {
-            COutPoint utxo = COutPoint(cItr->tx->tx->GetHash(), cItr->i);
-            auto txItr = m_coinstaketx.find(utxo);
-
-            CAmount nFeeRequired;
-            CTransactionRef tx;
-            if(txItr != m_coinstaketx.end())
-            {
-                auto t = txItr->second;
-                tx = std::get<0>(t);
-                nFeeRequired = std::get<1>(t);
-            }
-            else
-            {
-                CCoinControl coin_control;
-                coin_control.Select(utxo);
-
-                CReserveKey reservekey(this);
-                CAmount nFeeRequired;
-                std::vector<CRecipient> vecSend;
-                std::string strError;
-
-                int nChangePosRet = -1;
-
-                CAmount nValue = cItr->tx->tx->vout[cItr->i].nValue;
-
-                CRecipient recipient = {scriptPubKey, nValue, true};
-                vecSend.push_back(recipient);
-
-                //create coinstake tx
-                // TODO: Check Lock Status
-                // If Wallet is Locked, Fail to send. Need unlock. (Unlock for minting ? )
-                if (!CreateTransaction(vecSend, tx, reservekey, nFeeRequired, nChangePosRet, strError, coin_control, true, true))
-                {
-                    continue;
-                }
-                m_coinstaketx[utxo] = std::tuple<CTransactionRef, CAmount>(tx, nFeeRequired);
-            }
-
-            //checkproofofstake
-            uint256 hashProofOfStake;
-            if(CheckProofOfStake(tx, nBits, hashProofOfStake,  nBlockTime))
-            {
-                txNew = tx;
-                script = scriptPubKey;
-                nFees = nFeeRequired;
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
 bool CWallet::SetRewardDistributionPcts(const std::vector<std::pair<std::string, std::uint8_t>>& pcts)
 {
     LOCK(cs_wallet); // vRewardDistributionPcts
@@ -4823,7 +4738,7 @@ bool CWallet::SignBlock(CBlock* pblock) const
     CMutableTransaction coinbaseTx(*pblock->vtx[0]);
     std::vector<CPubKey> vPubKeys;
     LogPrintf("get pubkey\n");
-    if (!GetPubKeysFromCoinStakeTx(pblock->vtx[1], vPubKeys)) {
+    if (!pos::GetPubKeysFromCoinStakeTx(pblock->vtx[1], vPubKeys)) {
         LogPrintf("could not get pubkey from TX\n");
         return false;
     }

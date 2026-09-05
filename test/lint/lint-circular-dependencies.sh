@@ -16,10 +16,9 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "policy/policy -> validation -> policy/policy"
     "qt/addresstablemodel -> qt/walletmodel -> qt/addresstablemodel"
     "qt/bantablemodel -> qt/clientmodel -> qt/bantablemodel"
-    "qt/bitcoingui -> qt/utilitydialog -> qt/bitcoingui"
-    "qt/bitcoingui -> qt/walletframe -> qt/bitcoingui"
-    "qt/bitcoingui -> qt/walletview -> qt/bitcoingui"
-    "qt/bitcoingui -> qt/walletview -> qt/stakingrewardsettingpage -> qt/bitcoingui"
+    "qt/utilitydialog -> qt/xpchaingui -> qt/utilitydialog"
+    "qt/walletframe -> qt/xpchaingui -> qt/walletframe"
+    "qt/walletview -> qt/xpchaingui -> qt/walletview"
     "qt/clientmodel -> qt/peertablemodel -> qt/clientmodel"
     "qt/paymentserver -> qt/walletmodel -> qt/paymentserver"
     "qt/recentrequeststablemodel -> qt/walletmodel -> qt/recentrequeststablemodel"
@@ -37,17 +36,16 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "wallet/wallet -> wallet/walletdb -> wallet/wallet"
     "policy/fees -> policy/policy -> validation -> policy/fees"
     "policy/rbf -> txmempool -> validation -> policy/rbf"
-    "qt/addressbookpage -> qt/bitcoingui -> qt/walletview -> qt/addressbookpage"
     "qt/guiutil -> qt/walletmodel -> qt/optionsmodel -> qt/guiutil"
     "txmempool -> validation -> validationinterface -> txmempool"
-    "qt/addressbookpage -> qt/bitcoingui -> qt/walletview -> qt/receivecoinsdialog -> qt/addressbookpage"
-    "qt/addressbookpage -> qt/bitcoingui -> qt/walletview -> qt/signverifymessagedialog -> qt/addressbookpage"
     "qt/guiutil -> qt/walletmodel -> qt/optionsmodel -> qt/intro -> qt/guiutil"
-    "qt/addressbookpage -> qt/bitcoingui -> qt/walletview -> qt/sendcoinsdialog -> qt/sendcoinsentry -> qt/addressbookpage"
-    "kernel -> validation -> kernel"
-    "init -> miner -> kernel -> init"
     "keystore -> script/sign -> policy/policy -> validation -> outputtype -> keystore"
-    "policy/stake -> validation -> policy/stake"
+    "wallet/db -> wallet/sqlite -> wallet/db"
+    # pos/kernel and pos/stake still reach back into validation for chain access
+    # (GetTransaction, ReadBlockFromDisk, mapBlockIndex). Removing these requires
+    # passing chain access into the PoS module instead of using node globals.
+    "pos/kernel -> validation -> pos/kernel"
+    "pos/stake -> validation -> pos/stake"
 )
 
 EXIT_CODE=0
