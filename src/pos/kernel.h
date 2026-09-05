@@ -37,8 +37,4 @@ bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& h
 
 } // namespace pos
 
-using pos::CheckStakeKernelHash;
-using pos::CheckProofOfStakePure;
-using pos::CheckProofOfStake;
-
 #endif // XPCHAIN_POS_KERNEL_H

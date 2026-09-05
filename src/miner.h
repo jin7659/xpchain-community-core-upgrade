@@ -9,7 +9,6 @@
 #include <primitives/block.h>
 #include <txmempool.h>
 #include <consensus/params.h>
-#include <pos/staker.h>
 #include <validation.h>
 
 #include <stdint.h>
@@ -20,9 +19,10 @@
 class CBlockIndex;
 class CChainParams;
 class CScript;
-class CWallet;
 
 namespace Consensus { struct Params; };
+
+namespace pos { class IStakeableWallet; }
 
 namespace boost {
     class thread_group;

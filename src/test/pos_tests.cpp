@@ -18,9 +18,7 @@
 #include <arith_uint256.h>
 #include <chainparams.h>
 #include <hash.h>
-#include <kernel.h>
 #include <key.h>
-#include <policy/stake.h>
 #include <pos/height.h>
 #include <pos/kernel.h>
 #include <pos/reward.h>
@@ -124,12 +122,12 @@ BOOST_AUTO_TEST_CASE(pos_height_switch_is_strictly_greater_than)
         const Consensus::Params& params = chainParams->GetConsensus();
         const int nSwitch = params.nSwitchHeight;
 
-        BOOST_CHECK(!IsPoSHeight(0, params));
-        BOOST_CHECK(!IsPoSHeight(nSwitch - 1, params));
+        BOOST_CHECK(!pos::IsPoSHeight(0, params));
+        BOOST_CHECK(!pos::IsPoSHeight(nSwitch - 1, params));
         // The switch height itself is still proof-of-work.
-        BOOST_CHECK(!IsPoSHeight(nSwitch, params));
-        BOOST_CHECK(IsPoSHeight(nSwitch + 1, params));
-        BOOST_CHECK(IsPoSHeight(nSwitch + 1000000, params));
+        BOOST_CHECK(!pos::IsPoSHeight(nSwitch, params));
+        BOOST_CHECK(pos::IsPoSHeight(nSwitch + 1, params));
+        BOOST_CHECK(pos::IsPoSHeight(nSwitch + 1000000, params));
     }
 }
 
@@ -177,7 +175,7 @@ BOOST_AUTO_TEST_CASE(stake_kernel_hash_preimage_layout)
     uint256 hashProofOfStake;
     // The return value depends on the target; the digest is filled in either way as long
     // as the minimum age requirement is met.
-    CheckStakeKernelHash(nBits, nTimeBlockFrom, nTxPrevOffset, 1000 * COIN, n, nTimeTx, hashProofOfStake);
+    pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, nTxPrevOffset, 1000 * COIN, n, nTimeTx, hashProofOfStake);
 
     BOOST_CHECK_EQUAL(hashProofOfStake,
                       ExpectedKernelHash(nBits, nTimeBlockFrom, nTxPrevOffset, n, nTimeTx));
@@ -192,8 +190,8 @@ BOOST_AUTO_TEST_CASE(stake_kernel_hash_ignores_amount)
     const uint32_t nTimeTx = nTimeBlockFrom + static_cast<uint32_t>(params.nStakeMinAge) + 4321;
 
     uint256 small_amount, large_amount;
-    CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, 1 * COIN, 0, nTimeTx, small_amount);
-    CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, 500000 * COIN, 0, nTimeTx, large_amount);
+    pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, 1 * COIN, 0, nTimeTx, small_amount);
+    pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, 500000 * COIN, 0, nTimeTx, large_amount);
 
     // The staked amount is not part of the preimage: it only moves the target.
     BOOST_CHECK_EQUAL(small_amount, large_amount);
@@ -240,13 +238,13 @@ BOOST_AUTO_TEST_CASE(stake_kernel_minimum_age)
     // nTimeBlockFrom + nStakeMinAge > nTimeTx is rejected, and the digest is left untouched.
     uint256 too_young = uint256();
     const uint32_t just_short = nTimeBlockFrom + static_cast<uint32_t>(params.nStakeMinAge) - 1;
-    BOOST_CHECK(!CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, nAmount, 0, just_short, too_young));
+    BOOST_CHECK(!pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, nAmount, 0, just_short, too_young));
     BOOST_CHECK_EQUAL(too_young, uint256());
 
     // Exactly nStakeMinAge is old enough to be considered, so the digest gets computed.
     uint256 old_enough;
     const uint32_t exactly_min = nTimeBlockFrom + static_cast<uint32_t>(params.nStakeMinAge);
-    CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, nAmount, 0, exactly_min, old_enough);
+    pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, nAmount, 0, exactly_min, old_enough);
     BOOST_CHECK_EQUAL(old_enough, ExpectedKernelHash(nBits, nTimeBlockFrom, 81, 0, exactly_min));
 }
 
@@ -261,14 +259,14 @@ BOOST_AUTO_TEST_CASE(stake_kernel_zero_coin_day_weight_never_passes)
     for (const CAmount nAmount : {CAmount{1}, 1 * COIN, 21000000 * COIN}) {
         for (const unsigned int nBits : {0x207fffffu, 0x1d00ffffu, 0x1b0404cbu}) {
             uint256 hash;
-            BOOST_CHECK(!CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, nAmount, 0, nTimeTx, hash));
+            BOOST_CHECK(!pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, nAmount, 0, nTimeTx, hash));
         }
     }
 
     // Likewise for a dust amount whose coin-day weight rounds down to zero even with age.
     uint256 hash;
     const uint32_t aged = nTimeBlockFrom + static_cast<uint32_t>(params.nStakeMinAge) + 3600;
-    BOOST_CHECK(!CheckStakeKernelHash(0x207fffff, nTimeBlockFrom, 81, 1 * COIN, 0, aged, hash));
+    BOOST_CHECK(!pos::CheckStakeKernelHash(0x207fffff, nTimeBlockFrom, 81, 1 * COIN, 0, aged, hash));
 }
 
 BOOST_AUTO_TEST_CASE(stake_kernel_matches_independent_target_check)
@@ -288,7 +286,7 @@ BOOST_AUTO_TEST_CASE(stake_kernel_matches_independent_target_check)
 
                     uint256 hash;
                     const bool actual =
-                        CheckStakeKernelHash(nBits, nTimeBlockFrom, nTxPrevOffset, nAmount, n, nTimeTx, hash);
+                        pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, nTxPrevOffset, nAmount, n, nTimeTx, hash);
                     const uint256 expected_hash =
                         ExpectedKernelHash(nBits, nTimeBlockFrom, nTxPrevOffset, n, nTimeTx);
                     const bool expected =
@@ -314,7 +312,7 @@ BOOST_AUTO_TEST_CASE(stake_kernel_is_monotonic_in_amount)
     CAmount previous = 0;
     for (CAmount nAmount = 1 * COIN; nAmount <= 1000000LL * COIN; nAmount *= 4) {
         uint256 hash;
-        const bool ok = CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, nAmount, 0, nTimeTx, hash);
+        const bool ok = pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, 81, nAmount, 0, nTimeTx, hash);
         if (seen_success) {
             BOOST_CHECK_MESSAGE(ok, "kernel regressed from pass to fail between "
                                         << previous << " and " << nAmount);
@@ -334,21 +332,21 @@ BOOST_AUTO_TEST_CASE(annual_rate_tiers)
     const Consensus::Params& params = Params().GetConsensus();
     const int interval = 60 * 24 * 365; // 525600, nSubsidyReducingInterval
 
-    BOOST_CHECK_EQUAL(GetAnnualRate(0, params), 0.0);
-    BOOST_CHECK_EQUAL(GetAnnualRate(params.nSwitchHeight, params), 0.0);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(0, params), 0.0);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(params.nSwitchHeight, params), 0.0);
 
-    BOOST_CHECK_EQUAL(GetAnnualRate(params.nSwitchHeight + 1, params), 0.10);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval, params), 0.10);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval + 1, params), 0.09);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 2, params), 0.09);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 2 + 1, params), 0.08);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 3, params), 0.08);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 3 + 1, params), 0.07);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 4, params), 0.07);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 4 + 1, params), 0.06);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 5, params), 0.06);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 5 + 1, params), 0.05);
-    BOOST_CHECK_EQUAL(GetAnnualRate(interval * 50, params), 0.05);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(params.nSwitchHeight + 1, params), 0.10);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval, params), 0.10);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval + 1, params), 0.09);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 2, params), 0.09);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 2 + 1, params), 0.08);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 3, params), 0.08);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 3 + 1, params), 0.07);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 4, params), 0.07);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 4 + 1, params), 0.06);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 5, params), 0.06);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 5 + 1, params), 0.05);
+    BOOST_CHECK_EQUAL(pos::GetAnnualRate(interval * 50, params), 0.05);
 }
 
 BOOST_AUTO_TEST_CASE(pos_reward_is_zero_outside_the_staking_window)
@@ -358,15 +356,15 @@ BOOST_AUTO_TEST_CASE(pos_reward_is_zero_outside_the_staking_window)
     const int pos_height = params.nSwitchHeight + 1;
 
     // Proof-of-work heights never earn a staking reward.
-    BOOST_CHECK_EQUAL(GetProofOfStakeReward(0, nAmount, params.nStakeMaxAge, params), 0);
-    BOOST_CHECK_EQUAL(GetProofOfStakeReward(params.nSwitchHeight, nAmount, params.nStakeMaxAge, params), 0);
+    BOOST_CHECK_EQUAL(pos::GetProofOfStakeReward(0, nAmount, params.nStakeMaxAge, params), 0);
+    BOOST_CHECK_EQUAL(pos::GetProofOfStakeReward(params.nSwitchHeight, nAmount, params.nStakeMaxAge, params), 0);
 
     // Below the minimum stake age nothing is earned, including at the boundary.
-    BOOST_CHECK_EQUAL(GetProofOfStakeReward(pos_height, nAmount, 0, params), 0);
-    BOOST_CHECK_EQUAL(GetProofOfStakeReward(pos_height, nAmount, params.nStakeMinAge - 1, params), 0);
+    BOOST_CHECK_EQUAL(pos::GetProofOfStakeReward(pos_height, nAmount, 0, params), 0);
+    BOOST_CHECK_EQUAL(pos::GetProofOfStakeReward(pos_height, nAmount, params.nStakeMinAge - 1, params), 0);
 
     // A zero stake earns nothing regardless of age.
-    BOOST_CHECK_EQUAL(GetProofOfStakeReward(pos_height, 0, params.nStakeMaxAge, params), 0);
+    BOOST_CHECK_EQUAL(pos::GetProofOfStakeReward(pos_height, 0, params.nStakeMaxAge, params), 0);
 }
 
 BOOST_AUTO_TEST_CASE(pos_reward_is_monotonic_in_age_and_amount)
@@ -378,7 +376,7 @@ BOOST_AUTO_TEST_CASE(pos_reward_is_monotonic_in_age_and_amount)
     CAmount previous = -1;
     for (uint32_t age = static_cast<uint32_t>(params.nStakeMinAge);
          age <= static_cast<uint32_t>(params.nStakeMaxAge); age += 3600) {
-        const CAmount reward = GetProofOfStakeReward(pos_height, nAmount, age, params);
+        const CAmount reward = pos::GetProofOfStakeReward(pos_height, nAmount, age, params);
         BOOST_CHECK_MESSAGE(reward >= previous, "reward decreased at age " << age);
         previous = reward;
     }
@@ -386,7 +384,7 @@ BOOST_AUTO_TEST_CASE(pos_reward_is_monotonic_in_age_and_amount)
     const uint32_t age = static_cast<uint32_t>(params.nStakeMinAge) + 86400 * 10;
     CAmount previous_by_amount = -1;
     for (CAmount amount = 1 * COIN; amount <= 10000000LL * COIN; amount *= 10) {
-        const CAmount reward = GetProofOfStakeReward(pos_height, amount, age, params);
+        const CAmount reward = pos::GetProofOfStakeReward(pos_height, amount, age, params);
         BOOST_CHECK_MESSAGE(reward >= previous_by_amount, "reward decreased at amount " << amount);
         previous_by_amount = reward;
     }
@@ -398,13 +396,13 @@ BOOST_AUTO_TEST_CASE(pos_reward_saturates_at_max_stake_age)
     const int pos_height = params.nSwitchHeight + 1;
     const CAmount nAmount = 100000 * COIN;
 
-    const CAmount at_max = GetProofOfStakeReward(pos_height, nAmount, params.nStakeMaxAge, params);
+    const CAmount at_max = pos::GetProofOfStakeReward(pos_height, nAmount, params.nStakeMaxAge, params);
     BOOST_CHECK(at_max > 0);
 
     // Ages beyond nStakeMaxAge are clamped, so the reward stops growing. This clamp is
     // also what keeps the uint32 age underflow described in §5.4 bounded.
     for (const int64_t extra : {int64_t{1}, int64_t{86400}, int64_t{86400 * 365}}) {
-        BOOST_CHECK_EQUAL(GetProofOfStakeReward(pos_height, nAmount,
+        BOOST_CHECK_EQUAL(pos::GetProofOfStakeReward(pos_height, nAmount,
                                                 static_cast<uint32_t>(params.nStakeMaxAge + extra), params),
                           at_max);
     }
@@ -412,7 +410,7 @@ BOOST_AUTO_TEST_CASE(pos_reward_saturates_at_max_stake_age)
     // A wrapped-around age (block.nTime < prevBlock.nTime) also clamps to nStakeMaxAge,
     // which is exactly why ConnectBlock must run CheckProofOfStake -- whose minimum-age
     // check forbids that ordering -- before computing the reward.
-    BOOST_CHECK_EQUAL(GetProofOfStakeReward(pos_height, nAmount, 0xffffffffu, params), at_max);
+    BOOST_CHECK_EQUAL(pos::GetProofOfStakeReward(pos_height, nAmount, 0xffffffffu, params), at_max);
 }
 
 BOOST_AUTO_TEST_CASE(pos_reward_curve_is_clamped_to_one)
@@ -425,9 +423,9 @@ BOOST_AUTO_TEST_CASE(pos_reward_curve_is_clamped_to_one)
     // so the reward is a plain pro-rated annual rate. This pins the constants without
     // depending on the exact floating-point coefficient below saturation.
     const uint32_t saturated_age = static_cast<uint32_t>(params.nStakeMaxAge);
-    const double expected = static_cast<double>(nAmount) * GetAnnualRate(pos_height, params) *
+    const double expected = static_cast<double>(nAmount) * pos::GetAnnualRate(pos_height, params) *
                             static_cast<double>(saturated_age) / (365.0 * 24.0 * 60.0 * 60.0);
-    const CAmount actual = GetProofOfStakeReward(pos_height, nAmount, saturated_age, params);
+    const CAmount actual = pos::GetProofOfStakeReward(pos_height, nAmount, saturated_age, params);
 
     BOOST_CHECK_MESSAGE(std::llabs(actual - static_cast<CAmount>(expected)) <= 1,
                         "reward " << actual << " differs from the saturated annual rate "
@@ -445,7 +443,7 @@ BOOST_AUTO_TEST_CASE(pos_reward_excludes_fees)
     // GetProofOfStakeReward has no fee input at all: unlike the proof-of-work branch of
     // ConnectBlock, PoS block reward is not nFees + subsidy. Guard the signature so that
     // a future refactor cannot quietly start adding fees.
-    const CAmount reward = GetProofOfStakeReward(pos_height, 100000 * COIN, params.nStakeMaxAge, params);
+    const CAmount reward = pos::GetProofOfStakeReward(pos_height, 100000 * COIN, params.nStakeMaxAge, params);
     BOOST_CHECK(reward > 0);
     BOOST_CHECK(reward < GetBlockSubsidy(pos_height, params));
 }
@@ -459,9 +457,9 @@ BOOST_AUTO_TEST_CASE(pos_reward_respects_annual_rate_tiers)
 
     // At saturation the reward is proportional to the annual rate, so the tier steps are
     // visible in the reward itself.
-    const CAmount tier_10 = GetProofOfStakeReward(interval, nAmount, age, params);
-    const CAmount tier_09 = GetProofOfStakeReward(interval + 1, nAmount, age, params);
-    const CAmount tier_05 = GetProofOfStakeReward(interval * 5 + 1, nAmount, age, params);
+    const CAmount tier_10 = pos::GetProofOfStakeReward(interval, nAmount, age, params);
+    const CAmount tier_09 = pos::GetProofOfStakeReward(interval + 1, nAmount, age, params);
+    const CAmount tier_05 = pos::GetProofOfStakeReward(interval * 5 + 1, nAmount, age, params);
 
     BOOST_CHECK(tier_10 > tier_09);
     BOOST_CHECK(tier_09 > tier_05);
@@ -477,13 +475,13 @@ BOOST_AUTO_TEST_CASE(destination_same_accepts_identical_destinations)
 {
     const CKey key = MakeKey();
 
-    BOOST_CHECK(IsDestinationSame(P2PKH(key), P2PKH(key)));
+    BOOST_CHECK(pos::IsDestinationSame(P2PKH(key), P2PKH(key)));
 
     const CScript p2wpkh = GetScriptForDestination(WitnessV0KeyHash(key.GetPubKey().GetID()));
-    BOOST_CHECK(IsDestinationSame(p2wpkh, p2wpkh));
+    BOOST_CHECK(pos::IsDestinationSame(p2wpkh, p2wpkh));
 
     const CScript p2sh = GetScriptForDestination(CScriptID(p2wpkh));
-    BOOST_CHECK(IsDestinationSame(p2sh, p2sh));
+    BOOST_CHECK(pos::IsDestinationSame(p2sh, p2sh));
 }
 
 BOOST_AUTO_TEST_CASE(destination_same_rejects_different_destinations)
@@ -491,21 +489,21 @@ BOOST_AUTO_TEST_CASE(destination_same_rejects_different_destinations)
     const CKey a = MakeKey();
     const CKey b = MakeKey();
 
-    BOOST_CHECK(!IsDestinationSame(P2PKH(a), P2PKH(b)));
+    BOOST_CHECK(!pos::IsDestinationSame(P2PKH(a), P2PKH(b)));
 
     // Same key, different script type: a coinstake may not migrate an output between
     // address types.
     const CScript p2wpkh = GetScriptForDestination(WitnessV0KeyHash(a.GetPubKey().GetID()));
-    BOOST_CHECK(!IsDestinationSame(P2PKH(a), p2wpkh));
+    BOOST_CHECK(!pos::IsDestinationSame(P2PKH(a), p2wpkh));
 
     // Multisig solves to more than one solution and is therefore never accepted.
     const CScript multisig = GetScriptForMultisig(1, {a.GetPubKey(), b.GetPubKey()});
-    BOOST_CHECK(!IsDestinationSame(multisig, multisig));
+    BOOST_CHECK(!pos::IsDestinationSame(multisig, multisig));
 
     // Unspendable / unsolvable scripts are rejected too.
     const CScript op_return = CScript() << OP_RETURN << std::vector<unsigned char>{0x01, 0x02};
-    BOOST_CHECK(!IsDestinationSame(op_return, op_return));
-    BOOST_CHECK(!IsDestinationSame(CScript(), CScript()));
+    BOOST_CHECK(!pos::IsDestinationSame(op_return, op_return));
+    BOOST_CHECK(!pos::IsDestinationSame(CScript(), CScript()));
 }
 
 BOOST_AUTO_TEST_CASE(coinstake_pubkey_extraction_supported_types)
@@ -521,7 +519,7 @@ BOOST_AUTO_TEST_CASE(coinstake_pubkey_extraction_supported_types)
         coinstake.vout[0].scriptPubKey = GetScriptForRawPubKey(pubkey);
 
         std::vector<CPubKey> keys;
-        BOOST_CHECK(GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
+        BOOST_CHECK(pos::GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
         BOOST_REQUIRE_EQUAL(keys.size(), 1U);
         BOOST_CHECK(keys[0] == pubkey);
     }
@@ -537,7 +535,7 @@ BOOST_AUTO_TEST_CASE(coinstake_pubkey_extraction_supported_types)
         coinstake.vout[0].scriptPubKey = GetScriptForDestination(WitnessV0KeyHash(pubkey.GetID()));
 
         std::vector<CPubKey> keys;
-        BOOST_CHECK(GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
+        BOOST_CHECK(pos::GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
         BOOST_REQUIRE_EQUAL(keys.size(), 1U);
         BOOST_CHECK(keys[0] == pubkey);
     }
@@ -563,12 +561,12 @@ BOOST_AUTO_TEST_CASE(coinstake_pubkey_extraction_rejects_taproot)
     BOOST_REQUIRE(type == TX_WITNESS_V1_TAPROOT);
 
     std::vector<CPubKey> keys;
-    BOOST_CHECK(!GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
+    BOOST_CHECK(!pos::GetPubKeysFromCoinStakeTx(MakeTransactionRef(coinstake), keys));
 
     // The rejection is specific to the block signature rule: the coinstake shape check
     // itself does accept a Taproot destination, which is why the failure only shows up
     // once a block has already been assembled.
-    BOOST_CHECK(IsDestinationSame(coinstake.vout[0].scriptPubKey, coinstake.vout[0].scriptPubKey));
+    BOOST_CHECK(pos::IsDestinationSame(coinstake.vout[0].scriptPubKey, coinstake.vout[0].scriptPubKey));
 }
 
 BOOST_AUTO_TEST_CASE(reward_hash_preimage_layout)
@@ -611,7 +609,7 @@ BOOST_AUTO_TEST_CASE(reward_hash_preimage_layout)
     uint256 expected;
     CHash256().Write(preimage.data(), preimage.size()).Finalize(expected.begin());
 
-    BOOST_CHECK_EQUAL(GetRewardHash(rewards, coinstake_ref, nTime), expected);
+    BOOST_CHECK_EQUAL(pos::GetRewardHash(rewards, coinstake_ref, nTime), expected);
 }
 
 BOOST_AUTO_TEST_CASE(reward_hash_is_sensitive_to_reward_details)
@@ -629,23 +627,23 @@ BOOST_AUTO_TEST_CASE(reward_hash_is_sensitive_to_reward_details)
 
     const uint32_t nTime = 1554076800;
     const std::vector<std::pair<CScript, CAmount>> base{{script, 1000}};
-    const uint256 base_hash = GetRewardHash(base, coinstake_ref, nTime);
+    const uint256 base_hash = pos::GetRewardHash(base, coinstake_ref, nTime);
 
     // Amount, ordering, count, time and the staked outpoint all commit into the hash.
     const std::vector<std::pair<CScript, CAmount>> other_amount{{script, 1001}};
-    BOOST_CHECK(GetRewardHash(other_amount, coinstake_ref, nTime) != base_hash);
+    BOOST_CHECK(pos::GetRewardHash(other_amount, coinstake_ref, nTime) != base_hash);
 
     const CScript other_script = P2PKH(MakeKey());
     const std::vector<std::pair<CScript, CAmount>> two{{script, 1000}, {other_script, 1000}};
     const std::vector<std::pair<CScript, CAmount>> two_swapped{{other_script, 1000}, {script, 1000}};
-    BOOST_CHECK(GetRewardHash(two, coinstake_ref, nTime) != base_hash);
-    BOOST_CHECK(GetRewardHash(two, coinstake_ref, nTime) != GetRewardHash(two_swapped, coinstake_ref, nTime));
+    BOOST_CHECK(pos::GetRewardHash(two, coinstake_ref, nTime) != base_hash);
+    BOOST_CHECK(pos::GetRewardHash(two, coinstake_ref, nTime) != pos::GetRewardHash(two_swapped, coinstake_ref, nTime));
 
-    BOOST_CHECK(GetRewardHash(base, coinstake_ref, nTime + 1) != base_hash);
+    BOOST_CHECK(pos::GetRewardHash(base, coinstake_ref, nTime + 1) != base_hash);
 
     CMutableTransaction other_input = coinstake;
     other_input.vin[0].prevout = COutPoint(uint256S("0x02"), 0);
-    BOOST_CHECK(GetRewardHash(base, MakeTransactionRef(other_input), nTime) != base_hash);
+    BOOST_CHECK(pos::GetRewardHash(base, MakeTransactionRef(other_input), nTime) != base_hash);
 }
 
 BOOST_AUTO_TEST_CASE(check_proof_of_stake_pure_basic)

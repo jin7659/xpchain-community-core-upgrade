@@ -75,7 +75,7 @@ int64_t KernelRecord::getPoSReward(int minutes)
 {
     int64_t PoSReward;
     int64_t nWeight = GetAdjustedTime() - nTime + minutes * 60;
-    PoSReward = GetProofOfStakeReward(chainActive.Tip()->nHeight, nValue, nWeight, Params().GetConsensus());
+    PoSReward = pos::GetProofOfStakeReward(chainActive.Tip()->nHeight, nValue, nWeight, Params().GetConsensus());
     return PoSReward;
 }
 

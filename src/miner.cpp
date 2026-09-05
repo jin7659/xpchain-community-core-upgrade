@@ -35,10 +35,9 @@
 #include <pos/kernel.h>
 #include <pos/reward.h>
 #include <pos/stake.h>
-#include <kernel.h>
 #include <warnings.h>
 #include <boost/thread.hpp>
-#include <pos/staker.h>
+#include <pos/stakeable_wallet.h>
 
 // Unconfirmed transactions in the memory pool often depend on other
 // transactions in the memory pool. When we select transactions from the
@@ -143,7 +142,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     assert(pindexPrev != nullptr);
     nHeight = pindexPrev->nHeight + 1;
 
-    bool fPoSHeight = IsPoSHeight(nHeight, chainparams.GetConsensus());
+    bool fPoSHeight = pos::IsPoSHeight(nHeight, chainparams.GetConsensus());
 
     if(fPoSHeight)
     {
@@ -242,7 +241,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
                 splitcoinbase = false;
             } else {
                 CBlockIndex* pprevBlockIndex = LookupBlockIndex(hashBlock);
-                CAmount nBlockReward = GetProofOfStakeReward(nHeight, prevTx->vout[txCoinStake->vin[0].prevout.n].nValue, pblock->nTime - pprevBlockIndex->nTime, chainparams.GetConsensus());
+                CAmount nBlockReward = pos::GetProofOfStakeReward(nHeight, prevTx->vout[txCoinStake->vin[0].prevout.n].nValue, pblock->nTime - pprevBlockIndex->nTime, chainparams.GetConsensus());
 
                 CTxDestination defaultDest;
                 if (!ExtractDestination(scriptPubKey, defaultDest)) {
@@ -282,7 +281,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
             CBlockIndex* pprevBlockIndex = LookupBlockIndex(hashBlock);
             assert(txCoinStake->vin.size() == 1);
             assert(pprevBlockIndex);
-            CAmount nBlockReward = GetProofOfStakeReward(nHeight, prevTx->vout[txCoinStake->vin[0].prevout.n].nValue, pblock->nTime - pprevBlockIndex->nTime, chainparams.GetConsensus());
+            CAmount nBlockReward = pos::GetProofOfStakeReward(nHeight, prevTx->vout[txCoinStake->vin[0].prevout.n].nValue, pblock->nTime - pprevBlockIndex->nTime, chainparams.GetConsensus());
 
             coinbaseTx.vout.resize(1);
             coinbaseTx.vout[0].scriptPubKey = scriptPubKey;

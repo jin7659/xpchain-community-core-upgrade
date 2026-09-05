@@ -16,6 +16,4 @@ bool IsPoSHeight(int n, const Consensus::Params& params);
 
 } // namespace pos
 
-using pos::IsPoSHeight;
-
 #endif // XPCHAIN_POS_HEIGHT_H

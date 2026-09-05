@@ -17,7 +17,7 @@
 #include <script/ismine.h>
 #include <script/sign.h>
 #include <util.h>
-#include <pos/staker.h>
+#include <pos/stakeable_wallet.h>
 #include <wallet/crypter.h>
 #include <wallet/coinselection.h>
 #include <wallet/walletutil.h>
@@ -705,8 +705,6 @@ private:
      */
     const CBlockIndex* m_last_block_processed = nullptr;
 
-    std::map<COutPoint, std::tuple<CTransactionRef, CAmount>>m_coinstaketx;
-
     /** ScriptPubKeyMan instances — manages all keys/scripts for this wallet, mapped by their unique IDs (uint256) */
     std::map<uint256, std::unique_ptr<ScriptPubKeyMan>> m_spk_managers;
 public:
@@ -1187,9 +1185,6 @@ public:
     void WalletLogPrintf(std::string fmt, Params... parameters) const {
         LogPrintf(("%s " + fmt).c_str(), GetDisplayName(), parameters...);
     };
-
-    bool CreateCoinStake(unsigned int nBits, CTransactionRef& txNew, CScript& script, CAmount& nFees,unsigned int nBlockTime);
-    bool CreateCoinStake(const COutput& coin, CTransactionRef& txNew, CAmount& nFees);
 
     std::vector<std::pair<std::string, std::uint8_t>> vRewardDistributionPcts;
     /** Set percentages of staking reward distribution to wallet, and write it to database file */

@@ -28,8 +28,4 @@ uint256 GetRewardHash(const std::vector<std::pair<CScript, CAmount>>& vReward, C
 
 } // namespace pos
 
-using pos::GetAnnualRate;
-using pos::GetProofOfStakeReward;
-using pos::GetRewardHash;
-
 #endif // XPCHAIN_POS_REWARD_H

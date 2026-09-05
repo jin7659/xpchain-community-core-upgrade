@@ -25,9 +25,4 @@ bool CheckBlockSignature(const CBlock& block, const Consensus::Params& consensus
 
 } // namespace pos
 
-using pos::IsCoinStakeTx;
-using pos::IsDestinationSame;
-using pos::GetPubKeysFromCoinStakeTx;
-using pos::CheckBlockSignature;
-
 #endif // XPCHAIN_POS_STAKE_H
