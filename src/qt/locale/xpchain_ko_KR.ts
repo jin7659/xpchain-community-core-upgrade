@@ -141,7 +141,7 @@
     </message>
     <message>
         <source>Enter the new passphrase to the wallet.&lt;br/&gt;Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
-        <translation>지갑에 새로운 패스워드를 입력하세요.&lt;br/&gt;패스워드를 &lt;b&gt;열 개 이상의 무작위 글자&lt;/b&gt; 혹은 &lt;b&gt;여덟개 이상의 단어로&lt;b&gt; 입력해 주세요.</translation>
+        <translation>지갑에 새로운 패스워드를 입력하세요.&lt;br/&gt;패스워드를 &lt;b&gt;열 개 이상의 무작위 글자&lt;/b&gt; 혹은 &lt;b&gt;여덟개 이상의 단어로&lt;/b&gt; 입력해 주세요.</translation>
     </message>
     <message>
         <source>Encrypt wallet</source>
@@ -227,6 +227,66 @@
         <source>Warning: The Caps Lock key is on!</source>
         <translation>경고: Caps Lock키가 켜져있습니다!</translation>
     </message>
+    <message>
+        <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your XPC from being stolen by malware infecting your computer.</source>
+        <translation>암호화 과정을 마치기 위해 %1을(를) 지금 종료합니다. 지갑 암호화만으로는 컴퓨터에 감염된 멀웨어로 인한 XPC 도난을 완전히 막을 수 없음을 기억하세요.</translation>
+    </message>
+    <message>
+        <source>Choose a passphrase that protects &lt;b&gt;two layers&lt;/b&gt; on SQLite wallets:&lt;br/&gt;1) the wallet &lt;b&gt;file&lt;/b&gt; at rest (SQLCipher), and&lt;br/&gt;2) your &lt;b&gt;spending keys&lt;/b&gt; in memory.&lt;br/&gt;&lt;br/&gt;After restart you will enter it once to &lt;b&gt;open the wallet file&lt;/b&gt;, then again when you need to &lt;b&gt;send or sign&lt;/b&gt;. Please use a passphrase of &lt;b&gt;ten or more random characters&lt;/b&gt;, or &lt;b&gt;eight or more words&lt;/b&gt;.</source>
+        <translation>SQLite 지갑에서 &lt;b&gt;두 계층&lt;/b&gt;을 보호하는 암호문구를 선택하세요:&lt;br/&gt;1) 저장 중인 지갑 &lt;b&gt;파일&lt;/b&gt;(SQLCipher), 그리고&lt;br/&gt;2) 메모리의 &lt;b&gt;지출 키&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;재시작 후 &lt;b&gt;지갑 파일을 열 때&lt;/b&gt; 한 번, &lt;b&gt;전송 또는 서명&lt;/b&gt;할 때 다시 입력합니다. &lt;b&gt;열 자 이상의 무작위 문자&lt;/b&gt; 또는 &lt;b&gt;여덟 단어 이상&lt;/b&gt;의 암호문구를 사용하세요.</translation>
+    </message>
+    <message>
+        <source>Current passphrase</source>
+        <translation>현재 암호문구</translation>
+    </message>
+    <message>
+        <source>Database passphrase</source>
+        <translation>데이터베이스 암호문구</translation>
+    </message>
+    <message>
+        <source>Enter the &lt;b&gt;database passphrase&lt;/b&gt; to open the encrypted wallet &lt;b&gt;file&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;Private keys stay locked after this step. You will be asked again when you send, sign, or unlock for staking.</source>
+        <translation>암호화된 지갑 &lt;b&gt;파일&lt;/b&gt;을 열려면 &lt;b&gt;데이터베이스 암호문구&lt;/b&gt;를 입력하세요.&lt;br/&gt;&lt;br/&gt;이 단계 후에도 개인 키는 잠긴 상태로 유지됩니다. 전송, 서명 또는 스테이킹 잠금 해제 시 다시 요청됩니다.</translation>
+    </message>
+    <message>
+        <source>Enter the current passphrase and a new one.&lt;br/&gt;&lt;br/&gt;On SQLCipher (SQLite) wallets this updates &lt;b&gt;both&lt;/b&gt; the wallet-file key and the spending-key encryption. Use the same new passphrase for both layers.</source>
+        <translation>현재 암호문구와 새 암호문구를 입력하세요.&lt;br/&gt;&lt;br/&gt;SQLCipher(SQLite) 지갑에서는 지갑 파일 키와 지출 키 암호화가 &lt;b&gt;모두&lt;/b&gt; 갱신됩니다. 두 계층에 동일한 새 암호문구를 사용하세요.</translation>
+    </message>
+    <message>
+        <source>Enter your wallet passphrase to &lt;b&gt;unlock spending keys&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;This is not the same step as opening an encrypted wallet file at startup. If you already opened the file, keys can still be locked until you unlock here.</source>
+        <translation>지출 키를 &lt;b&gt;잠금 해제&lt;/b&gt;하려면 지갑 암호문구를 입력하세요.&lt;br/&gt;&lt;br/&gt;시작 시 암호화된 지갑 파일을 여는 것과는 다른 단계입니다. 이미 파일을 열었더라도 여기서 잠금 해제하기 전까지 키는 잠긴 상태일 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Open encrypted wallet file</source>
+        <translation>암호화된 지갑 파일 열기</translation>
+    </message>
+    <message>
+        <source>Passphrase change failed</source>
+        <translation>암호문구 변경 실패</translation>
+    </message>
+    <message>
+        <source>Passphrase changed</source>
+        <translation>암호문구 변경됨</translation>
+    </message>
+    <message>
+        <source>Two steps after restart:&lt;br/&gt;1) &lt;b&gt;Open wallet file&lt;/b&gt; — enter this passphrase when prompted (GUI), or set &lt;code&gt;-walletdbpassphrase&lt;/code&gt; for &lt;code&gt;xpchaind&lt;/code&gt; / xpchain.conf.&lt;br/&gt;2) &lt;b&gt;Unlock spending keys&lt;/b&gt; — unlock again before sending or signing. Opening the file does not unlock keys by itself.</source>
+        <translation>재시작 후 두 단계:&lt;br/&gt;1) &lt;b&gt;지갑 파일 열기&lt;/b&gt; — 안내 시(GUI) 이 암호문구를 입력하거나, &lt;code&gt;xpchaind&lt;/code&gt; / xpchain.conf에 &lt;code&gt;-walletdbpassphrase&lt;/code&gt;를 설정하세요.&lt;br/&gt;2) &lt;b&gt;지출 키 잠금 해제&lt;/b&gt; — 전송 또는 서명 전에 다시 잠금 해제하세요. 파일만 열어서는 키가 잠금 해제되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Unlock wallet keys</source>
+        <translation>지갑 키 잠금 해제</translation>
+    </message>
+    <message>
+        <source>Wallet passphrase</source>
+        <translation>지갑 암호문구</translation>
+    </message>
+    <message>
+        <source>Wallet passphrase was successfully changed. On SQLCipher wallets this updates both the database passphrase and spending-key encryption.</source>
+        <translation>지갑 암호문구가 성공적으로 변경되었습니다. SQLCipher 지갑에서는 데이터베이스 암호문구와 지출 키 암호화가 모두 갱신됩니다.</translation>
+    </message>
+    <message>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR XPC&lt;/b&gt;!</source>
+        <translation>경고: 지갑을 암호화한 뒤 암호문구를 잃어버리면 &lt;b&gt;모든 XPC를 잃게 됩니다&lt;/b&gt;!</translation>
+    </message>
 </context>
 <context>
     <name>BanTableModel</name>
@@ -271,7 +331,7 @@
     </message>
     <message>
         <source>&amp;Minting</source>
-        <translation>채굴</translation>
+        <translation>스테이킹</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
@@ -331,7 +391,7 @@
     </message>
     <message>
         <source>Staking reward settings...</source>
-        <translation>채굴 보상 설정</translation>
+        <translation>스테이킹 보상 설정</translation>
     </message>
     <message>
         <source>Wallet:</source>
@@ -519,19 +579,19 @@
     </message>
     <message>
         <source>Show the status of minting</source>
-        <translation>채굴 상태를 보여줍니다.</translation>
+        <translation>스테이킹 상태를 보여줍니다.</translation>
     </message>
     <message>
         <source>&amp;Unlock Wallet for Minting Only</source>
-        <translation>채굴을 위한 지갑 잠금해제</translation>
+        <translation>스테이킹을 위한 지갑 잠금해제</translation>
     </message>
     <message>
         <source>Unlock wallet only for minting. Sending coins will still require the password.</source>
-        <translation>채굴을 위해 지갑 잠금을 해제합니다. 코인 전송 시 암호가 필요합니다.</translation>
+        <translation>스테이킹을 위해 지갑 잠금을 해제합니다. 코인 전송 시 암호가 필요합니다.</translation>
     </message>
     <message>
         <source>Modify settings for staking reward</source>
-        <translation>채굴보상 설정 변경</translation>
+        <translation>스테이킹 보상 설정 변경</translation>
     </message>
     <message>
         <source>Show the %1 help message to get a list with possible XPChain command-line options</source>
@@ -783,6 +843,352 @@ Open the Staking tab to check coin age and estimated odds.</source>
         <source>Restore keys from a BIP39 mnemonic into the current wallet (prefer a new empty wallet)</source>
         <translation>BIP39 니모닉에서 키를 현재 지갑으로 복원합니다(새 빈 지갑 사용을 권장)</translation>
     </message>
+    <message>
+        <source>
+
+SQLite wallet: %1</source>
+        <translation>
+
+SQLite 지갑: %1</translation>
+    </message>
+    <message>
+        <source>
+
+XPChain will now close safely to complete the SQLite format upgrade.
+Please restart XPChain to use your modern SQLite wallet.</source>
+        <translation>
+
+SQLite 형식 업그레이드를 완료하기 위해 XPChain을 안전하게 종료합니다.
+최신 SQLite 지갑을 사용하려면 XPChain을 다시 시작하세요.</translation>
+    </message>
+    <message>
+        <source>
+Backup: %1</source>
+        <translation>
+백업: %1</translation>
+    </message>
+    <message>
+        <source>
+Records copied: %1</source>
+        <translation>
+복사된 레코드: %1</translation>
+    </message>
+    <message>
+        <source>&amp;Advanced</source>
+        <translation>고급(&amp;A)</translation>
+    </message>
+    <message>
+        <source>&amp;Lock Wallet</source>
+        <translation>지갑 잠금(&amp;L)</translation>
+    </message>
+    <message>
+        <source>&amp;Migrate Wallet to SQLite...</source>
+        <translation>지갑을 SQLite로 마이그레이션(&amp;M)...</translation>
+    </message>
+    <message>
+        <source>&amp;Rescan Wallet...</source>
+        <translation>지갑 재스캔(&amp;R)...</translation>
+    </message>
+    <message>
+        <source>&amp;Restore Wallet from Mnemonic...</source>
+        <translation>니모닉으로 지갑 복원(&amp;R)...</translation>
+    </message>
+    <message>
+        <source>&amp;Staking</source>
+        <translation>스테이킹(&amp;S)</translation>
+    </message>
+    <message>
+        <source>&amp;Staking Reward Settings...</source>
+        <translation>스테이킹 보상 설정(&amp;S)...</translation>
+    </message>
+    <message>
+        <source>&amp;Tools</source>
+        <translation>도구(&amp;T)</translation>
+    </message>
+    <message>
+        <source>&amp;Verify Message...</source>
+        <translation>메시지 검증(&amp;V)...</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Wallet file:&lt;/b&gt; %1</source>
+        <translation>&lt;b&gt;지갑 파일:&lt;/b&gt; %1</translation>
+    </message>
+    <message>
+        <source>&lt;br/&gt;&lt;br/&gt;Private keys stay locked after opening the file. Unlock again before sending or signing.</source>
+        <translation>&lt;br/&gt;&lt;br/&gt;파일을 연 후에도 개인 키는 잠긴 상태로 유지됩니다. 전송 또는 서명 전에 다시 잠금 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Address Imported</source>
+        <translation>주소 가져옴</translation>
+    </message>
+    <message>
+        <source>Address imported without a rescan. Use Tools → Rescan Wallet if history is missing.</source>
+        <translation>재스캔 없이 주소를 가져왔습니다. 기록이 없으면 도구 → 지갑 재스캔을 사용하세요.</translation>
+    </message>
+    <message>
+        <source>Address imported. A blockchain rescan may run in the background; watch the progress dialog.</source>
+        <translation>주소를 가져왔습니다. 블록체인 재스캔이 백그라운드에서 실행될 수 있습니다. 진행 대화상자를 확인하세요.</translation>
+    </message>
+    <message>
+        <source>Address: %1
+</source>
+        <translation>주소: %1
+</translation>
+    </message>
+    <message>
+        <source>Amount: %1
+</source>
+        <translation>금액: %1
+</translation>
+    </message>
+    <message>
+        <source>BIP44 path m/44'/%1'/0'/…</source>
+        <translation>BIP44 경로 m/44'/%1'/0'/…</translation>
+    </message>
+    <message>
+        <source>Backup All Wallets</source>
+        <translation>모든 지갑 백업</translation>
+    </message>
+    <message>
+        <source>Backup all loaded wallets to a specific directory</source>
+        <translation>불러온 모든 지갑을 지정 디렉터리에 백업</translation>
+    </message>
+    <message>
+        <source>Change the passphrase for spending keys and encrypted wallet files</source>
+        <translation>지출 키 및 암호화된 지갑 파일의 암호문구 변경</translation>
+    </message>
+    <message>
+        <source>Close &amp;Wallet...</source>
+        <translation>지갑 닫기(&amp;W)...</translation>
+    </message>
+    <message>
+        <source>Close Wallet</source>
+        <translation>지갑 닫기</translation>
+    </message>
+    <message>
+        <source>Close Wallet Failed</source>
+        <translation>지갑 닫기 실패</translation>
+    </message>
+    <message>
+        <source>Copy the current Berkeley DB wallet into a new SQLite wallet file</source>
+        <translation>현재 Berkeley DB 지갑을 새 SQLite 지갑 파일로 복사</translation>
+    </message>
+    <message>
+        <source>Create a new wallet (optionally encrypted on create)</source>
+        <translation>새 지갑 만들기 (생성 시 암호화 선택 가능)</translation>
+    </message>
+    <message>
+        <source>Create, generate a mnemonic, restore, or open a wallet</source>
+        <translation>지갑 만들기, 니모닉 생성, 복원 또는 열기</translation>
+    </message>
+    <message>
+        <source>Date: %1
+</source>
+        <translation>날짜: %1
+</translation>
+    </message>
+    <message>
+        <source>Encrypt spending keys and (on SQLite) the wallet file at rest with a passphrase</source>
+        <translation>지출 키와(SQLite에서) 저장 중인 지갑 파일을 암호문구로 암호화</translation>
+    </message>
+    <message>
+        <source>Enter the &lt;b&gt;database passphrase&lt;/b&gt; to open the encrypted wallet &lt;b&gt;file&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;Private keys stay locked after this step. You will be asked again when you send, sign, or unlock for staking.</source>
+        <translation>암호화된 지갑 &lt;b&gt;파일&lt;/b&gt;을 열려면 &lt;b&gt;데이터베이스 암호문구&lt;/b&gt;를 입력하세요.&lt;br/&gt;&lt;br/&gt;이 단계 후에도 개인 키는 잠긴 상태로 유지됩니다. 전송, 서명 또는 스테이킹 잠금 해제 시 다시 요청됩니다.</translation>
+    </message>
+    <message>
+        <source>Failed to lock the wallet.</source>
+        <translation>지갑을 잠그지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Import &amp;Address...</source>
+        <translation>주소 가져오기(&amp;A)...</translation>
+    </message>
+    <message>
+        <source>Import Address</source>
+        <translation>주소 가져오기</translation>
+    </message>
+    <message>
+        <source>Import Failed</source>
+        <translation>가져오기 실패</translation>
+    </message>
+    <message>
+        <source>Import a watch-only address into the current wallet</source>
+        <translation>현재 지갑에 감시 전용 주소 가져오기</translation>
+    </message>
+    <message>
+        <source>Label: %1
+</source>
+        <translation>라벨: %1
+</translation>
+    </message>
+    <message>
+        <source>Lock Wallet</source>
+        <translation>지갑 잠금</translation>
+    </message>
+    <message>
+        <source>Lock spending keys. Staking and sending will require unlock.</source>
+        <translation>지출 키를 잠급니다. 스테이킹과 전송에는 잠금 해제가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Migration Complete</source>
+        <translation>마이그레이션 완료</translation>
+    </message>
+    <message>
+        <source>Migration Failed</source>
+        <translation>마이그레이션 실패</translation>
+    </message>
+    <message>
+        <source>Mnemonic wallet created</source>
+        <translation>니모닉 지갑이 생성됨</translation>
+    </message>
+    <message>
+        <source>Mnemonic wallet creation failed</source>
+        <translation>니모닉 지갑 생성 실패</translation>
+    </message>
+    <message>
+        <source>No Wallet Selected</source>
+        <translation>선택된 지갑 없음</translation>
+    </message>
+    <message>
+        <source>No wallet loaded</source>
+        <translation>불러온 지갑 없음</translation>
+    </message>
+    <message>
+        <source>Open an existing wallet</source>
+        <translation>기존 지갑 열기</translation>
+    </message>
+    <message>
+        <source>Please enter an address.</source>
+        <translation>주소를 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Please open or select a Berkeley DB wallet first.</source>
+        <translation>먼저 Berkeley DB 지갑을 열거나 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Please open or select a wallet first to restore.</source>
+        <translation>복원하려면 먼저 지갑을 열거나 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Please open or select a wallet first.</source>
+        <translation>먼저 지갑을 열거나 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Please select a wallet to close.</source>
+        <translation>닫을 지갑을 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Rescan Wallet</source>
+        <translation>지갑 재스캔</translation>
+    </message>
+    <message>
+        <source>Rescan the blockchain for transactions belonging to this wallet</source>
+        <translation>이 지갑에 속한 트랜잭션을 위해 블록체인 재스캔</translation>
+    </message>
+    <message>
+        <source>Rescan the blockchain for wallet "%1"?
+
+This can take a long time. You can cancel from the progress dialog.</source>
+        <translation>지갑 "%1"에 대해 블록체인을 재스캔하시겠습니까?
+
+시간이 오래 걸릴 수 있습니다. 진행 대화상자에서 취소할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Restore needs a wallet to import keys into.
+
+Create an empty wallet now, then continue with restore?</source>
+        <translation>복원하려면 키를 가져올 지갑이 필요합니다.
+
+지금 빈 지갑을 만든 뒤 복원을 계속하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Send coins to an XPChain address</source>
+        <translation>XPChain 주소로 코인 전송</translation>
+    </message>
+    <message>
+        <source>Set &amp;Up Wallet...</source>
+        <translation>지갑 설정(&amp;U)...</translation>
+    </message>
+    <message>
+        <source>Show stakeable coins and estimated staking odds</source>
+        <translation>스테이킹 가능 코인과 예상 스테이킹 확률 표시</translation>
+    </message>
+    <message>
+        <source>Sign &amp;Message...</source>
+        <translation>메시지 서명(&amp;M)...</translation>
+    </message>
+    <message>
+        <source>The wallet is encrypted. Unlock spending keys before sending.</source>
+        <translation>지갑이 암호화되어 있습니다. 전송 전에 지출 키를 잠금 해제하세요.</translation>
+    </message>
+    <message>
+        <source>The wallet is not encrypted. You can encrypt it later from Settings → Encrypt Wallet.</source>
+        <translation>지갑이 암호화되어 있지 않습니다. 나중에 설정 → 지갑 암호화에서 암호화할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Type: %1
+</source>
+        <translation>유형: %1
+</translation>
+    </message>
+    <message>
+        <source>Unload the currently selected wallet</source>
+        <translation>현재 선택한 지갑 언로드</translation>
+    </message>
+    <message>
+        <source>Unload wallet "%1"?
+
+You can open it again later from File → Set Up Wallet or File → Advanced → Open Wallet.</source>
+        <translation>지갑 "%1"을(를) 언로드하시겠습니까?
+
+나중에 파일 → 지갑 설정 또는 파일 → 고급 → 지갑 열기에서 다시 열 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Unlock spending keys for staking only. Sending still requires a full unlock.</source>
+        <translation>스테이킹 전용으로 지출 키를 잠금 해제합니다. 전송에는 여전히 전체 잠금 해제가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Wallet "%1" was created and encrypted.&lt;br/&gt;&lt;br/&gt;Spending keys are locked. Unlock before sending or signing.&lt;br/&gt;&lt;br/&gt;After restart: open the wallet file with this passphrase (GUI prompt or &lt;code&gt;-walletdbpassphrase&lt;/code&gt;), then unlock keys again.</source>
+        <translation>지갑 "%1"이(가) 생성되고 암호화되었습니다.&lt;br/&gt;&lt;br/&gt;지출 키는 잠겨 있습니다. 전송 또는 서명 전에 잠금 해제하세요.&lt;br/&gt;&lt;br/&gt;재시작 후: 이 암호문구로 지갑 파일을 연 다음(GUI 안내 또는 &lt;code&gt;-walletdbpassphrase&lt;/code&gt;), 키를 다시 잠금 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Wallet "%1" was created from your confirmed BIP39 backup (%2).&lt;br/&gt;&lt;br/&gt;Keep the written mnemonic offline. It cannot be recovered from the wallet file later.&lt;br/&gt;&lt;br/&gt;%3</source>
+        <translation>지갑 "%1"이(가) 확인된 BIP39 백업(%2)에서 생성되었습니다.&lt;br/&gt;&lt;br/&gt;적어 둔 니모닉을 오프라인으로 보관하세요. 나중에 지갑 파일에서 복구할 수 없습니다.&lt;br/&gt;&lt;br/&gt;%3</translation>
+    </message>
+    <message>
+        <source>Wallet "%1" was created without encryption. You can encrypt it later from Settings → Encrypt Wallet.</source>
+        <translation>지갑 "%1"이(가) 암호화 없이 생성되었습니다. 나중에 설정 → 지갑 암호화에서 암호화할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Wallet created</source>
+        <translation>지갑 생성됨</translation>
+    </message>
+    <message>
+        <source>Wallet migrated to SQLite successfully.</source>
+        <translation>지갑이 SQLite로 성공적으로 마이그레이션되었습니다.</translation>
+    </message>
+    <message>
+        <source>Wallet: %1
+</source>
+        <translation>지갑: %1
+</translation>
+    </message>
+    <message>
+        <source>XPChain Core HD path m/0'/…</source>
+        <translation>XPChain Core HD 경로 m/0'/…</translation>
+    </message>
+    <message>
+        <source>[default wallet]</source>
+        <translation>[기본 지갑]</translation>
+    </message>
+    <message>
+        <source>Backup Successful</source>
+        <translation>백업 성공</translation>
+    </message>
+    <message>
+        <source>XPChain Core</source>
+        <translation>XPChain Core</translation>
+    </message>
 </context>
 <context>
     <name>CoinControlDialog</name>
@@ -1006,11 +1412,11 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>The label associated with this setting entry for staking reward distribution</source>
-        <translation>채굴보상 분배설정 관련 라벨</translation>
+        <translation>스테이킹 보상 분배 설정의 라벨</translation>
     </message>
     <message>
         <source>The address associated with this setting entry for staking reward distribution</source>
-        <translation>채굴보상 분배설정 관련 주소</translation>
+        <translation>스테이킹 보상 분배 설정의 주소</translation>
     </message>
     <message>
         <source>&amp;Distribution %</source>
@@ -1018,7 +1424,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>The percentage of staking reward you want to send to the address</source>
-        <translation>임의주소로 보낼 채굴보상의 퍼센트</translation>
+        <translation>임의 주소로 보낼 스테이킹 보상의 비율</translation>
     </message>
     <message>
         <source> %</source>
@@ -1026,7 +1432,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>New staking reward distribution setting</source>
-        <translation>새로운 채굴보상 분배 설정</translation>
+        <translation>새 스테이킹 보상 분배 설정</translation>
     </message>
     <message>
         <source>The entered address &quot;%1&quot; is not a valid XPChain address.</source>
@@ -1081,6 +1487,14 @@ Open the Staking tab to check coin age and estimated odds.</source>
     <message>
         <source>Command-line options</source>
         <translation>명령줄 옵션</translation>
+    </message>
+    <message>
+        <source>%1 is shutting down...</source>
+        <translation>%1을(를) 종료하는 중...</translation>
+    </message>
+    <message>
+        <source>Do not shut down the computer until this window disappears.</source>
+        <translation>이 창이 사라질 때까지 컴퓨터를 종료하지 마세요.</translation>
     </message>
 </context>
 <context>
@@ -1153,6 +1567,26 @@ Open the Staking tab to check coin age and estimated odds.</source>
         <source>(of %n GB needed)</source>
         <translation><numerusform>(%n GB가 필요)</numerusform></translation>
     </message>
+    <message>
+        <source>A new data directory will be created.</source>
+        <translation>새 데이터 디렉터리가 생성됩니다.</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>이름</translation>
+    </message>
+    <message>
+        <source>Directory already exists. Add %1 if you intend to create a new directory here.</source>
+        <translation>디렉터리가 이미 있습니다. 여기에 새 디렉터리를 만들려면 %1을(를) 추가하세요.</translation>
+    </message>
+    <message>
+        <source>Path already exists, and is not a directory.</source>
+        <translation>경로가 이미 있지만 디렉터리가 아닙니다.</translation>
+    </message>
+    <message>
+        <source>Cannot create data directory here.</source>
+        <translation>여기에 데이터 디렉터리를 만들 수 없습니다.</translation>
+    </message>
 </context>
 <context>
     <name>MintingTableModel</name>
@@ -1178,7 +1612,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>MintProbability</source>
-        <translation>채굴확률</translation>
+        <translation>스테이킹확률</translation>
     </message>
     <message>
         <source>MintReward</source>
@@ -1188,7 +1622,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
         <source>minutes</source>
         <translation>분</translation>
     </message>
-     <message>
+    <message>
         <source>hours</source>
         <translation>시간</translation>
     </message>
@@ -1198,7 +1632,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>You have %1 chance to find a POS block if you mint %2 %3 at current difficulty.</source>
-        <translation>현재 난이도로  %2 %3 채굴 하였을 때, POS블록을 찾을 확률은  %1 입니다.</translation>
+        <translation>현재 난이도로  %2 %3 스테이킹 하였을 때, POS블록을 찾을 확률은  %1 입니다.</translation>
     </message>
     <message>
         <source>Destination address of the output.</source>
@@ -1228,6 +1662,22 @@ Open the Staking tab to check coin age and estimated odds.</source>
         <source>The size of the potential rewards if the block is found at the beginning and the end given time interval.</source>
         <translation>지정된 시간의 개시시점과 종료시점에서 블록을 발견하였을 경우의 획득 보수량의 범위</translation>
     </message>
+    <message>
+        <source>Chance to stake a block within the given time interval.</source>
+        <translation>지정한 시간 간격 내에 블록을 스테이킹할 확률입니다.</translation>
+    </message>
+    <message>
+        <source>Stake Probability</source>
+        <translation>스테이킹 확률</translation>
+    </message>
+    <message>
+        <source>Stake Reward</source>
+        <translation>스테이킹 보상</translation>
+    </message>
+    <message>
+        <source>You have %1 chance to find a PoS block if you stake %2 %3 at current difficulty.</source>
+        <translation>현재 난이도에서 %2 %3을(를) 스테이킹하면 PoS 블록을 찾을 확률이 %1입니다.</translation>
+    </message>
 </context>
 <context>
     <name>MintingView</name>
@@ -1245,7 +1695,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>Display minting probability within : </source>
-        <translation>채굴 퍼센트 표시</translation>
+        <translation>스테이킹 퍼센트 표시</translation>
     </message>
     <message>
         <source>10 min</source>
@@ -1285,7 +1735,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>Export Minting Data</source>
-        <translation>채굴 데이터 내보내기</translation>
+        <translation>스테이킹 데이터 내보내기</translation>
     </message>
     <message>
         <source>Comma separated file (*.csv)</source>
@@ -1313,11 +1763,11 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>MintingProbability</source>
-        <translation>채굴퍼센트</translation>
+        <translation>스테이킹퍼센트</translation>
     </message>
     <message>
         <source>MintingReward</source>
-        <translation>채굴보상</translation>
+        <translation>스테이킹 보상</translation>
     </message>
     <message>
         <source>Error exporting</source>
@@ -1338,6 +1788,30 @@ Open the Staking tab to check coin age and estimated odds.</source>
     <message>
         <source>No spendable balance yet. Receive coins, wait for confirmations, then return here to check staking odds.</source>
         <translation>아직 사용 가능한 잔액이 없습니다. 코인을 받은 뒤 확인을 기다린 다음, 여기로 돌아와 스테이킹 확률을 확인하세요.</translation>
+    </message>
+    <message>
+        <source>Display staking probability within : </source>
+        <translation>다음 기간 내 스테이킹 확률 표시: </translation>
+    </message>
+    <message>
+        <source>Export Staking Data</source>
+        <translation>스테이킹 데이터 내보내기</translation>
+    </message>
+    <message>
+        <source>Show/hide 'Address' column</source>
+        <translation>'주소' 열 표시/숨기기</translation>
+    </message>
+    <message>
+        <source>Show/hide 'Transaction' column</source>
+        <translation>'트랜잭션' 열 표시/숨기기</translation>
+    </message>
+    <message>
+        <source>StakeProbability</source>
+        <translation>스테이킹확률</translation>
+    </message>
+    <message>
+        <source>StakeReward</source>
+        <translation>스테이킹보상</translation>
     </message>
 </context>
 <context>
@@ -1725,7 +2199,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>Mined balance that has not yet matured</source>
-        <translation>아직 사용 가능하지 않은 채굴된 잔액</translation>
+        <translation>아직 성숙하지 않은 생성(스테이킹/채굴) 잔액</translation>
     </message>
     <message>
         <source>Balances</source>
@@ -1757,7 +2231,7 @@ Open the Staking tab to check coin age and estimated odds.</source>
     </message>
     <message>
         <source>Mined balance in watch-only addresses that has not yet matured</source>
-        <translation>조회전용 주소의 채굴된 잔액 중 숙성되지 않은 것</translation>
+        <translation>감시 전용 주소에서 아직 성숙하지 않은 생성(스테이킹/채굴) 잔액</translation>
     </message>
     <message>
         <source>Current total balance in watch-only addresses</source>
@@ -1774,6 +2248,22 @@ Open the Staking tab to check coin age and estimated odds.</source>
     <message>
         <source>No transactions yet. Use Receive to get your first deposit address.</source>
         <translation>아직 거래가 없습니다. 받기 탭에서 첫 입금 주소를 만드세요.</translation>
+    </message>
+    <message>
+        <source>Staked or mined balance in watch-only addresses that has not yet matured</source>
+        <translation>감시 전용 주소에서 아직 성숙하지 않은 스테이킹·채굴 잔액</translation>
+    </message>
+    <message>
+        <source>Staked or mined balance that has not yet matured</source>
+        <translation>아직 성숙하지 않은 스테이킹·채굴 잔액</translation>
+    </message>
+    <message>
+        <source>This wallet uses the legacy Berkeley DB format. Migrate to the modern SQLite format for better security and performance.</source>
+        <translation>이 지갑은 레거시 Berkeley DB 형식을 사용합니다. 보안과 성능을 위해 최신 SQLite 형식으로 마이그레이션하세요.</translation>
+    </message>
+    <message>
+        <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
+        <translation>새로 생성된 코인(스테이킹/채굴)은 사용하기 전에 %1개 블록이 성숙해야 합니다. 이 블록을 생성했을 때 네트워크에 전파되어 블록체인에 추가되도록 했습니다. 체인에 포함되지 못하면 상태가 &quot;미승인&quot;으로 바뀌어 사용할 수 없습니다. 다른 노드가 거의 동시에 블록을 생성하면 가끔 이런 일이 발생할 수 있습니다.</translation>
     </message>
 </context>
 <context>
@@ -1992,6 +2482,26 @@ Open the Staking tab to check coin age and estimated odds.</source>
         <source>from  %1 to %2</source>
         <translation>%1 ～ %2</translation>
     </message>
+    <message>
+        <source>Enter an XPChain address (e.g. %1)</source>
+        <translation>XPChain 주소를 입력하세요 (예: %1)</translation>
+    </message>
+    <message>
+        <source>Error: Cannot parse configuration file: %1.</source>
+        <translation>오류: 설정 파일을 구문 분석할 수 없습니다: %1.</translation>
+    </message>
+    <message>
+        <source>Error parsing command line arguments: %1.</source>
+        <translation>명령줄 인수 구문 분석 오류: %1.</translation>
+    </message>
+    <message>
+        <source>Error: Specified data directory "%1" does not exist.</source>
+        <translation>오류: 지정한 데이터 디렉터리 "%1"이(가) 없습니다.</translation>
+    </message>
+    <message>
+        <source>Error: %1</source>
+        <translation>오류: %1</translation>
+    </message>
 </context>
 <context>
     <name>QObject::QObject</name>
@@ -2029,6 +2539,46 @@ Open the Staking tab to check coin age and estimated odds.</source>
     <message>
         <source>PNG Image (*.png)</source>
         <translation>PNG 이미지(*.png)</translation>
+    </message>
+    <message>
+        <source>Request payment to %1</source>
+        <translation>%1(으)로 결제 요청</translation>
+    </message>
+    <message>
+        <source>Payment information</source>
+        <translation>결제 정보</translation>
+    </message>
+    <message>
+        <source>URI</source>
+        <translation>URI</translation>
+    </message>
+    <message>
+        <source>Address</source>
+        <translation>주소</translation>
+    </message>
+    <message>
+        <source>Amount</source>
+        <translation>금액</translation>
+    </message>
+    <message>
+        <source>Label</source>
+        <translation>라벨</translation>
+    </message>
+    <message>
+        <source>Message</source>
+        <translation>메시지</translation>
+    </message>
+    <message>
+        <source>Wallet</source>
+        <translation>지갑</translation>
+    </message>
+    <message>
+        <source>Resulting URI too long, try to reduce the text for label / message.</source>
+        <translation>생성된 URI가 너무 깁니다. 라벨/메시지 텍스트를 줄여 보세요.</translation>
+    </message>
+    <message>
+        <source>Error encoding URI into QR Code.</source>
+        <translation>URI를 QR 코드로 인코딩하는 중 오류가 발생했습니다.</translation>
     </message>
 </context>
 <context>
@@ -2478,6 +3028,22 @@ Open the Staking tab to check coin age and estimated odds.</source>
         <source>Taproot (Bech32m) addresses are not available until Taproot activates at block %1. Coins sent to a Bech32m address before then are spendable by anyone.</source>
         <translation>탭루트(Bech32m) 주소는 블록 %1에서 탭루트가 활성화될 때까지 사용할 수 없습니다. 그 전에 Bech32m 주소로 보낸 코인은 누구나 사용할 수 있습니다.</translation>
     </message>
+    <message>
+        <source>Base58 (Legacy)</source>
+        <translation>Base58 (레거시)</translation>
+    </message>
+    <message>
+        <source>Base58 (P2SH-SegWit)</source>
+        <translation>Base58 (P2SH-SegWit)</translation>
+    </message>
+    <message>
+        <source>Bech32 (SegWit)</source>
+        <translation>Bech32 (SegWit)</translation>
+    </message>
+    <message>
+        <source>Bech32m (Taproot)</source>
+        <translation>Bech32m (Taproot)</translation>
+    </message>
 </context>
 <context>
     <name>ReceiveRequestDialog</name>
@@ -2536,6 +3102,18 @@ Open the Staking tab to check coin age and estimated odds.</source>
     <message>
         <source>Error encoding URI into QR Code.</source>
         <translation>URI를 QR 코드로 인코딩하는 중 오류가 발생했습니다.</translation>
+    </message>
+    <message>
+        <source>&amp;Copy Image</source>
+        <translation>이미지 복사(&amp;C)</translation>
+    </message>
+    <message>
+        <source>Save QR Code</source>
+        <translation>QR 코드 저장</translation>
+    </message>
+    <message>
+        <source>PNG Image (*.png)</source>
+        <translation>PNG 이미지 (*.png)</translation>
     </message>
 </context>
 <context>
@@ -2859,6 +3437,42 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
         <source>(no label)</source>
         <translation>(라벨 없음)</translation>
     </message>
+    <message>
+        <source>Fee guide: custom fee in use</source>
+        <translation>수수료 안내: 사용자 지정 수수료 사용 중</translation>
+    </message>
+    <message>
+        <source>Fee guide: custom minimum fee (eco)</source>
+        <translation>수수료 안내: 사용자 지정 최소 수수료(절약)</translation>
+    </message>
+    <message>
+        <source>Fee guide: estimating (eco fallback)</source>
+        <translation>수수료 안내: 추정 중(절약 대체)</translation>
+    </message>
+    <message>
+        <source>Network: eco — confirmation may take up to ~24 hours</source>
+        <translation>네트워크: 절약 — 확인까지 최대 약 24시간 소요될 수 있음</translation>
+    </message>
+    <message>
+        <source>Network: fast — confirmation often within ~10 minutes</source>
+        <translation>네트워크: 빠름 — 보통 약 10분 내 확인</translation>
+    </message>
+    <message>
+        <source>Network: normal — confirmation often within ~2 hours</source>
+        <translation>네트워크: 보통 — 보통 약 2시간 내 확인</translation>
+    </message>
+    <message>
+        <source>Specify a custom fee per kB (1,000 bytes) of the transaction's virtual size.
+
+Note:  Since the fee is calculated on a per-byte basis, a fee of "100 mochas per kB" for a transaction size of 500 bytes (half of 1 kB) would ultimately yield a fee of only 50 mochas.</source>
+        <translation>트랜잭션 가상 크기 1kB(1,000바이트)당 사용자 지정 수수료를 지정하세요.
+
+참고: 수수료는 바이트 단위로 계산되므로, 트랜잭션 크기가 500바이트(1kB의 절반)일 때 "100 mocha/kB" 수수료는 최종적으로 50 mocha만 부과됩니다.</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>예</translation>
+    </message>
 </context>
 <context>
     <name>SendCoinsEntry</name>
@@ -3115,11 +3729,11 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <name>StakingRewardSettingPage</name>
     <message>
         <source>Staking reward settings</source>
-        <translation>채굴 보상 설정</translation>
+        <translation>스테이킹 보상 설정</translation>
     </message>
     <message>
         <source>You will get a staking reward every time you generate a block according to the following settings.&lt;br&gt;Each amount of distribution is rounded down to the nearest integer in mochas.&lt;br&gt;Note: the changes will apply &lt;b&gt;only after&lt;/b&gt; you click OK button.</source>
-        <translation>블록을 생성하게 되면, 이하 설정에 따라 채굴보상을 받게 됩니다. &lt;br&gt; 각 분배 금액은 mocha단위로 변경됩니다. &lt;br&gt; 참고 : 변경 사항은 확인 버튼을 클릭 &lt;b&gt;한 후에&lt;/b&gt; 반영됩니다.</translation>
+        <translation>블록을 스테이킹할 때마다 아래 설정에 따라 스테이킹 보상을 받습니다.&lt;br&gt;각 분배 금액은 mocha 단위로 내림됩니다.&lt;br&gt;참고: 변경 사항은 확인 버튼을 클릭한 &lt;b&gt;후에&lt;/b&gt; 적용됩니다.</translation>
     </message>
     <message>
         <source>Enter address or label to search</source>
@@ -3185,12 +3799,16 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
         <source>The total of distribution percentage must be 100% or less.</source>
         <translation>총 분배 비율은 100 % 이하 여야합니다.</translation>
     </message>
+    <message>
+        <source>You will get a staking reward every time you stake a block according to the following settings.&lt;br&gt;Each amount of distribution is rounded down to the nearest integer in mochas.&lt;br&gt;Note: the changes will apply &lt;b&gt;only after&lt;/b&gt; you click the OK button.</source>
+        <translation>다음 설정에 따라 블록을 스테이킹할 때마다 스테이킹 보상을 받습니다.&lt;br&gt;각 분배 금액은 mocha 단위로 가장 가까운 정수로 내림됩니다.&lt;br&gt;참고: 변경 사항은 확인 버튼을 클릭한 &lt;b&gt;후에만&lt;/b&gt; 적용됩니다.</translation>
+    </message>
 </context>
 <context>
     <name>StakingRewardSettingTableModel</name>
     <message>
         <source>Label</source>
-        <translation>채굴 보상 테이블 모델설정</translation>
+        <translation>스테이킹 보상 테이블 모델설정</translation>
     </message>
     <message>
         <source>Address</source>
@@ -3216,31 +3834,31 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <name>TransactionDesc</name>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation><numerusform>%n개의 더 많은 블록 열기</numerusform></translation>
+        <translation>%n개 블록 더 열린 상태</translation>
     </message>
     <message>
         <source>Open until %1</source>
-        <translation>%1 까지 열림</translation>
+        <translation>%1까지 열림</translation>
     </message>
     <message>
         <source>conflicted with a transaction with %1 confirmations</source>
-        <translation>%1 승인이 있는 거래와 충돌 함</translation>
+        <translation>확인 %1회인 트랜잭션과 충돌함</translation>
     </message>
     <message>
         <source>0/unconfirmed, %1</source>
-        <translation>0/미승인, %1</translation>
+        <translation>0/미확인, %1</translation>
     </message>
     <message>
         <source>in memory pool</source>
-        <translation>메모리 풀 안에 있음</translation>
+        <translation>메모리 풀에 있음</translation>
     </message>
     <message>
         <source>not in memory pool</source>
-        <translation>메모리 풀 안에 없음</translation>
+        <translation>메모리 풀에 없음</translation>
     </message>
     <message>
         <source>abandoned</source>
-        <translation>버려진</translation>
+        <translation>포기됨</translation>
     </message>
     <message>
         <source>%1/unconfirmed</source>
@@ -3248,7 +3866,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>%1 confirmations</source>
-        <translation>%1 확인됨</translation>
+        <translation>확인 %1회</translation>
     </message>
     <message>
         <source>Status</source>
@@ -3260,7 +3878,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>Source</source>
-        <translation>소스</translation>
+        <translation>출처</translation>
     </message>
     <message>
         <source>Generated</source>
@@ -3268,23 +3886,23 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>From</source>
-        <translation>으로부터</translation>
+        <translation>보낸 사람</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation>알수없음</translation>
+        <translation>알 수 없음</translation>
     </message>
     <message>
         <source>To</source>
-        <translation>에게</translation>
+        <translation>받는 사람</translation>
     </message>
     <message>
         <source>own address</source>
-        <translation>자신의 주소</translation>
+        <translation>내 주소</translation>
     </message>
     <message>
         <source>watch-only</source>
-        <translation>조회전용</translation>
+        <translation>감시 전용</translation>
     </message>
     <message>
         <source>label</source>
@@ -3292,35 +3910,35 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>Credit</source>
-        <translation>입금액</translation>
+        <translation>입금</translation>
     </message>
     <message numerus="yes">
         <source>matures in %n more block(s)</source>
-        <translation><numerusform>%n개의 더 많은 블록을 숙성</numerusform></translation>
+        <translation>%n개 블록 후 성숙</translation>
     </message>
     <message>
         <source>not accepted</source>
-        <translation>허용되지 않음</translation>
+        <translation>수락되지 않음</translation>
     </message>
     <message>
         <source>Debit</source>
-        <translation>출금액</translation>
+        <translation>출금</translation>
     </message>
     <message>
         <source>Total debit</source>
-        <translation>총 출금액</translation>
+        <translation>총 출금</translation>
     </message>
     <message>
         <source>Total credit</source>
-        <translation>총 입금액</translation>
+        <translation>총 입금</translation>
     </message>
     <message>
         <source>Transaction fee</source>
-        <translation>거래 수수료</translation>
+        <translation>트랜잭션 수수료</translation>
     </message>
     <message>
         <source>Net amount</source>
-        <translation>총 거래액</translation>
+        <translation>순액</translation>
     </message>
     <message>
         <source>Message</source>
@@ -3328,19 +3946,19 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>Comment</source>
-        <translation>설명</translation>
+        <translation>코멘트</translation>
     </message>
     <message>
         <source>Transaction ID</source>
-        <translation>거래 ID</translation>
+        <translation>트랜잭션 ID</translation>
     </message>
     <message>
         <source>Transaction total size</source>
-        <translation>거래 총 크기</translation>
+        <translation>트랜잭션 전체 크기</translation>
     </message>
     <message>
         <source>Transaction virtual size</source>
-        <translation>가상 거래 사이즈</translation>
+        <translation>트랜잭션 가상 크기</translation>
     </message>
     <message>
         <source>Output index</source>
@@ -3348,19 +3966,19 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>Merchant</source>
-        <translation>상인</translation>
+        <translation>판매자</translation>
     </message>
     <message>
         <source>Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to "not accepted" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.</source>
-        <translation>신규 채굴된 코인이 사용되기 위해서는 %1 개의 블록이 경과되어야 합니다. 블록을 생성할 때 블록체인에 추가되도록 네트워크에 전파되는 과정을 거치는데, 블록체인에 포함되지 못하고 실패한다면 해당 블록의 상태는 '미승인'으로 표현되고 XPChain 또한 사용될 수 없습니다. 이 현상은 다른 노드가 비슷한 시간대에 동시에 블록을 생성할 때 종종 발생할 수 있습니다. </translation>
+        <translation>새로 생성된 코인(스테이킹/채굴)은 사용하기 전에 %1개 블록이 성숙해야 합니다. 이 블록을 생성했을 때 네트워크에 전파되어 블록체인에 추가되도록 했습니다. 체인에 포함되지 못하면 상태가 &quot;미승인&quot;으로 바뀌어 사용할 수 없습니다. 다른 노드가 거의 동시에 블록을 생성하면 가끔 이런 일이 발생할 수 있습니다.</translation>
     </message>
     <message>
         <source>Debug information</source>
-        <translation>디버깅 정보</translation>
+        <translation>디버그 정보</translation>
     </message>
     <message>
         <source>Transaction</source>
-        <translation>거래</translation>
+        <translation>트랜잭션</translation>
     </message>
     <message>
         <source>Inputs</source>
@@ -3368,7 +3986,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>Amount</source>
-        <translation>거래액</translation>
+        <translation>금액</translation>
     </message>
     <message>
         <source>true</source>
@@ -3377,6 +3995,10 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>false</source>
         <translation>거짓</translation>
+    </message>
+    <message>
+        <source>Certificate label</source>
+        <translation>인증서 라벨</translation>
     </message>
 </context>
 <context>
@@ -3388,6 +4010,14 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>Details for %1</source>
         <translation>%1에 대한 세부 정보</translation>
+    </message>
+    <message>
+        <source>Copied!</source>
+        <translation>복사됨!</translation>
+    </message>
+    <message>
+        <source>Copy TXID</source>
+        <translation>TXID 복사</translation>
     </message>
 </context>
 <context>
@@ -3458,7 +4088,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>Minted</source>
-        <translation>채굴</translation>
+        <translation>스테이킹</translation>
     </message>
     <message>
         <source>watch-only</source>
@@ -3541,7 +4171,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>Minted</source>
-        <translation>채굴</translation>
+        <translation>스테이킹</translation>
     </message>
     <message>
         <source>Other</source>
@@ -3720,6 +4350,26 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
         <source>Could not commit transaction</source>
         <translation>트랜젝션을 커밋 할 수 없습니다.</translation>
     </message>
+    <message>
+        <source>Blockchain rescan finished. Check Overview for your balance.</source>
+        <translation>블록체인 재스캔이 완료되었습니다. 개요에서 잔액을 확인하세요.</translation>
+    </message>
+    <message>
+        <source>Rescan Complete</source>
+        <translation>재스캔 완료</translation>
+    </message>
+    <message>
+        <source>Rescan Failed</source>
+        <translation>재스캔 실패</translation>
+    </message>
+    <message>
+        <source>The wallet could not start or complete a blockchain rescan.
+
+If another rescan is already running, wait for it to finish or cancel it from the progress dialog, then try Tools → Rescan Wallet again.</source>
+        <translation>지갑이 블록체인 재스캔을 시작하거나 완료할 수 없습니다.
+
+다른 재스캔이 이미 실행 중이면 완료될 때까지 기다리거나 진행 대화상자에서 취소한 후, 도구 → 지갑 재스캔을 다시 시도하세요.</translation>
+    </message>
 </context>
 <context>
     <name>WalletView</name>
@@ -3762,6 +4412,14 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>SQLite Wallet (*.sqlite);;Wallet Data (*.dat)</source>
         <translation>SQLite 지갑 (*.sqlite);;지갑 데이터 (*.dat)</translation>
+    </message>
+    <message>
+        <source>Enter your wallet passphrase to &lt;b&gt;unlock spending keys for staking only&lt;/b&gt;.&lt;br/&gt;&lt;br/&gt;Sending coins will still require a full unlock. This is separate from opening an encrypted wallet file at startup.</source>
+        <translation>스테이킹 전용으로 지출 키를 &lt;b&gt;잠금 해제&lt;/b&gt;하려면 지갑 암호문구를 입력하세요.&lt;br/&gt;&lt;br/&gt;코인 전송에는 여전히 전체 잠금 해제가 필요합니다. 시작 시 암호화된 지갑 파일을 여는 것과는 별개입니다.</translation>
+    </message>
+    <message>
+        <source>Wallet backup has started in the background...</source>
+        <translation>지갑 백업이 백그라운드에서 시작되었습니다...</translation>
     </message>
 </context>
 <context>
@@ -4286,6 +4944,30 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
         <source>Error loading wallet %s. %s</source>
         <translation>지갑 %s 로딩 오류. %s</translation>
     </message>
+    <message>
+        <source>Group outputs by address, selecting all or none, instead of selecting on a per-output basis. Privacy is improved as an address is only used once (unless someone sends to it after spending from it), but may result in slightly higher fees as suboptimal coin selection may result due to the added limitation (default: %u)</source>
+        <translation>출력을 주소별로 묶어 전부 선택하거나 선택하지 않으며, 출력 단위로 선택하지 않습니다. 주소가 한 번만 사용되어 프라이버시가 향상되지만(지출 후 다시 입금되는 경우 제외), 제한으로 인해 최적의 코인 선택이 어려워 수수료가 약간 높아질 수 있습니다(기본값: %u)</translation>
+    </message>
+    <message>
+        <source>Please contribute if you find %s useful. Visit %s for further information about the software.</source>
+        <translation>%s이(가) 유용하다면 기여해 주세요. 소프트웨어에 대한 자세한 정보는 %s을(를) 방문하세요.</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" does not exist</source>
+        <translation>지정한 -walletdir "%s"이(가) 존재하지 않습니다</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is a relative path</source>
+        <translation>지정한 -walletdir "%s"은(는) 상대 경로입니다</translation>
+    </message>
+    <message>
+        <source>Specified -walletdir "%s" is not a directory</source>
+        <translation>지정한 -walletdir "%s"은(는) 디렉터리가 아닙니다</translation>
+    </message>
+    <message>
+        <source>This is experimental software.</source>
+        <translation>실험적 소프트웨어입니다.</translation>
+    </message>
 </context>
 <context>
     <name>MnemonicImportDialog</name>
@@ -4312,6 +4994,246 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>Backup Failed</source>
         <translation>백업 실패</translation>
+    </message>
+    <message>
+        <source> · length OK</source>
+        <translation> · 길이 정상</translation>
+    </message>
+    <message>
+        <source> · need 12 or 24 (also accepts 15/18/21)</source>
+        <translation> · 12 또는 24개 필요 (15/18/21도 허용)</translation>
+    </message>
+    <message>
+        <source> · not in BIP39 list: %1</source>
+        <translation> · BIP39 목록에 없음: %1</translation>
+    </message>
+    <message>
+        <source> · suggestions: %1</source>
+        <translation> · 제안: %1</translation>
+    </message>
+    <message>
+        <source>%1 word(s)</source>
+        <translation>%1개 단어</translation>
+    </message>
+    <message>
+        <source>(unknown)</source>
+        <translation>(알 수 없음)</translation>
+    </message>
+    <message>
+        <source>0 words</source>
+        <translation>0개 단어</translation>
+    </message>
+    <message>
+        <source>0 words — enter 12 or 24 BIP39 words</source>
+        <translation>0개 단어 — BIP39 단어 12개 또는 24개를 입력하세요</translation>
+    </message>
+    <message>
+        <source>BIP39 passphrase (optional):</source>
+        <translation>BIP39 패스프레이즈 (선택):</translation>
+    </message>
+    <message>
+        <source>BIP44 path m/44'/0'/0'/… — current XPChain web wallet (recommended).</source>
+        <translation>BIP44 경로 m/44'/0'/0'/… — 현재 XPChain 웹 지갑 (권장).</translation>
+    </message>
+    <message>
+        <source>BIP44 path m/44'/398'/0'/… (legacy web wallet). Prefer coin_type 0 unless you know you need 398.</source>
+        <translation>BIP44 경로 m/44'/398'/0'/… (레거시 웹 지갑). 398이 필요한지 아는 경우가 아니면 coin_type 0을 권장합니다.</translation>
+    </message>
+    <message>
+        <source>Backup Directory Write Permission Denied</source>
+        <translation>백업 디렉터리 쓰기 권한 거부됨</translation>
+    </message>
+    <message>
+        <source>Close this dialog, then use File → Set Up Wallet (or File → Advanced → Create Wallet with Descriptor unchecked) for a clean restore target.</source>
+        <translation>이 대화상자를 닫은 뒤, 파일 → 지갑 설정(또는 파일 → 고급 → 디스크립터 선택 해제로 지갑 만들기)으로 깨끗한 복원 대상을 준비하세요.</translation>
+    </message>
+    <message>
+        <source>Create empty wallet first…</source>
+        <translation>먼저 빈 지갑 만들기…</translation>
+    </message>
+    <message>
+        <source>Current wallet is not empty</source>
+        <translation>현재 지갑이 비어 있지 않습니다</translation>
+    </message>
+    <message>
+        <source>Enter your 12 or 24 English BIP39 words, separated by spaces:</source>
+        <translation>영문 BIP39 단어 12개 또는 24개를 공백으로 구분하여 입력하세요:</translation>
+    </message>
+    <message>
+        <source>Error: Wallet model is not available.</source>
+        <translation>오류: 지갑 모델을 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Failed to import derived seed. Check that HD is enabled, the wallet is unlocked, and keys are not conflicting.</source>
+        <translation>파생 시드 가져오기에 실패했습니다. HD가 활성화되어 있는지, 지갑이 잠금 해제되어 있는지, 키가 충돌하지 않는지 확인하세요.</translation>
+    </message>
+    <message>
+        <source>Fix unknown words before importing.</source>
+        <translation>가져오기 전에 알 수 없는 단어를 수정하세요.</translation>
+    </message>
+    <message>
+        <source>Import Complete</source>
+        <translation>가져오기 완료</translation>
+    </message>
+    <message>
+        <source>Import and Restore</source>
+        <translation>가져오기 및 복원</translation>
+    </message>
+    <message>
+        <source>Import merges keys into the current wallet. A backup is created automatically before import. For a clean recovery, create a new empty wallet first.</source>
+        <translation>가져오기는 현재 지갑에 키를 병합합니다. 가져오기 전에 백업이 자동으로 만들어집니다. 깨끗하게 복구하려면 먼저 새 빈 지갑을 만드세요.</translation>
+    </message>
+    <message>
+        <source>Keys imported. Starting blockchain rescan — progress appears in the main window.</source>
+        <translation>키를 가져왔습니다. 블록체인 재스캔을 시작합니다 — 진행 상황은 메인 창에 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>Leave blank if you did not set one</source>
+        <translation>설정하지 않았다면 비워 두세요</translation>
+    </message>
+    <message>
+        <source>Legacy web wallet path (coin_type 398) — only if coin_type 0 finds nothing</source>
+        <translation>레거시 웹 지갑 경로 (coin_type 398) — coin_type 0으로 찾지 못한 경우에만</translation>
+    </message>
+    <message>
+        <source>Manual wallet backup failed or cancelled. Aborting import for security.</source>
+        <translation>수동 지갑 백업이 실패했거나 취소되었습니다. 보안을 위해 가져오기를 중단합니다.</translation>
+    </message>
+    <message>
+        <source>Mnemonic valid. Creating wallet backup…</source>
+        <translation>니모닉이 유효합니다. 지갑 백업을 만드는 중…</translation>
+    </message>
+    <message>
+        <source>Only enable if coin_type 0 (current web wallet) does not find your funds. Older web wallet deployments used coin_type 398.</source>
+        <translation>coin_type 0(현재 웹 지갑)으로 자금을 찾지 못한 경우에만 활성화하세요. 이전 웹 지갑 배포는 coin_type 398을 사용했습니다.</translation>
+    </message>
+    <message>
+        <source>Recover from XPChain web wallet (BIP44) — recommended</source>
+        <translation>XPChain 웹 지갑에서 복구 (BIP44) — 권장</translation>
+    </message>
+    <message>
+        <source>Restore Wallet from Mnemonic (BIP39)</source>
+        <translation>니모닉으로 지갑 복원 (BIP39)</translation>
+    </message>
+    <message>
+        <source>Restore from BIP39 mnemonic</source>
+        <translation>BIP39 니모닉에서 복원</translation>
+    </message>
+    <message>
+        <source>The wallet could not save the automatic backup to:
+%1
+
+This is likely due to insufficient write permissions in the directory.
+For security, you must perform a manual backup before importing. Would you like to select an alternative location to save your backup?</source>
+        <translation>지갑이 자동 백업을 다음 위치에 저장할 수 없습니다:
+%1
+
+해당 디렉터리의 쓰기 권한이 부족한 것으로 보입니다.
+보안을 위해 가져오기 전에 수동 백업을 수행해야 합니다. 백업을 저장할 다른 위치를 선택하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>This is a descriptor wallet. BIP39 mnemonic restore needs a legacy HD wallet.
+Create an empty non-descriptor wallet first (Create empty wallet / File → Advanced → Create Wallet with Descriptor unchecked), then restore into it.</source>
+        <translation>이것은 디스크립터 지갑입니다. BIP39 니모닉 복원에는 레거시 HD 지갑이 필요합니다.
+먼저 빈 비디스크립터 지갑을 만든 뒤(빈 지갑 만들기 / 파일 → 고급 → 디스크립터 선택 해제로 지갑 만들기) 그곳으로 복원하세요.</translation>
+    </message>
+    <message>
+        <source>This wallet already has a balance or transaction history.
+
+Mnemonic import merges derived keys into this wallet; it does not replace it.
+
+For a clean recovery, cancel and create a new empty wallet first.
+
+Continue merging into “%1”?</source>
+        <translation>이 지갑에는 이미 잔액 또는 거래 기록이 있습니다.
+
+니모닉 가져오기는 파생 키를 이 지갑에 병합하며, 지갑을 교체하지 않습니다.
+
+깨끗하게 복구하려면 취소한 뒤 먼저 새 빈 지갑을 만드세요.
+
+“%1”에 계속 병합하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Unchecked uses XPChain Core HD (m/0'/…). That will not match web wallet addresses.</source>
+        <translation>선택 해제 시 XPChain Core HD(m/0'/…)를 사용합니다. 웹 지갑 주소와 일치하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Use BIP44 paths m/44'/coin_type'/0'/… — required to recover addresses from the XPChain web wallet.</source>
+        <translation>BIP44 경로 m/44'/coin_type'/0'/… 사용 — XPChain 웹 지갑 주소를 복구하는 데 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Using XPChain Core HD (m/0'/…). Uncheck only for Core-native seeds — this path does not match XPChain web wallet addresses.</source>
+        <translation>XPChain Core HD(m/0'/…)를 사용합니다. Core 고유 시드에만 선택 해제하세요 — 이 경로는 XPChain 웹 지갑 주소와 일치하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Validation failed: %1</source>
+        <translation>검증 실패: %1</translation>
+    </message>
+    <message>
+        <source>WARNING: Import merges keys into the &lt;b&gt;current&lt;/b&gt; wallet (“%1”). A backup is written to &lt;code&gt;%2/backup_before_mnemonic_*.dat&lt;/code&gt; before import.&lt;br/&gt;&lt;br/&gt;For a clean recovery, create a new empty wallet first (button below, or File → Set Up Wallet / File → Advanced → Create Wallet (Descriptor unchecked)), then restore into that wallet.</source>
+        <translation>경고: 가져오기는 키를 &lt;b&gt;현재&lt;/b&gt; 지갑(“%1”)에 병합합니다. 가져오기 전에 백업이 &lt;code&gt;%2/backup_before_mnemonic_*.dat&lt;/code&gt;에 저장됩니다.&lt;br/&gt;&lt;br/&gt;깨끗하게 복구하려면 먼저 새 빈 지갑을 만든 뒤(아래 버튼, 또는 파일 → 지갑 설정 / 파일 → 고급 → 지갑 만들기(디스크립터 선택 해제)) 그 지갑으로 복원하세요.</translation>
+    </message>
+    <message>
+        <source>Wallet backup failed. Aborting import for security.</source>
+        <translation>지갑 백업에 실패했습니다. 보안을 위해 가져오기를 중단합니다.</translation>
+    </message>
+    <message>
+        <source>Wallet unlock failed or cancelled. Aborting seed import.</source>
+        <translation>지갑 잠금 해제가 실패했거나 취소되었습니다. 시드 가져오기를 중단합니다.</translation>
+    </message>
+    <message>
+        <source>Web wallet compatible BIP44 mnemonic recovery has completed.
+
+Keys were imported along path m/44'/%1'/0'/change/index (up to %2 addresses per chain).
+
+A full blockchain rescan has started. Keep the wallet open until the progress dialog finishes.
+You will get a notification when the rescan completes.
+
+Note: proof-of-stake rewards require coins to mature for several days before staking.</source>
+        <translation>웹 지갑 호환 BIP44 니모닉 복구가 완료되었습니다.
+
+경로 m/44'/%1'/0'/change/index를 따라 키가 가져와졌습니다(체인당 최대 %2개 주소).
+
+전체 블록체인 재스캔이 시작되었습니다. 진행 대화상자가 끝날 때까지 지갑을 열어 두세요.
+재스캔이 완료되면 알림을 받습니다.
+
+참고: 지분증명 보상은 스테이킹 전에 코인이 며칠간 성숙해야 합니다.</translation>
+    </message>
+    <message>
+        <source>Word list looks valid. Full checksum is checked on Import.</source>
+        <translation>단어 목록이 유효해 보입니다. 전체 체크섬은 가져오기 시 확인됩니다.</translation>
+    </message>
+    <message>
+        <source>Your wallet has been migrated to the BIP39 seed using the XPChain Core HD scheme (m/0'/...).
+
+This path is different from the web wallet BIP44 layout.
+
+A full blockchain rescan has started. Keep the wallet open until it finishes; a notification will appear when it completes.</source>
+        <translation>지갑이 XPChain Core HD 방식(m/0'/...)의 BIP39 시드로 마이그레이션되었습니다.
+
+이 경로는 웹 지갑 BIP44 레이아웃과 다릅니다.
+
+전체 블록체인 재스캔이 시작되었습니다. 끝날 때까지 지갑을 열어 두세요. 완료되면 알림이 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>e.g. abandon ability able about above absent absorb abstract absurd abuse access accident ...</source>
+        <translation>예: abandon ability able about above absent absorb abstract absurd abuse access accident ...</translation>
+    </message>
+    <message>
+        <source>…</source>
+        <translation>…</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>표시</translation>
+    </message>
+    <message>
+        <source>Wallet Data (*.dat)</source>
+        <translation>지갑 데이터 (*.dat)</translation>
     </message>
 </context>
 <context>
@@ -4430,6 +5352,60 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
         <source>XPChain will quit after a successful migration. Restart the app to use the SQLite wallet.</source>
         <translation>마이그레이션이 성공하면 XPChain이 종료됩니다. SQLite 지갑을 사용하려면 앱을 다시 시작하세요.</translation>
     </message>
+    <message>
+        <source>(unknown)</source>
+        <translation>(알 수 없음)</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Current wallet:&lt;/b&gt; %1&lt;br/&gt;&lt;b&gt;Format:&lt;/b&gt; Berkeley DB (legacy)&lt;br/&gt;&lt;br/&gt;A new SQLite wallet file will be created. The original file is not deleted.</source>
+        <translation>&lt;b&gt;현재 지갑:&lt;/b&gt; %1&lt;br/&gt;&lt;b&gt;형식:&lt;/b&gt; Berkeley DB (레거시)&lt;br/&gt;&lt;br/&gt;새 SQLite 지갑 파일이 생성됩니다. 원본 파일은 삭제되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Current wallet:&lt;/b&gt; %1&lt;br/&gt;&lt;b&gt;Format:&lt;/b&gt; SQLite (or already non-Berkeley)&lt;br/&gt;&lt;br/&gt;Migration is only available for Berkeley DB wallets. This wallet does not need to be migrated.</source>
+        <translation>&lt;b&gt;현재 지갑:&lt;/b&gt; %1&lt;br/&gt;&lt;b&gt;형식:&lt;/b&gt; SQLite (또는 이미 비 Berkeley)&lt;br/&gt;&lt;br/&gt;마이그레이션은 Berkeley DB 지갑에만 사용할 수 있습니다. 이 지갑은 마이그레이션할 필요가 없습니다.</translation>
+    </message>
+    <message>
+        <source>Destination must be a non-empty path ending in .sqlite.</source>
+        <translation>대상은 .sqlite로 끝나는 비어 있지 않은 경로여야 합니다.</translation>
+    </message>
+    <message>
+        <source>Invalid destination</source>
+        <translation>잘못된 대상</translation>
+    </message>
+    <message>
+        <source>Migrate</source>
+        <translation>마이그레이션</translation>
+    </message>
+    <message>
+        <source>Migrate this Berkeley DB wallet to SQLite?
+
+Mode: %1
+Backup source: %2
+
+The original wallet file will be safely kept as a backup. Verify balances after migration.</source>
+        <translation>이 Berkeley DB 지갑을 SQLite로 마이그레이션하시겠습니까?
+
+모드: %1
+백업 원본: %2
+
+원본 지갑 파일은 백업으로 안전하게 보관됩니다. 마이그레이션 후 잔액을 확인하세요.</translation>
+    </message>
+    <message>
+        <source>Upgrade this wallet to SQLite in place. The original Berkeley DB file is kept as a .legacy.bak backup.</source>
+        <translation>이 지갑을 제자리에서 SQLite로 업그레이드합니다. 원본 Berkeley DB 파일은 .legacy.bak 백업으로 보관됩니다.</translation>
+    </message>
+    <message>
+        <source>default</source>
+        <translation>기본</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>아니오</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>예</translation>
+    </message>
 </context>
 <context>
     <name>WalletSetupDialog</name>
@@ -4461,12 +5437,270 @@ wallets 디렉터리에 있는 지갑을 불러옵니다.</translation>
         <source>Import keys from an existing BIP39 mnemonic into a wallet.</source>
         <translation>기존 BIP39 니모닉에서 키를 지갑으로 가져옵니다.</translation>
     </message>
+    <message>
+        <source>Choose how to set up this wallet. You can reopen this dialog from File → Set Up Wallet, or use File → Advanced for individual create / open / mnemonic actions.</source>
+        <translation>이 지갑을 설정하는 방법을 선택하세요. 파일 → 지갑 설정에서 이 대화상자를 다시 열거나, 파일 → 고급에서 개별 생성 / 열기 / 니모닉 작업을 사용할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Create a new BIP39 seed, confirm the backup, then create a seeded wallet.</source>
+        <translation>새 BIP39 시드를 만들고 백업을 확인한 뒤, 시드가 적용된 지갑을 생성합니다.</translation>
+    </message>
+    <message>
+        <source>Load a wallet that already exists on disk.</source>
+        <translation>디스크에 이미 있는 지갑을 불러옵니다.</translation>
+    </message>
+    <message>
+        <source>New wallet without a mnemonic. Use for watch-only, advanced import, or as a clean BIP39 restore target (leave Descriptor unchecked).</source>
+        <translation>니모닉 없는 새 지갑입니다. 감시 전용, 고급 가져오기, 또는 깨끗한 BIP39 복원 대상으로 사용하세요(디스크립터는 선택 해제).</translation>
+    </message>
+    <message>
+        <source>Set Up Wallet</source>
+        <translation>지갑 설정</translation>
+    </message>
 </context>
 <context>
     <name>CreateWalletDialog</name>
     <message>
         <source>BIP39 mnemonic restore requires a legacy HD keypath wallet. Descriptor wallets cannot import this mnemonic seed.</source>
         <translation>BIP39 니모닉 복원은 레거시 HD 키경로 지갑이 필요합니다. 디스크립터 지갑에는 이 니모닉 시드를 가져올 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Confirm</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>Create Wallet</source>
+        <translation>지갑 만들기</translation>
+    </message>
+    <message>
+        <source>Descriptor Wallet (Modern v27.0+)</source>
+        <translation>디스크립터 지갑 (최신 v27.0+)</translation>
+    </message>
+    <message>
+        <source>Disable Private Keys</source>
+        <translation>개인 키 비활성화</translation>
+    </message>
+    <message>
+        <source>Encrypt spending keys and (on SQLite/SQLCipher builds) the wallet file at rest. You will need this passphrase to open the wallet file after restart and again to unlock keys for sending.</source>
+        <translation>지출 키와(SQLite/SQLCipher 빌드에서는) 저장 중인 지갑 파일을 암호화합니다. 재시작 후 지갑 파일을 열 때와 전송을 위해 키를 잠금 해제할 때 이 암호문구가 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Enter a passphrase to encrypt the wallet, or uncheck Encrypt wallet.</source>
+        <translation>지갑을 암호화할 암호문구를 입력하거나, 지갑 암호화를 선택 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Enter wallet name...</source>
+        <translation>지갑 이름 입력...</translation>
+    </message>
+    <message>
+        <source>Passphrase</source>
+        <translation>암호문구</translation>
+    </message>
+    <message>
+        <source>Recommended. Protects spending keys and the wallet file (SQLCipher). Leave unchecked only if you intentionally want an unencrypted wallet.</source>
+        <translation>권장. 지출 키와 지갑 파일(SQLCipher)을 보호합니다. 의도적으로 비암호화 지갑을 원할 때만 선택 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Show passphrase</source>
+        <translation>암호문구 표시</translation>
+    </message>
+    <message>
+        <source>Use the modern descriptor wallet format (SQLite). Recommended for new wallets. Leave unchecked only if you need a legacy HD keypath wallet.</source>
+        <translation>최신 디스크립터 지갑 형식(SQLite)을 사용합니다. 새 지갑에 권장됩니다. 레거시 HD 키경로 지갑이 필요할 때만 선택 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Wallet Name</source>
+        <translation>지갑 이름</translation>
+    </message>
+    <message>
+        <source>Wallet creation failed</source>
+        <translation>지갑 생성 실패</translation>
+    </message>
+    <message>
+        <source>Watch-only wallet: no private keys are generated. You can import addresses or descriptors later, but you cannot spend from this wallet.</source>
+        <translation>감시 전용 지갑: 개인 키가 생성되지 않습니다. 나중에 주소나 디스크립터를 가져올 수 있지만 이 지갑으로는 지출할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The supplied passphrases do not match.</source>
+        <translation>입력한 암호문구가 일치하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Encrypt wallet</source>
+        <translation>지갑 암호화</translation>
+    </message>
+</context>
+<context>
+    <name>ImportAddressDialog</name>
+    <message>
+        <source>Adds an address you do not have keys for. Balances and history appear after a rescan. You cannot spend from watch-only addresses.</source>
+        <translation>키가 없는 주소를 추가합니다. 잔액과 기록은 재스캔 후 표시됩니다. 감시 전용 주소로는 지출할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Import Watch-Only Address</source>
+        <translation>감시 전용 주소 가져오기</translation>
+    </message>
+    <message>
+        <source>Optional label</source>
+        <translation>선택 라벨</translation>
+    </message>
+    <message>
+        <source>Rescan blockchain for transactions (may take a while)</source>
+        <translation>트랜잭션을 위해 블록체인 재스캔 (시간이 걸릴 수 있음)</translation>
+    </message>
+    <message>
+        <source>Address</source>
+        <translation>주소</translation>
+    </message>
+    <message>
+        <source>Label</source>
+        <translation>라벨</translation>
+    </message>
+</context>
+<context>
+    <name>MnemonicBackupDialog</name>
+    <message>
+        <source>12 words (128-bit)</source>
+        <translation>12개 단어 (128비트)</translation>
+    </message>
+    <message>
+        <source>24 words (256-bit)</source>
+        <translation>24개 단어 (256비트)</translation>
+    </message>
+    <message>
+        <source>BIP39 passphrase (optional)</source>
+        <translation>BIP39 패스프레이즈 (선택)</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>뒤로</translation>
+    </message>
+    <message>
+        <source>Confirm</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>Create Wallet</source>
+        <translation>지갑 만들기</translation>
+    </message>
+    <message>
+        <source>Creates a new HD wallet seeded from a freshly generated BIP39 phrase. Write the phrase down offline — it cannot be shown again from an existing wallet file.</source>
+        <translation>새로 생성된 BIP39 구문으로 시드된 새 HD 지갑을 만듭니다. 구문을 오프라인에 적어 두세요 — 기존 지갑 파일에서는 다시 표시할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Derive keys on m/44'/coin_type'/0'/… so addresses match the XPChain web wallet.</source>
+        <translation>m/44'/coin_type'/0'/…에서 키를 파생하여 주소가 XPChain 웹 지갑과 일치하도록 합니다.</translation>
+    </message>
+    <message>
+        <source>Encrypt spending keys and (on SQLCipher builds) the wallet file at rest.</source>
+        <translation>지출 키와(SQLCipher 빌드에서는) 저장 중인 지갑 파일을 암호화합니다.</translation>
+    </message>
+    <message>
+        <source>Enter a wallet name.</source>
+        <translation>지갑 이름을 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Enter a wallet passphrase, or uncheck Encrypt wallet.</source>
+        <translation>지갑 암호문구를 입력하거나, 지갑 암호화를 선택 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Enter the same words, separated by spaces</source>
+        <translation>동일한 단어를 공백으로 구분하여 입력하세요</translation>
+    </message>
+    <message>
+        <source>Generate and Backup BIP39 Mnemonic</source>
+        <translation>BIP39 니모닉 생성 및 백업</translation>
+    </message>
+    <message>
+        <source>Generate and Backup Mnemonic</source>
+        <translation>니모닉 생성 및 백업</translation>
+    </message>
+    <message>
+        <source>Generated phrase failed validation: %1</source>
+        <translation>생성된 구문 검증 실패: %1</translation>
+    </message>
+    <message>
+        <source>I have written down this mnemonic and stored it safely offline</source>
+        <translation>이 니모닉을 적어 오프라인에 안전하게 보관했습니다</translation>
+    </message>
+    <message>
+        <source>Leave blank unless you want an extra passphrase</source>
+        <translation>추가 패스프레이즈가 필요 없으면 비워 두세요</translation>
+    </message>
+    <message>
+        <source>Legacy web wallet path (coin_type 398)</source>
+        <translation>레거시 웹 지갑 경로 (coin_type 398)</translation>
+    </message>
+    <message>
+        <source>Mnemonic confirmed.</source>
+        <translation>니모닉이 확인되었습니다.</translation>
+    </message>
+    <message>
+        <source>Mnemonic generation failed</source>
+        <translation>니모닉 생성 실패</translation>
+    </message>
+    <message>
+        <source>Mnemonic length</source>
+        <translation>니모닉 길이</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>다음</translation>
+    </message>
+    <message>
+        <source>Only enable for older web wallet deployments that used coin_type 398.</source>
+        <translation>coin_type 398을 사용한 이전 웹 지갑 배포에만 활성화하세요.</translation>
+    </message>
+    <message>
+        <source>Re-enter the mnemonic to confirm your backup before the wallet is created.</source>
+        <translation>지갑이 생성되기 전에 백업을 확인하려면 니모닉을 다시 입력하세요.</translation>
+    </message>
+    <message>
+        <source>Show wallet passphrase</source>
+        <translation>지갑 암호문구 표시</translation>
+    </message>
+    <message>
+        <source>Show words</source>
+        <translation>단어 표시</translation>
+    </message>
+    <message>
+        <source>Use BIP44 path (web wallet compatible) — recommended</source>
+        <translation>BIP44 경로 사용 (웹 지갑 호환) — 권장</translation>
+    </message>
+    <message>
+        <source>Wallet name</source>
+        <translation>지갑 이름</translation>
+    </message>
+    <message>
+        <source>Wallet passphrase</source>
+        <translation>지갑 암호문구</translation>
+    </message>
+    <message>
+        <source>Wallet passphrases do not match.</source>
+        <translation>지갑 암호문구가 일치하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Words do not match. Check spelling and order, then try again.</source>
+        <translation>단어가 일치하지 않습니다. 철자와 순서를 확인한 뒤 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Write these words down on paper in order. Do not screenshot, email, or store them in cloud notes. Anyone with this phrase can spend your coins.</source>
+        <translation>이 단어들을 순서대로 종이에 적으세요. 스크린샷, 이메일, 클라우드 노트에 저장하지 마세요. 이 구문을 가진 누구나 코인을 사용할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>e.g. mnemonic-wallet</source>
+        <translation>예: mnemonic-wallet</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>표시</translation>
+    </message>
+    <message>
+        <source>Encrypt wallet</source>
+        <translation>지갑 암호화</translation>
     </message>
 </context>
 </TS>
