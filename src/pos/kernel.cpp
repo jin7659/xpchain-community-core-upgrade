@@ -55,12 +55,22 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
     return pos::CheckStakeKernelHash(nBits, blockFrom.GetBlockTime(), nTxPrevOffset, txOutPrev.nValue, prevout.n, nTimeTx, hashProofOfStake, Params().GetConsensus());
 }
 
+unsigned int GetCoinStakeScriptFlags(int nHeight, const Consensus::Params& params)
+{
+    unsigned int nFlags = SCRIPT_VERIFY_NONE;
+    if (nHeight >= params.TaprootHeight) {
+        nFlags |= SCRIPT_VERIFY_TAPROOT;
+    }
+    return nFlags;
+}
+
 bool CheckProofOfStakePure(const CTransaction& txCoinStake,
                            const CTransaction& txPrev,
                            unsigned int nBits,
                            uint32_t nTimeTx,
                            uint32_t nTimeBlockFrom,
                            unsigned int nTxPrevOffset,
+                           int nHeight,
                            uint256& hashProofOfStake,
                            const Consensus::Params& params)
 {
@@ -73,10 +83,7 @@ bool CheckProofOfStakePure(const CTransaction& txCoinStake,
     }
 
     // Verify signature
-    unsigned int nFlags = SCRIPT_VERIFY_NONE;
-    if (chainActive.Height() + 1 >= params.TaprootHeight) {
-        nFlags |= SCRIPT_VERIFY_TAPROOT;
-    }
+    const unsigned int nFlags = GetCoinStakeScriptFlags(nHeight, params);
 
     std::vector<CTxOut> spent_outputs;
     spent_outputs.push_back(txPrev.vout[txin.prevout.n]);
@@ -95,7 +102,7 @@ bool CheckProofOfStakePure(const CTransaction& txCoinStake,
     return pos::CheckStakeKernelHash(nBits, nTimeBlockFrom, nTxPrevOffset, txPrev.vout[txin.prevout.n].nValue, txin.prevout.n, nTimeTx, hashProofOfStake, params);
 }
 
-bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& hashProofOfStake, unsigned int nBlockTime, const Consensus::Params& params)
+bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& hashProofOfStake, unsigned int nBlockTime, int nHeight, const Consensus::Params& params)
 {
     const CTxIn& txin = tx->vin[0];
 
@@ -130,12 +137,7 @@ bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& h
         return error("%s: block not found db hash = %s\n", __func__, hash.ToString().c_str());
     }
 
-    return CheckProofOfStakePure(*tx, *txTmp, nBits, nBlockTime, block.GetBlockTime(), GetSizeOfCompactSize(block.vtx.size()) + sizeof(CBlockHeader), hashProofOfStake, params);
-}
-
-bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& hashProofOfStake, unsigned int nBlockTime)
-{
-    return CheckProofOfStake(tx, nBits, hashProofOfStake, nBlockTime, Params().GetConsensus());
+    return CheckProofOfStakePure(*tx, *txTmp, nBits, nBlockTime, block.GetBlockTime(), GetSizeOfCompactSize(block.vtx.size()) + sizeof(CBlockHeader), nHeight, hashProofOfStake, params);
 }
 
 } // namespace pos

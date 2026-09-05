@@ -24,6 +24,7 @@
 #include <pos/reward.h>
 #include <pos/stake.h>
 #include <primitives/transaction.h>
+#include <script/interpreter.h>
 #include <script/standard.h>
 #include <uint256.h>
 #include <validation.h>
@@ -680,19 +681,36 @@ BOOST_AUTO_TEST_CASE(check_proof_of_stake_pure_basic)
     unsigned int nTxPrevOffset = 100;
     unsigned int nBits = 0x207fffff; // regtest max target
 
+    const int nHeight = 200;
+
     uint256 hashProofOfStake;
-    bool valid = pos::CheckProofOfStakePure(coinstake, txPrev, nBits, nTimeTx, nTimeBlockFrom, nTxPrevOffset, hashProofOfStake, consensus);
+    bool valid = pos::CheckProofOfStakePure(coinstake, txPrev, nBits, nTimeTx, nTimeBlockFrom, nTxPrevOffset, nHeight, hashProofOfStake, consensus);
     BOOST_CHECK(valid);
 
     // Too young stake should fail
     uint32_t nTimeTxTooYoung = nTimeBlockFrom + consensus.nStakeMinAge - 1;
     uint256 hashProofOfStakeFail;
-    BOOST_CHECK(!pos::CheckProofOfStakePure(coinstake, txPrev, nBits, nTimeTxTooYoung, nTimeBlockFrom, nTxPrevOffset, hashProofOfStakeFail, consensus));
+    BOOST_CHECK(!pos::CheckProofOfStakePure(coinstake, txPrev, nBits, nTimeTxTooYoung, nTimeBlockFrom, nTxPrevOffset, nHeight, hashProofOfStakeFail, consensus));
 
     // Invalid signature should fail
     CMutableTransaction badCoinstake = coinstake;
     badCoinstake.vin[0].scriptSig = CScript() << OP_0;
-    BOOST_CHECK(!pos::CheckProofOfStakePure(badCoinstake, txPrev, nBits, nTimeTx, nTimeBlockFrom, nTxPrevOffset, hashProofOfStakeFail, consensus));
+    BOOST_CHECK(!pos::CheckProofOfStakePure(badCoinstake, txPrev, nBits, nTimeTx, nTimeBlockFrom, nTxPrevOffset, nHeight, hashProofOfStakeFail, consensus));
+
+    // The verdict depends on the height passed in, not on the active chain tip:
+    // a block is judged the same however far the tip has moved.
+    BOOST_CHECK(pos::CheckProofOfStakePure(coinstake, txPrev, nBits, nTimeTx, nTimeBlockFrom, nTxPrevOffset, 0, hashProofOfStake, consensus));
+    BOOST_CHECK(pos::CheckProofOfStakePure(coinstake, txPrev, nBits, nTimeTx, nTimeBlockFrom, nTxPrevOffset, 4000000, hashProofOfStake, consensus));
+}
+
+BOOST_AUTO_TEST_CASE(coinstake_script_flags_follow_block_height)
+{
+    Consensus::Params consensus = CreateChainParams(CBaseChainParams::REGTEST)->GetConsensus();
+    consensus.TaprootHeight = 1000;
+
+    BOOST_CHECK((pos::GetCoinStakeScriptFlags(999, consensus) & SCRIPT_VERIFY_TAPROOT) == 0);
+    BOOST_CHECK((pos::GetCoinStakeScriptFlags(1000, consensus) & SCRIPT_VERIFY_TAPROOT) != 0);
+    BOOST_CHECK((pos::GetCoinStakeScriptFlags(1001, consensus) & SCRIPT_VERIFY_TAPROOT) != 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

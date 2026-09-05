@@ -21,6 +21,9 @@ bool CheckStakeKernelHash(unsigned int nBits, uint32_t nTimeBlockFrom, unsigned 
 bool CheckStakeKernelHash(unsigned int nBits, uint32_t nTimeBlockFrom, unsigned int nTxPrevOffset, CAmount nAmount, uint64_t n, uint32_t nTimeTx, uint256& hashProofOfStake);
 bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned int nTxPrevOffset, const CTxOut& txOutPrev, const COutPoint& prevout, uint32_t nTimeTx, uint256& hashProofOfStake);
 
+/** Script flags used to verify the coinstake input of a block at nHeight */
+unsigned int GetCoinStakeScriptFlags(int nHeight, const Consensus::Params& params);
+
 /** Pure verification function without disk I/O */
 bool CheckProofOfStakePure(const CTransaction& txCoinStake,
                            const CTransaction& txPrev,
@@ -28,12 +31,12 @@ bool CheckProofOfStakePure(const CTransaction& txCoinStake,
                            uint32_t nTimeTx,
                            uint32_t nTimeBlockFrom,
                            unsigned int nTxPrevOffset,
+                           int nHeight,
                            uint256& hashProofOfStake,
                            const Consensus::Params& params);
 
 /** Contextual check proof of stake (retrieves txPrev & blockFrom from disk) */
-bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& hashProofOfStake, unsigned int nBlockTime, const Consensus::Params& params);
-bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& hashProofOfStake, unsigned int nBlockTime);
+bool CheckProofOfStake(const CTransactionRef& tx, unsigned int nBits, uint256& hashProofOfStake, unsigned int nBlockTime, int nHeight, const Consensus::Params& params);
 
 } // namespace pos
 

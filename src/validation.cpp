@@ -1844,7 +1844,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     assert(*pindex->phashBlock == block.GetHash());
     int64_t nTimeStart = GetTimeMicros();
     uint256 hashProofOfStake;
-    if(pos::IsPoSHeight(pindex->nHeight, chainparams.GetConsensus()) && !pos::CheckProofOfStake(block.vtx[1], block.nBits, hashProofOfStake, block.nTime))
+    if(pos::IsPoSHeight(pindex->nHeight, chainparams.GetConsensus()) && !pos::CheckProofOfStake(block.vtx[1], block.nBits, hashProofOfStake, block.nTime, pindex->nHeight, chainparams.GetConsensus()))
     {
         return state.DoS(100, error("%s: CheckProofOfStake failed", __func__), REJECT_INVALID, "bad-blk");
     }
