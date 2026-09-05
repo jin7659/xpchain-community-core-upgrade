@@ -23,7 +23,7 @@
       <enum>Qt::RichText</enum>
      </property>
      <property name="text">
-      <string>You will get a staking reward every time you generate a block according to the following settings.&lt;br&gt;Each amount of distribution is rounded down to the nearest integer in mochas.&lt;br&gt;Note: the changes will apply &lt;b&gt;only after&lt;/b&gt; you click OK button.</string>
+      <string>You will get a staking reward every time you stake a block according to the following settings.&lt;br&gt;Each amount of distribution is rounded down to the nearest integer in mochas.&lt;br&gt;Note: the changes will apply &lt;b&gt;only after&lt;/b&gt; you click the OK button.</string>
      </property>
     </widget>
    </item>

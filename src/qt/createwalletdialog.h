@@ -32,6 +32,8 @@ public:
     /** Passphrase when encryptWallet() is true; empty otherwise. Cleared after read in createWallet(). */
     QString passphrase() const;
     void secureClearPassphrases();
+    /** Prefer legacy HD (descriptors off) for BIP39 restore / empty restore targets. */
+    void setForMnemonicRestore(bool enabled = true);
 
 private Q_SLOTS:
     void updateOkButton();

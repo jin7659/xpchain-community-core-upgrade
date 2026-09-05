@@ -97,6 +97,17 @@ bool CreateWalletDialog::descriptors() const
     return ui->descriptor_cb->isChecked();
 }
 
+void CreateWalletDialog::setForMnemonicRestore(bool enabled)
+{
+    if (!enabled) return;
+    ui->descriptor_cb->setChecked(false);
+    ui->descriptor_cb->setToolTip(tr(
+        "BIP39 mnemonic restore requires a legacy HD keypath wallet. "
+        "Descriptor wallets cannot import this mnemonic seed."));
+    ui->disable_privkeys_cb->setChecked(false);
+    ui->disable_privkeys_cb->setEnabled(false);
+}
+
 bool CreateWalletDialog::encryptWallet() const
 {
     return ui->encrypt_wallet_cb->isChecked();

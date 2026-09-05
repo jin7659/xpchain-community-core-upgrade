@@ -383,7 +383,7 @@ QVariant MintingTableModel::data(const QModelIndex &index, int role) const
                 unit = tr("days");
             }
 
-            QString str = QString(tr("You have %1 chance to find a POS block if you mint %2 %3 at current difficulty."));
+            QString str = QString(tr("You have %1 chance to find a PoS block if you stake %2 %3 at current difficulty."));
             return str.arg(index.data().toString().toUtf8().constData()).arg(interval).arg(unit);
         }
         break;
@@ -521,7 +521,7 @@ QVariant MintingTableModel::headerData(int section, Qt::Orientation orientation,
             case CoinDay:
                 return tr("Coin age in the output.");
             case MintProbability:
-                return tr("Chance to mint a block within given time interval.");
+                return tr("Chance to stake a block within the given time interval.");
             case MintReward:
                 return tr("The size of the potential rewards if the block is found at the beginning and the end given time interval.");
             }

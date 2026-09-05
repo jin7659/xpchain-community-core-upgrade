@@ -46,7 +46,7 @@ WalletSetupDialog::WalletSetupDialog(QWidget* parent)
 
     m_btnCreate = addChoice(
         tr("Create empty wallet"),
-        tr("New wallet without a mnemonic. Use for watch-only or advanced import."));
+        tr("New wallet without a mnemonic. Use for watch-only, advanced import, or as a clean BIP39 restore target (leave Descriptor unchecked)."));
     m_btnGenerate = addChoice(
         tr("Generate & backup mnemonic"),
         tr("Create a new BIP39 seed, confirm the backup, then create a seeded wallet."));

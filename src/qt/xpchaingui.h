@@ -133,6 +133,7 @@ private:
     QAction* decryptForMintingAction = nullptr;
     QAction* backupWalletAction = nullptr;
     QAction* changePassphraseAction = nullptr;
+    QAction* lockWalletAction = nullptr;
     QAction* aboutQtAction = nullptr;
     QAction* openRPCConsoleAction = nullptr;
     QAction* openAction = nullptr;
@@ -280,8 +281,10 @@ private Q_SLOTS:
     void showDebugWindowActivateConsole();
     /** Create a new wallet */
     void createWallet();
+    void createWalletInternal(bool for_mnemonic_restore);
     /** Show unified wallet setup chooser */
     void walletSetup();
+    void lockWallet();
     /** Generate BIP39 mnemonic, confirm backup, create seeded wallet */
     void generateMnemonicWallet();
     /** Restore wallet using BIP39 mnemonic */

@@ -57,7 +57,7 @@
       <item>
        <widget class="QLabel" name="labelBDBWarningText">
         <property name="text">
-         <string>⚠️ This wallet uses the legacy Berkeley DB format. Migrate to the modern SQLite format for enhanced security and performance.</string>
+         <string>This wallet uses the legacy Berkeley DB format. Migrate to the modern SQLite format for better security and performance.</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -220,7 +220,7 @@
                <cursorShape>IBeamCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>Mined balance in watch-only addresses that has not yet matured</string>
+               <string>Staked or mined balance in watch-only addresses that has not yet matured</string>
               </property>
               <property name="text">
                <string notr="true">0.000 000 00 XPC</string>
@@ -278,7 +278,7 @@
                <cursorShape>IBeamCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>Mined balance that has not yet matured</string>
+               <string>Staked or mined balance that has not yet matured</string>
               </property>
               <property name="text">
                <string notr="true">0.000 000 00 XPC</string>

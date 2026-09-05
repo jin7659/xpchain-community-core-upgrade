@@ -114,7 +114,7 @@ void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent)
     widget->setFont(fixedPitchFont());
     // We don't want translators to use own addresses in translations
     // and this is the only place, where this address is supplied.
-    widget->setPlaceholderText(QObject::tr("Enter a XPChain address (e.g. %1)").arg(
+    widget->setPlaceholderText(QObject::tr("Enter an XPChain address (e.g. %1)").arg(
         QString::fromStdString(DummyAddress(Params()))));
     widget->setValidator(new XPChainAddressEntryValidator(parent));
     widget->setCheckValidator(new XPChainAddressCheckValidator(parent));
