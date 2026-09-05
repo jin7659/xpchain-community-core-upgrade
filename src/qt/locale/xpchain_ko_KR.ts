@@ -5416,12 +5416,6 @@ Modern descriptor wallet (Taproot-ready). Uncheck Descriptor only for BIP39 rest
 최신 디스크립터 지갑(탭루트 지원). BIP39 복원 대상일 때만 Descriptor를 해제하세요.</translation>
     </message>
     <message>
-        <source>Generate &amp; backup mnemonic
-BIP39 seed compatible with XPChain web / mobile recovery.</source>
-        <translation>니모닉 생성 및 백업
-XPChain 웹/모바일 복구와 호환되는 BIP39 시드입니다.</translation>
-    </message>
-    <message>
         <source>Restore from mnemonic
 Import an existing BIP39 phrase into a legacy HD wallet.</source>
         <translation>니모닉으로 복원
@@ -5442,10 +5436,6 @@ wallets 디렉터리에 있는 지갑을 불러옵니다.</translation>
         <translation>이 지갑을 설정하는 방법을 선택하세요. 파일 → 지갑 설정에서 이 대화상자를 다시 열거나, 파일 → 고급에서 개별 생성 / 열기 / 니모닉 작업을 사용할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Create a new BIP39 seed, confirm the backup, then create a seeded wallet.</source>
-        <translation>새 BIP39 시드를 만들고 백업을 확인한 뒤, 시드가 적용된 지갑을 생성합니다.</translation>
-    </message>
-    <message>
         <source>Load a wallet that already exists on disk.</source>
         <translation>디스크에 이미 있는 지갑을 불러옵니다.</translation>
     </message>
@@ -5456,6 +5446,16 @@ wallets 디렉터리에 있는 지갑을 불러옵니다.</translation>
     <message>
         <source>Set Up Wallet</source>
         <translation>지갑 설정</translation>
+    </message>
+    <message>
+        <source>Create wallet with new mnemonic
+Generate a BIP39 seed, back it up, then create a new seeded wallet.</source>
+        <translation>새 니모닉으로 지갑 만들기
+BIP39 시드를 생성·백업한 뒤, 그 시드로 새 지갑을 만듭니다.</translation>
+    </message>
+    <message>
+        <source>Starts a new wallet: generate a BIP39 seed, confirm the backup, then create a wallet from that seed. Does not attach a mnemonic to an existing wallet.</source>
+        <translation>새 지갑을 만듭니다. BIP39 시드를 생성하고 백업을 확인한 뒤, 그 시드로 지갑을 생성합니다. 기존 지갑에 니모닉을 붙이는 기능이 아닙니다.</translation>
     </message>
 </context>
 <context>
