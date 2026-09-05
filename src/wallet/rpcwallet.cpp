@@ -5,6 +5,7 @@
 
 #include <amount.h>
 #include <chain.h>
+#include <chainparams.h>
 #include <consensus/validation.h>
 #include <core_io.h>
 #include <httpserver.h>
@@ -145,6 +146,14 @@ static std::string LabelFromValue(const UniValue& value)
     return label;
 }
 
+//! Reject an explicitly requested address type that consensus does not protect yet.
+static void CheckOutputTypeAvailable(OutputType type)
+{
+    if (type == OutputType::BECH32M && !TaprootOutputsProtected()) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Taproot (bech32m) addresses are not available until block %d. Coins sent to a bech32m address before Taproot activates are spendable by anyone.", Params().GetConsensus().TaprootHeight));
+    }
+}
+
 static UniValue getnewaddress(const JSONRPCRequest& request)
 {
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
@@ -162,7 +171,7 @@ static UniValue getnewaddress(const JSONRPCRequest& request)
             "so payments received with the address will be associated with 'label'.\n"
             "\nArguments:\n"
             "1. \"label\"          (string, optional) The label name for the address to be linked to. If not provided, the default label \"\" is used. It can also be set to the empty string \"\" to represent the default label. The label does not need to exist, it will be created if there is no label by the given name.\n"
-            "2. \"address_type\"   (string, optional) The address type to use. Options are \"legacy\", \"p2sh-segwit\", and \"bech32\". Default is set by -addresstype.\n"
+            "2. \"address_type\"   (string, optional) The address type to use. Options are \"legacy\", \"p2sh-segwit\", \"bech32\", and \"bech32m\" (rejected until Taproot activates). Default is set by -addresstype.\n"
             "\nResult:\n"
             "\"address\"    (string) The new xpchain address\n"
             "\nExamples:\n"
@@ -181,11 +190,12 @@ static UniValue getnewaddress(const JSONRPCRequest& request)
     if (!request.params[0].isNull())
         label = LabelFromValue(request.params[0]);
 
-    OutputType output_type = pwallet->m_default_address_type;
+    OutputType output_type = ProtectedOutputType(pwallet->m_default_address_type);
     if (!request.params[1].isNull()) {
         if (!ParseOutputType(request.params[1].get_str(), output_type)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("Unknown address type '%s'", request.params[1].get_str()));
         }
+        CheckOutputTypeAvailable(output_type);
     }
 
     if (!pwallet->IsLocked()) {
@@ -273,7 +283,7 @@ static UniValue getrawchangeaddress(const JSONRPCRequest& request)
             "\nReturns a new XPChain address, for receiving change.\n"
             "This is for use with raw transactions, NOT normal use.\n"
             "\nArguments:\n"
-            "1. \"address_type\"           (string, optional) The address type to use. Options are \"legacy\", \"p2sh-segwit\", and \"bech32\". Default is set by -changetype.\n"
+            "1. \"address_type\"           (string, optional) The address type to use. Options are \"legacy\", \"p2sh-segwit\", \"bech32\", and \"bech32m\" (rejected until Taproot activates). Default is set by -changetype.\n"
             "\nResult:\n"
             "\"address\"    (string) The address\n"
             "\nExamples:\n"
@@ -291,11 +301,12 @@ static UniValue getrawchangeaddress(const JSONRPCRequest& request)
         pwallet->TopUpKeyPool();
     }
 
-    OutputType output_type = pwallet->m_default_change_type != OutputType::CHANGE_AUTO ? pwallet->m_default_change_type : pwallet->m_default_address_type;
+    OutputType output_type = ProtectedOutputType(pwallet->m_default_change_type != OutputType::CHANGE_AUTO ? pwallet->m_default_change_type : pwallet->m_default_address_type);
     if (!request.params[0].isNull()) {
         if (!ParseOutputType(request.params[0].get_str(), output_type)) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("Unknown address type '%s'", request.params[0].get_str()));
         }
+        CheckOutputTypeAvailable(output_type);
     }
 
     CReserveKey reservekey(pwallet);
@@ -3823,6 +3834,7 @@ void FundTransaction(CWallet* const pwallet, CMutableTransaction& tx, CAmount& f
             if (!ParseOutputType(options["change_type"].get_str(), *coinControl.m_change_type)) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("Unknown change type '%s'", options["change_type"].get_str()));
             }
+            CheckOutputTypeAvailable(*coinControl.m_change_type);
         }
 
         if (options.exists("includeWatching"))
@@ -3912,7 +3924,7 @@ static UniValue fundrawtransaction(const JSONRPCRequest& request)
                             "   {\n"
                             "     \"changeAddress\"          (string, optional, default pool address) The xpchain address to receive the change\n"
                             "     \"changePosition\"         (numeric, optional, default random) The index of the change output\n"
-                            "     \"change_type\"            (string, optional) The output type to use. Only valid if changeAddress is not specified. Options are \"legacy\", \"p2sh-segwit\", and \"bech32\". Default is set by -changetype.\n"
+                            "     \"change_type\"            (string, optional) The output type to use. Only valid if changeAddress is not specified. Options are \"legacy\", \"p2sh-segwit\", \"bech32\", and \"bech32m\" (rejected until Taproot activates). Default is set by -changetype.\n"
                             "     \"includeWatching\"        (boolean, optional, default false) Also select inputs which are watch only\n"
                             "     \"lockUnspents\"           (boolean, optional, default false) Lock selected unspent outputs\n"
                             "     \"feeRate\"                (numeric, optional, default not set: makes wallet determine the fee) Set a specific fee rate in " + CURRENCY_UNIT + "/kB\n"
@@ -5001,7 +5013,7 @@ UniValue walletcreatefundedpsbt(const JSONRPCRequest& request)
                             "   {\n"
                             "     \"changeAddress\"          (string, optional, default pool address) The xpchain address to receive the change\n"
                             "     \"changePosition\"         (numeric, optional, default random) The index of the change output\n"
-                            "     \"change_type\"            (string, optional) The output type to use. Only valid if changeAddress is not specified. Options are \"legacy\", \"p2sh-segwit\", and \"bech32\". Default is set by -changetype.\n"
+                            "     \"change_type\"            (string, optional) The output type to use. Only valid if changeAddress is not specified. Options are \"legacy\", \"p2sh-segwit\", \"bech32\", and \"bech32m\" (rejected until Taproot activates). Default is set by -changetype.\n"
                             "     \"includeWatching\"        (boolean, optional, default false) Also select inputs which are watch only\n"
                             "     \"lockUnspents\"           (boolean, optional, default false) Lock selected unspent outputs\n"
                             "     \"feeRate\"                (numeric, optional, default not set: makes wallet determine the fee) Set a specific fee rate in " + CURRENCY_UNIT + "/kB\n"

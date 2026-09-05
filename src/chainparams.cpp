@@ -80,7 +80,10 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 0;
         consensus.BIP66Height = 0;
-        consensus.TaprootHeight = 3000000;
+        // Taproot (BIP341, BIP342) activates at a fixed height. Below it, nodes
+        // that predate Taproot support accept any spend of a witness v1 output,
+        // so the height must stay in the future until the network has upgraded.
+        consensus.TaprootHeight = 4200000;
         consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 60;
@@ -199,7 +202,7 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 0;
         consensus.BIP66Height = 0;
-        consensus.TaprootHeight = 0;
+        consensus.TaprootHeight = 0; // Active from genesis on testnet
         consensus.powLimit = uint256S("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 60;
