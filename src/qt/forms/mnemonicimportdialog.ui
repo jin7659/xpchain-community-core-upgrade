@@ -152,7 +152,7 @@
      <item>
       <widget class="QPushButton" name="createEmptyWalletButton">
        <property name="toolTip">
-        <string>Close this dialog, then use File → Create Wallet for a clean restore target.</string>
+        <string>Close this dialog, then use File → Set Up Wallet (or File → Advanced → Create Wallet) for a clean restore target.</string>
        </property>
        <property name="text">
         <string>Create empty wallet first…</string>

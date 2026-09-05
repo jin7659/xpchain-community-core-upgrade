@@ -24,7 +24,8 @@ WalletSetupDialog::WalletSetupDialog(QWidget* parent)
     QVBoxLayout* layout = new QVBoxLayout(this);
 
     QLabel* intro = new QLabel(
-        tr("Choose how to set up this wallet. You can also use the File menu later."), this);
+        tr("Choose how to set up this wallet. You can reopen this dialog from File → Set Up Wallet, "
+           "or use File → Advanced for individual create / open / mnemonic actions."), this);
     intro->setWordWrap(true);
     layout->addWidget(intro);
 
