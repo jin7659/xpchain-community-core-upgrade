@@ -43,14 +43,17 @@
 #include <QAbstractItemView>
 #include <QApplication>
 #include <QClipboard>
+#include <QColor>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDesktopWidget>
 #include <QDoubleValidator>
+#include <QFile>
 #include <QFileDialog>
 #include <QFont>
 #include <QKeyEvent>
 #include <QLineEdit>
+#include <QPalette>
 #include <QSettings>
 #include <QTextDocument> // for Qt::mightBeRichText
 #include <QThread>
@@ -945,6 +948,52 @@ qreal calculateIdealFontSize(int width, const QString& text, QFont font, qreal m
         font_size -= 0.5;
     }
     return font_size;
+}
+
+QString getThemeSetting()
+{
+    QSettings settings;
+    const QString theme = settings.value("theme", "dark").toString();
+    if (theme == "light" || theme == "dark" || theme == "system")
+        return theme;
+    return QStringLiteral("dark");
+}
+
+bool isSystemDarkTheme()
+{
+#ifdef Q_OS_WIN
+    // Windows 10+ AppsUseLightTheme: 0 = dark, 1 = light
+    QSettings personalize(
+        QStringLiteral("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"),
+        QSettings::NativeFormat);
+    if (personalize.contains(QStringLiteral("AppsUseLightTheme"))) {
+        return personalize.value(QStringLiteral("AppsUseLightTheme")).toInt() == 0;
+    }
+#endif
+    // Qt5-portable heuristic: compare window background lightness
+    const QColor bg = QApplication::palette().color(QPalette::Window);
+    return bg.lightness() < 128;
+}
+
+QString effectiveTheme(const QString& themePreference)
+{
+    const QString pref = themePreference.isEmpty() ? getThemeSetting() : themePreference;
+    if (pref == QLatin1String("system"))
+        return isSystemDarkTheme() ? QStringLiteral("dark") : QStringLiteral("light");
+    if (pref == QLatin1String("light"))
+        return QStringLiteral("light");
+    return QStringLiteral("dark");
+}
+
+void applyTheme(const QString& themePreference)
+{
+    const QString name = effectiveTheme(themePreference);
+    QFile qssFile(QStringLiteral(":/styles/%1").arg(name));
+    if (qssFile.open(QFile::ReadOnly | QFile::Text)) {
+        qApp->setStyleSheet(QLatin1String(qssFile.readAll()));
+    } else {
+        qApp->setStyleSheet(QString());
+    }
 }
 
 void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)

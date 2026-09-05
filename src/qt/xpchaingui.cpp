@@ -93,12 +93,9 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
     platformStyle(_platformStyle),
     m_networkStyle(networkStyle)
 {
-    // 다크 모드 QSS 전역 주입
-    QFile qssFile(":/styles/dark");
-    if (qssFile.open(QFile::ReadOnly)) {
-        QString qssContent = QLatin1String(qssFile.readAll());
-        qApp->setStyleSheet(qssContent);
-    }
+    // Apply saved theme (dark / light / system) before building widgets
+    GUIUtil::applyTheme();
+    qApp->installEventFilter(this);
     QSettings settings;
     if (!restoreGeometry(settings.value("MainWindowGeometry").toByteArray())) {
         // Restore failed (perhaps missing setting), center the window
@@ -633,6 +630,9 @@ void XPChainGUI::setClientModel(ClientModel *_clientModel)
 
             // initialize the disable state of the tray icon with the current value in the model.
             setTrayIconVisible(optionsModel->getHideTrayIcon());
+
+            connect(optionsModel, &OptionsModel::themeChanged, this, &XPChainGUI::updateTheme);
+            updateTheme(optionsModel->getTheme());
         }
     } else {
         // Disable possibility to show main window via action
@@ -1186,6 +1186,11 @@ void XPChainGUI::changeEvent(QEvent *e)
 #endif
 }
 
+void XPChainGUI::updateTheme(const QString& theme)
+{
+    GUIUtil::applyTheme(theme);
+}
+
 void XPChainGUI::closeEvent(QCloseEvent *event)
 {
 #ifndef Q_OS_MAC // Ignored on Mac
@@ -1265,6 +1270,15 @@ void XPChainGUI::dropEvent(QDropEvent *event)
 
 bool XPChainGUI::eventFilter(QObject *object, QEvent *event)
 {
+    // When following the system theme, re-apply if the OS palette changes.
+    if (event->type() == QEvent::ApplicationPaletteChange) {
+        const QString pref = clientModel && clientModel->getOptionsModel()
+            ? clientModel->getOptionsModel()->getTheme()
+            : GUIUtil::getThemeSetting();
+        if (pref == QLatin1String("system")) {
+            GUIUtil::applyTheme(pref);
+        }
+    }
     // Catch status tip events
     if (event->type() == QEvent::StatusTip)
     {

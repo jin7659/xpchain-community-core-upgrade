@@ -106,6 +106,9 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
             ui->lang->addItem(locale.nativeLanguageName() + QString(" (") + langStr + QString(")"), QVariant(langStr));
         }
     }
+    ui->theme->addItem(tr("Match system"), QVariant("system"));
+    ui->theme->addItem(tr("Light"), QVariant("light"));
+    ui->theme->addItem(tr("Dark"), QVariant("dark"));
     ui->thirdPartyTxUrls->setPlaceholderText("https://example.com/tx/%s");
 
     ui->unit->setModel(new XPChainUnits(this));
@@ -208,6 +211,7 @@ void OptionsDialog::setMapper()
 
     /* Display */
     mapper->addMapping(ui->lang, OptionsModel::Language);
+    mapper->addMapping(ui->theme, OptionsModel::Theme);
     mapper->addMapping(ui->unit, OptionsModel::DisplayUnit);
     mapper->addMapping(ui->thirdPartyTxUrls, OptionsModel::ThirdPartyTxUrls);
 }
