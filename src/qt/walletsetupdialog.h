@@ -8,6 +8,7 @@
 #include <QDialog>
 
 class QAbstractButton;
+class QPushButton;
 
 /** First-run style chooser: create, generate mnemonic, restore, or open. */
 class WalletSetupDialog : public QDialog
@@ -35,6 +36,7 @@ private:
     QAbstractButton* m_btnGenerate;
     QAbstractButton* m_btnRestore;
     QAbstractButton* m_btnOpen;
+    QPushButton* m_okButton;
 };
 
 #endif // XPCHAIN_QT_WALLETSETUPDIALOG_H

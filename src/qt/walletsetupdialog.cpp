@@ -16,7 +16,8 @@ WalletSetupDialog::WalletSetupDialog(QWidget* parent)
       m_btnCreate(nullptr),
       m_btnGenerate(nullptr),
       m_btnRestore(nullptr),
-      m_btnOpen(nullptr)
+      m_btnOpen(nullptr),
+      m_okButton(nullptr)
 {
     setWindowTitle(tr("Set Up Wallet"));
     setMinimumWidth(420);
@@ -74,13 +75,17 @@ WalletSetupDialog::WalletSetupDialog(QWidget* parent)
         tr("Open existing wallet file\nLoad a wallet already present in the wallets directory."),
         tr("Load a wallet that already exists on disk."));
 
-    m_btnGenerate->setChecked(true);
-    m_choice = GenerateMnemonic;
+    // No default selection — user must pick explicitly (OK stays disabled until then).
+    group->setExclusive(true);
 
     connect(group, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(onChoiceClicked(QAbstractButton*)));
 
     QDialogButtonBox* buttons = new QDialogButtonBox(
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    m_okButton = buttons->button(QDialogButtonBox::Ok);
+    if (m_okButton) {
+        m_okButton->setEnabled(false);
+    }
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     layout->addWidget(buttons);
@@ -96,5 +101,8 @@ void WalletSetupDialog::onChoiceClicked(QAbstractButton* button)
         m_choice = RestoreMnemonic;
     } else if (button == m_btnOpen) {
         m_choice = OpenExisting;
+    }
+    if (m_okButton) {
+        m_okButton->setEnabled(true);
     }
 }
