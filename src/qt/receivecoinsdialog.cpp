@@ -110,7 +110,8 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         
         // Taproot outputs are spendable by anyone until the activation height, so
         // the option only appears once consensus enforces the Taproot rules.
-        if (!model->isLegacy() && TaprootOutputsProtected()) {
+        // Taproot requires descriptor wallets; isLegacy() only means Berkeley DB.
+        if (model->wallet().isDescriptor() && TaprootOutputsProtected()) {
             ui->addressType->addItem(tr("Bech32m (Taproot)"), (int)OutputType::BECH32M);
         }
 
@@ -142,8 +143,8 @@ void ReceiveCoinsDialog::clear()
     // Default to wallet's default address type
     if (model) {
         OutputType default_type = ProtectedOutputType(model->wallet().getDefaultAddressType());
-        if (model->isLegacy() && default_type == OutputType::BECH32M) {
-            default_type = OutputType::BECH32; // Fallback for legacy
+        if (!model->wallet().isDescriptor() && default_type == OutputType::BECH32M) {
+            default_type = OutputType::BECH32; // Fallback for non-descriptor wallets
         }
 
         int index = ui->addressType->findData((int)default_type);
@@ -179,10 +180,10 @@ void ReceiveCoinsDialog::on_receiveButton_clicked()
     QString label = ui->reqLabel->text();
     /* Generate new receiving address */
     OutputType address_type = (OutputType)ui->addressType->currentData().toInt();
-    if (address_type == OutputType::BECH32M && model->isLegacy()) {
+    if (address_type == OutputType::BECH32M && !model->wallet().isDescriptor()) {
         QMessageBox::warning(this, tr("Address generation failure"),
-            tr("Taproot (Bech32m) addresses are not supported by legacy Berkeley DB wallets. "
-               "Please create a new modern (SQLite) wallet to use Taproot features."));
+            tr("Taproot (Bech32m) addresses require a descriptor wallet. "
+               "Create a new descriptor wallet to use Taproot features."));
         return;
     }
     if (address_type == OutputType::BECH32M && !TaprootOutputsProtected()) {

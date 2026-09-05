@@ -36,7 +36,7 @@
       <bool>true</bool>
      </property>
      <property name="text">
-      <string>Copy this wallet into a new SQLite file. The original Berkeley DB file is kept.</string>
+      <string>Upgrade this wallet to SQLite in place. The original Berkeley DB file is kept as a .legacy.bak backup.</string>
      </property>
     </widget>
    </item>

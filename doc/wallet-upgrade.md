@@ -76,7 +76,7 @@ Keep the written phrase offline. It is not recoverable from the wallet database 
 
 ### Restore an existing mnemonic (GUI)
 
-1. For a **clean recovery**, create a **new empty wallet** first (**File → Set Up Wallet → Create empty wallet**, or **File → Advanced → Create Wallet**), or use **Create empty wallet first…** in the restore dialog.
+1. For a **clean recovery**, create a **new empty wallet** first (**File → Set Up Wallet → Create empty wallet**, or **File → Advanced → Create Wallet**), or use **Create empty wallet first…** in the restore dialog. The GUI restore helpers leave **Descriptor** unchecked — BIP39 import needs a legacy HD wallet, not a descriptor wallet.
 2. Open **File → Set Up Wallet → Restore from mnemonic** (or **File → Advanced → Restore Wallet from Mnemonic**).
 3. Enter your mnemonic words (word count and BIP39 list hints appear as you type).
 4. Leave **Recover from XPChain web wallet (BIP44)** checked when recovering from the XPChain web wallet.

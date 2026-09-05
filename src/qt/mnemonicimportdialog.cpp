@@ -176,7 +176,7 @@ void MnemonicImportDialog::updateBackupWarning()
            "(“%1”). A backup is written to <code>%2/backup_before_mnemonic_*.dat</code> "
            "before import.<br/><br/>"
            "For a clean recovery, create a new empty wallet first "
-           "(button below, or File → Set Up Wallet / File → Advanced → Create Wallet), then restore into that wallet.")
+           "(button below, or File → Set Up Wallet / File → Advanced → Create Wallet (Descriptor unchecked)), then restore into that wallet.")
             .arg(model ? QString::fromStdString(model->wallet().getWalletName()) : tr("(unknown)"))
             .arg(dir));
 }
@@ -296,6 +296,13 @@ void MnemonicImportDialog::on_importButton_clicked()
         return;
     }
 
+    if (model->wallet().isDescriptor()) {
+        setStatus(StatusError, tr(
+            "This is a descriptor wallet. BIP39 mnemonic restore needs a legacy HD wallet.\n"
+            "Create an empty non-descriptor wallet first (Create empty wallet / File → Advanced → Create Wallet with Descriptor unchecked), then restore into it."));
+        return;
+    }
+
     QByteArray mnemonicBytes = ui->mnemonicEdit->toPlainText().trimmed().toUtf8();
     QByteArray passphraseBytes = ui->passphraseEdit->text().toUtf8();
     SecureString mnemonicSec(mnemonicBytes.constData(), mnemonicBytes.constData() + mnemonicBytes.size());
@@ -394,7 +401,7 @@ void MnemonicImportDialog::on_importButton_clicked()
                        "Keys were imported along path m/44'/%1'/0'/change/index (up to %2 addresses per chain).\n\n"
                        "A full blockchain rescan has started. Keep the wallet open until the progress dialog finishes.\n"
                        "You will get a notification when the rescan completes.\n\n"
-                       "Note: proof-of-stake rewards require coins to mature for several days before minting.")
+                       "Note: proof-of-stake rewards require coins to mature for several days before staking.")
                       .arg(options.bip44_coin_type)
                       .arg(options.gap_limit);
     } else {

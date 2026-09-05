@@ -264,7 +264,7 @@ void XPChainGUI::createActions()
     walletSetupAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("Set &Up Wallet..."), this);
     walletSetupAction->setStatusTip(tr("Create, generate a mnemonic, restore, or open a wallet"));
 
-    generateMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Generate & Backup Mnemonic..."), this);
+    generateMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Generate && Backup Mnemonic..."), this);
     generateMnemonicAction->setStatusTip(tr("Generate a new BIP39 mnemonic, confirm backup, and create a wallet seeded from it"));
 
     importMnemonicAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Restore Wallet from Mnemonic..."), this);
@@ -290,7 +290,7 @@ void XPChainGUI::createActions()
     tabGroup->addAction(overviewAction);
 
     sendCoinsAction = new QAction(platformStyle->SingleColorIcon(":/icons/send"), tr("&Send"), this);
-    sendCoinsAction->setStatusTip(tr("Send coins to a XPChain address"));
+    sendCoinsAction->setStatusTip(tr("Send coins to an XPChain address"));
     sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
     sendCoinsAction->setCheckable(true);
     sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
@@ -370,10 +370,13 @@ void XPChainGUI::createActions()
     backupWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/filesave"), tr("&Backup Wallet..."), this);
     backupWalletAction->setStatusTip(tr("Backup wallet to another location"));
     changePassphraseAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Change Passphrase..."), this);
+    lockWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_closed"), tr("&Lock Wallet"), this);
+    lockWalletAction->setStatusTip(tr("Lock spending keys. Staking and sending will require unlock."));
+    lockWalletAction->setEnabled(false);
     changePassphraseAction->setStatusTip(tr("Change the passphrase for spending keys and encrypted wallet files"));
-    signMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/edit"), tr("Sign &message..."), this);
+    signMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/edit"), tr("Sign &Message..."), this);
     signMessageAction->setStatusTip(tr("Sign messages with your XPChain addresses to prove you own them"));
-    verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify message..."), this);
+    verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify Message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified XPChain addresses"));
 
     openRPCConsoleAction = new QAction(platformStyle->TextColorIcon(":/icons/debugwindow"), tr("&Debug window"), this);
@@ -389,7 +392,7 @@ void XPChainGUI::createActions()
     openAction = new QAction(platformStyle->TextColorIcon(":/icons/open"), tr("Open &URI..."), this);
     openAction->setStatusTip(tr("Open a xpchain: URI or payment request"));
 
-    openStakingRewardSettingsAction = new QAction(platformStyle->TextColorIcon(":/icons/options"), tr("Staking reward settings..."), this);
+    openStakingRewardSettingsAction = new QAction(platformStyle->TextColorIcon(":/icons/options"), tr("&Staking Reward Settings..."), this);
     openStakingRewardSettingsAction->setStatusTip(tr("Modify settings for staking reward"));
 
     showHelpMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/info"), tr("&Command-line options"), this);
@@ -423,6 +426,7 @@ void XPChainGUI::createActions()
         connect(decryptForMintingAction, SIGNAL(triggered(bool)), walletFrame, SLOT(decryptForMinting(bool)));
         connect(backupWalletAction, SIGNAL(triggered()), walletFrame, SLOT(backupWallet()));
         connect(changePassphraseAction, SIGNAL(triggered()), walletFrame, SLOT(changePassphrase()));
+        connect(lockWalletAction, SIGNAL(triggered()), this, SLOT(lockWallet()));
         connect(signMessageAction, SIGNAL(triggered()), this, SLOT(gotoSignMessageTab()));
         connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(gotoVerifyMessageTab()));
         connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
@@ -455,9 +459,11 @@ void XPChainGUI::createMenuBar()
         file->addAction(walletSetupAction);
         file->addSeparator();
         file->addAction(closeWalletAction);
-        file->addAction(migrateWalletAction);
-        file->addAction(backupAllWalletsAction);
+        file->addSeparator();
         file->addAction(backupWalletAction);
+        file->addAction(backupAllWalletsAction);
+        file->addSeparator();
+        file->addAction(migrateWalletAction);
         file->addAction(openAction);
         file->addSeparator();
         QMenu *fileAdvanced = file->addMenu(tr("&Advanced"));
@@ -480,6 +486,7 @@ void XPChainGUI::createMenuBar()
     {
         settings->addAction(encryptWalletAction);
         settings->addAction(decryptForMintingAction);
+        settings->addAction(lockWalletAction);
         settings->addAction(changePassphraseAction);
         settings->addAction(openStakingRewardSettingsAction);
         settings->addSeparator();
@@ -495,7 +502,8 @@ void XPChainGUI::createMenuBar()
     }
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
-    if(walletFrame)
+    // Debug window lives under Tools when the wallet UI is available.
+    if(!walletFrame)
     {
         help->addAction(openRPCConsoleAction);
     }
@@ -688,10 +696,13 @@ void XPChainGUI::setWalletActionsEnabled(bool enabled)
     mintingAction->setEnabled(enabled);
     openStakingRewardSettingsAction->setEnabled(enabled);
     importMnemonicAction->setEnabled(enabled);
-    migrateWalletAction->setEnabled(enabled);
+    // Enabled for Berkeley DB wallets only; setWalletFormatStatus() updates this.
+    migrateWalletAction->setEnabled(false);
+    if (backupAllWalletsAction) backupAllWalletsAction->setEnabled(enabled);
     if (closeWalletAction) closeWalletAction->setEnabled(enabled);
     if (importAddressAction) importAddressAction->setEnabled(enabled);
     if (rescanWalletAction) rescanWalletAction->setEnabled(enabled);
+    if (lockWalletAction) lockWalletAction->setEnabled(false);
 }
 
 void XPChainGUI::createTrayIcon(const NetworkStyle *networkStyle)
@@ -737,7 +748,7 @@ void XPChainGUI::createTrayIconMenu()
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addAction(openRPCConsoleAction);
-#ifndef Q_OS_MAC // This is built-인 on Mac
+#ifndef Q_OS_MAC // This is built-in on Mac
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 #endif
@@ -1249,6 +1260,7 @@ void XPChainGUI::setEncryptionStatus(int status)
         encryptWalletAction->setEnabled(true);
         decryptForMintingAction->setEnabled(false);
         decryptForMintingAction->setChecked(false);
+        if (lockWalletAction) lockWalletAction->setEnabled(false);
         break;
     case WalletModel::Unlocked:
         labelWalletEncryptionIcon->show();
@@ -1267,6 +1279,7 @@ void XPChainGUI::setEncryptionStatus(int status)
         encryptWalletAction->setEnabled(false); // TODO: decrypt currently not supported
         decryptForMintingAction->setEnabled(fWalletUnlockMintOnly);
         decryptForMintingAction->setChecked(fWalletUnlockMintOnly);
+        if (lockWalletAction) lockWalletAction->setEnabled(true);
         break;
     case WalletModel::Locked:
         labelWalletEncryptionIcon->show();
@@ -1279,6 +1292,7 @@ void XPChainGUI::setEncryptionStatus(int status)
         encryptWalletAction->setEnabled(false); // TODO: decrypt currently not supported
         decryptForMintingAction->setEnabled(true);
         decryptForMintingAction->setChecked(false);
+        if (lockWalletAction) lockWalletAction->setEnabled(false);
         break;
     }
 }
@@ -1311,6 +1325,7 @@ void XPChainGUI::setWalletFormatStatus(WalletModel* walletModel)
     if (!walletModel) {
         labelWalletFormatStatus->hide();
         if (labelStakingIcon) labelStakingIcon->hide();
+        if (migrateWalletAction) migrateWalletAction->setEnabled(false);
         return;
     }
 
@@ -1360,6 +1375,9 @@ void XPChainGUI::setWalletFormatStatus(WalletModel* walletModel)
         tr("Type: %1").arg(watch_only ? tr("watch-only") : (descriptor ? tr("descriptor") : tr("legacy HD"))) + QStringLiteral("<br/>") +
         keys_line + click_hint);
     labelWalletFormatStatus->show();
+    if (migrateWalletAction) {
+        migrateWalletAction->setEnabled(!sqlite);
+    }
 }
 
 void XPChainGUI::updateStakingIcon()
@@ -1396,10 +1414,12 @@ void XPChainGUI::updateStakingIcon()
     } else if (isLocked && !fWalletUnlockMintOnly) {
         tooltip = tr("Staking is paused: wallet is locked. Unlock for staking to enable.");
     } else if (!hasBalance) {
-        tooltip = tr("Staking is waiting: no mature coins available in this wallet.");
+        tooltip = tr("Staking is waiting: no spendable balance available in this wallet.");
     } else {
+        // Balance alone cannot prove stake maturity; avoid over-claiming "active".
         stakingActive = true;
-        tooltip = tr("Staking is active.\nYour wallet is participating in Proof-of-Stake consensus.");
+        tooltip = tr("Staking may be active if this wallet has mature coins unlocked for staking.\n"
+                     "Open the Staking tab to check coin age and estimated odds.");
     }
 
     if (stakingActive) {
@@ -1674,7 +1694,7 @@ void XPChainGUI::walletSetup()
             if (reply != QMessageBox::Yes) {
                 return;
             }
-            createWallet();
+            createWalletInternal(true);
             view = walletFrame->currentWalletView();
             if (!view || !view->getWalletModel()) {
                 return;
@@ -1690,12 +1710,42 @@ void XPChainGUI::walletSetup()
 #endif
 }
 
+void XPChainGUI::lockWallet()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame) return;
+    WalletView* view = walletFrame->currentWalletView();
+    if (!view) return;
+    WalletModel* model = view->getWalletModel();
+    if (!model) return;
+    if (model->getEncryptionStatus() != WalletModel::Unlocked) {
+        return;
+    }
+    if (model->setWalletLocked(true)) {
+        fWalletUnlockMintOnly = false;
+        if (decryptForMintingAction) decryptForMintingAction->setChecked(false);
+        updateWalletStatus();
+    } else {
+        QMessageBox::warning(this, tr("Lock Wallet"),
+                             tr("Failed to lock the wallet."));
+    }
+#endif
+}
+
 void XPChainGUI::createWallet()
+{
+    createWalletInternal(false);
+}
+
+void XPChainGUI::createWalletInternal(bool for_mnemonic_restore)
 {
     // Ensure wallets directory exists so new wallets are created there
     QDir().mkpath(QString::fromStdString(GetDataDir().string()) + "/wallets");
 
     CreateWalletDialog dlg(this);
+    if (for_mnemonic_restore) {
+        dlg.setForMnemonicRestore(true);
+    }
     if(dlg.exec())
     {
         const QString name = dlg.walletName();
@@ -1844,7 +1894,7 @@ void XPChainGUI::importMnemonic()
     dlg.exec();
 
     if (create_empty) {
-        createWallet();
+        createWalletInternal(true);
         WalletView* view = walletFrame->currentWalletView();
         if (view && view->getWalletModel()) {
             MnemonicImportDialog again(this, view->getWalletModel());
@@ -2058,7 +2108,8 @@ void XPChainGUI::openWallet()
     // Ensure the directory exists
     QDir().mkpath(wallets_dir);
 
-    QString path = QFileDialog::getOpenFileName(this, tr("Open Wallet"), wallets_dir, tr("Wallets (*.dat * wallet.dat);;All Files (*)"));
+    QString path = QFileDialog::getOpenFileName(this, tr("Open Wallet"), wallets_dir,
+        tr("Wallet files (wallet.dat *.dat *.sqlite);;All Files (*)"));
 
     if (!path.isEmpty()) {
         // If user picked a file like /path/to/wallet.dat, we want the parent directory name if it's in a subfolder,

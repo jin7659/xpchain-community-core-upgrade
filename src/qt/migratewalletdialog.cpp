@@ -43,8 +43,18 @@ MigrateWalletDialog::MigrateWalletDialog(QWidget* parent, WalletModel* _model) :
         ui->destinationEdit->setEnabled(false);
         ui->backupCheckBox->setEnabled(false);
         ui->loadNewCheckBox->setEnabled(false);
+        ui->replaceSourceCheckBox->setEnabled(false);
+        ui->overwriteCheckBox->setEnabled(false);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     }
+
+    // In-process wallet swap after migrate is unsafe; always restart instead.
+    ui->loadNewCheckBox->setChecked(false);
+    ui->loadNewCheckBox->setEnabled(false);
+    ui->loadNewCheckBox->setText(tr("XPChain will quit after migration so you can restart with SQLite (required)."));
+    ui->loadNewCheckBox->setToolTip(tr(
+        "Loading the migrated wallet in this same process is disabled to avoid Berkeley DB / staking thread issues. "
+        "XPChain quits after a successful migration; reopen the app to use the SQLite wallet."));
 
     connect(ui->replaceSourceCheckBox, &QCheckBox::toggled, this, &MigrateWalletDialog::onReplaceSourceToggled);
     connect(ui->destinationEdit, &QLineEdit::textChanged, this, &MigrateWalletDialog::updateOkButton);
@@ -93,10 +103,14 @@ void MigrateWalletDialog::onReplaceSourceToggled(bool checked)
     ui->destinationEdit->setEnabled(!checked);
     ui->overwriteCheckBox->setEnabled(!checked);
     if (checked) {
+        ui->summaryLabel->setText(
+            tr("Upgrade this wallet to SQLite in place. The original Berkeley DB file is kept as a .legacy.bak backup."));
         ui->destinationHintLabel->setText(
             tr("The current wallet will be upgraded to SQLite in-place, and the original will be backed up as .legacy.bak.<br/>"
                "<b>This guarantees SQLite is automatically recognized on next start.</b>"));
     } else {
+        ui->summaryLabel->setText(
+            tr("Copy this wallet into a new SQLite file. The original Berkeley DB file is kept."));
         ui->destinationHintLabel->setText(
             tr("Must end with .sqlite. Relative paths are under the wallets data directory."));
     }
