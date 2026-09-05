@@ -2440,7 +2440,7 @@ You can open it again later from File → Set Up Wallet or File → Advanced →
     </message>
     <message numerus="yes">
         <source>%n day(s)</source>
-        <translation><numerusform>&amp;n 일</numerusform></translation>
+        <translation><numerusform>%n 일</numerusform></translation>
     </message>
     <message numerus="yes">
         <source>%n week(s)</source>
@@ -3834,7 +3834,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of "100 mochas per
     <name>TransactionDesc</name>
     <message numerus="yes">
         <source>Open for %n more block(s)</source>
-        <translation>%n개 블록 더 열린 상태</translation>
+        <translation><numerusform>%n개 블록 더 열린 상태</numerusform></translation>
     </message>
     <message>
         <source>Open until %1</source>
@@ -3914,7 +3914,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of "100 mochas per
     </message>
     <message numerus="yes">
         <source>matures in %n more block(s)</source>
-        <translation>%n개 블록 후 성숙</translation>
+        <translation><numerusform>%n개 블록 후 성숙</numerusform></translation>
     </message>
     <message>
         <source>not accepted</source>
