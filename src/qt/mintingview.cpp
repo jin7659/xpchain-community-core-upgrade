@@ -9,10 +9,13 @@
 #include <qt/transactionrecord.h>
 #include <qt/mintingtablemodel.h>
 #include <qt/walletmodel.h>
+#include <interfaces/wallet.h>
 
 #include <ui_interface.h>
 
 #include <QComboBox>
+#include <QFrame>
+#include <QPushButton>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
@@ -25,7 +28,8 @@
 #include <QVBoxLayout>
 
 MintingView::MintingView(const PlatformStyle *platformStyle, QWidget *parent) :
-    QWidget(parent), model(0), mintingView(0), mintingProxyModel(0)
+    QWidget(parent), model(0), mintingView(0), mintingProxyModel(0),
+    guidanceFrame(0), guidanceLabel(0), guidanceButton(0)
 {
     QHBoxLayout *hlayout = new QHBoxLayout();
     hlayout->setContentsMargins(0,0,0,0);
@@ -80,6 +84,23 @@ MintingView::MintingView(const PlatformStyle *platformStyle, QWidget *parent) :
     QVBoxLayout *vlayout = new QVBoxLayout(this);
     vlayout->setContentsMargins(0,0,0,0);
     vlayout->setSpacing(0);
+
+    guidanceFrame = new QFrame(this);
+    guidanceFrame->setObjectName("stakingGuidanceFrame");
+    guidanceFrame->setStyleSheet(
+        "#stakingGuidanceFrame { background-color: rgba(30, 120, 200, 40); border: 1px solid #1f6feb; border-radius: 4px; }"
+        "#stakingGuidanceFrame QLabel { padding: 6px; }"
+        "#stakingGuidanceFrame QPushButton { margin: 6px; }");
+    QHBoxLayout *guidanceLayout = new QHBoxLayout(guidanceFrame);
+    guidanceLabel = new QLabel(guidanceFrame);
+    guidanceLabel->setWordWrap(true);
+    guidanceButton = new QPushButton(guidanceFrame);
+    guidanceButton->setVisible(false);
+    connect(guidanceButton, SIGNAL(clicked()), this, SLOT(guidanceButtonClicked()));
+    guidanceLayout->addWidget(guidanceLabel, 1);
+    guidanceLayout->addWidget(guidanceButton, 0, Qt::AlignTop);
+    guidanceFrame->setVisible(false);
+    vlayout->addWidget(guidanceFrame);
 
     QTableView *view = new QTableView(this);
     vlayout->addLayout(hlayout);
@@ -171,7 +192,44 @@ void MintingView::setModel(WalletModel *_model)
                 MintingTableModel::CoinDay,100);
         mintingView->horizontalHeader()->resizeSection(
                 MintingTableModel::MintProbability, 120);
+
+        connect(_model, SIGNAL(encryptionStatusChanged()), this, SLOT(updateGuidanceBanner()));
     }
+    updateGuidanceBanner();
+}
+
+void MintingView::updateGuidanceBanner()
+{
+    if (!guidanceFrame || !guidanceLabel || !guidanceButton) {
+        return;
+    }
+    if (!model) {
+        guidanceFrame->setVisible(false);
+        return;
+    }
+
+    if (model->getEncryptionStatus() == WalletModel::Locked) {
+        guidanceLabel->setText(tr("This wallet is locked. Unlock for staking to include your coins in Proof-of-Stake."));
+        guidanceButton->setText(tr("Unlock for Staking…"));
+        guidanceButton->setVisible(true);
+        guidanceFrame->setVisible(true);
+        return;
+    }
+
+    const interfaces::WalletBalances balances = model->wallet().getBalances();
+    if (balances.balance <= 0) {
+        guidanceLabel->setText(tr("No spendable balance yet. Receive coins, wait for confirmations, then return here to check staking odds."));
+        guidanceButton->setVisible(false);
+        guidanceFrame->setVisible(true);
+        return;
+    }
+
+    guidanceFrame->setVisible(false);
+}
+
+void MintingView::guidanceButtonClicked()
+{
+    Q_EMIT unlockForStakingRequested();
 }
 
 void MintingView::chooseMintingInterval(int idx)

@@ -48,6 +48,8 @@ public:
 Q_SIGNALS:
     /** Notify that the user has requested more information about the out-of-sync warning */
     void requestedSyncWarningInfo();
+    /** Empty-state CTA: open the Set Up Wallet flow */
+    void setupWalletClicked();
 
 private:
     QStackedWidget *walletStack;

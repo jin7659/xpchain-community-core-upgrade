@@ -13,6 +13,8 @@
 
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 WalletFrame::WalletFrame(const PlatformStyle *_platformStyle, XPChainGUI *_gui) :
     QFrame(_gui),
@@ -26,9 +28,23 @@ WalletFrame::WalletFrame(const PlatformStyle *_platformStyle, XPChainGUI *_gui) 
     walletFrameLayout->setContentsMargins(0,0,0,0);
     walletFrameLayout->addWidget(walletStack);
 
+    QWidget *noWalletPage = new QWidget(this);
+    QVBoxLayout *noWalletLayout = new QVBoxLayout(noWalletPage);
+    noWalletLayout->setAlignment(Qt::AlignCenter);
     QLabel *noWallet = new QLabel(tr("No wallet has been loaded."));
     noWallet->setAlignment(Qt::AlignCenter);
-    walletStack->addWidget(noWallet);
+    noWallet->setWordWrap(true);
+    QLabel *noWalletHint = new QLabel(tr("Create, restore, or open a wallet to get started."));
+    noWalletHint->setAlignment(Qt::AlignCenter);
+    noWalletHint->setWordWrap(true);
+    QPushButton *setupButton = new QPushButton(tr("Set Up Wallet…"), noWalletPage);
+    setupButton->setMinimumWidth(180);
+    connect(setupButton, &QPushButton::clicked, this, &WalletFrame::setupWalletClicked);
+    noWalletLayout->addWidget(noWallet);
+    noWalletLayout->addWidget(noWalletHint);
+    noWalletLayout->addSpacing(12);
+    noWalletLayout->addWidget(setupButton, 0, Qt::AlignHCenter);
+    walletStack->addWidget(noWalletPage);
 }
 
 WalletFrame::~WalletFrame()

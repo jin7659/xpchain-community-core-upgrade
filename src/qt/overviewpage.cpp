@@ -237,6 +237,21 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
         ui->listTransactions->setModel(filter.get());
         ui->listTransactions->setModelColumn(TransactionTableModel::ToAddress);
+        if (ui->labelEmptyTransactions) {
+            ui->labelEmptyTransactions->setVisible(filter->rowCount() == 0);
+            connect(filter.get(), &QAbstractItemModel::rowsInserted, this, [this]() {
+                if (ui->labelEmptyTransactions && filter)
+                    ui->labelEmptyTransactions->setVisible(filter->rowCount() == 0);
+            });
+            connect(filter.get(), &QAbstractItemModel::rowsRemoved, this, [this]() {
+                if (ui->labelEmptyTransactions && filter)
+                    ui->labelEmptyTransactions->setVisible(filter->rowCount() == 0);
+            });
+            connect(filter.get(), &QAbstractItemModel::modelReset, this, [this]() {
+                if (ui->labelEmptyTransactions && filter)
+                    ui->labelEmptyTransactions->setVisible(filter->rowCount() == 0);
+            });
+        }
 
         // Keep up to date with wallet
         interfaces::Wallet& wallet = model->wallet();
@@ -250,6 +265,7 @@ void OverviewPage::setWalletModel(WalletModel *model)
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
     } else {
         ui->frameBDBWarning->setVisible(false);
+        if (ui->labelEmptyTransactions) ui->labelEmptyTransactions->setVisible(false);
     }
 
     if (stakingRewardChart) {

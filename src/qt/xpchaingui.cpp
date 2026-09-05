@@ -52,10 +52,16 @@
 #include <QDateTime>
 #include <QDesktopWidget>
 #include <QFileDialog>
+#include <QFileInfo>
+#include <QDir>
 #include <QDragEnterEvent>
+#include <QLabel>
 #include <QListWidget>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QPushButton>
 #include <QUrl>
 #include <QMimeData>
 #include <QProgressDialog>
@@ -111,6 +117,7 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
     {
         /** Create wallet frame and make it the central widget */
         walletFrame = new WalletFrame(_platformStyle, this);
+        connect(walletFrame, &WalletFrame::setupWalletClicked, this, &XPChainGUI::walletSetup);
         setCentralWidget(walletFrame);
     } else
 #endif // ENABLE_WALLET
@@ -151,7 +158,7 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
     frameBlocksLayout->setContentsMargins(3,0,3,0);
     frameBlocksLayout->setSpacing(3);
     unitDisplayControl = new UnitDisplayStatusBarControl(platformStyle);
-    labelWalletEncryptionIcon = new QLabel();
+    labelWalletEncryptionIcon = new GUIUtil::ClickableLabel();
     labelWalletHDStatusIcon = new QLabel();
     GUIUtil::ClickableLabel* clickableFormatStatus = new GUIUtil::ClickableLabel();
     labelWalletFormatStatus = clickableFormatStatus;
@@ -160,6 +167,8 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
         "background-color: transparent; border: 1px solid #1f6feb; "
         "border-radius: 3px; padding: 1px 6px; }");
     labelWalletFormatStatus->hide();
+    labelStakingIcon = new GUIUtil::ClickableLabel();
+    labelStakingIcon->hide();
     connect(clickableFormatStatus, &GUIUtil::ClickableLabel::clicked, [this]() {
         if (walletFrame && walletFrame->currentWalletView()) {
             WalletModel* model = walletFrame->currentWalletView()->getWalletModel();
@@ -168,8 +177,33 @@ XPChainGUI::XPChainGUI(interfaces::Node& node, const PlatformStyle *_platformSty
             }
         }
     });
-    labelStakingIcon = new QLabel();
-    labelStakingIcon->hide();
+    connect(qobject_cast<GUIUtil::ClickableLabel*>(labelWalletEncryptionIcon), &GUIUtil::ClickableLabel::clicked, [this]() {
+#ifdef ENABLE_WALLET
+        if (!walletFrame) return;
+        WalletView* view = walletFrame->currentWalletView();
+        if (!view || !view->getWalletModel()) return;
+        const int enc = view->getWalletModel()->getEncryptionStatus();
+        if (enc == WalletModel::Locked) {
+            unlockWallet();
+        } else if (enc == WalletModel::Unlocked) {
+            lockWallet();
+        }
+#endif
+    });
+    connect(qobject_cast<GUIUtil::ClickableLabel*>(labelStakingIcon), &GUIUtil::ClickableLabel::clicked, [this]() {
+#ifdef ENABLE_WALLET
+        if (!walletFrame) return;
+        WalletView* view = walletFrame->currentWalletView();
+        if (!view || !view->getWalletModel()) return;
+        WalletModel* model = view->getWalletModel();
+        if (model->getEncryptionStatus() == WalletModel::Locked) {
+            // Staking-only unlock is the common click path from the staking icon.
+            if (decryptForMintingAction) decryptForMintingAction->trigger();
+        } else {
+            gotoMintingPage();
+        }
+#endif
+    });
     labelProxyIcon = new QLabel();
     connectionsControl = new GUIUtil::ClickableLabel();
     labelBlocksIcon = new GUIUtil::ClickableLabel();
@@ -373,6 +407,9 @@ void XPChainGUI::createActions()
     lockWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_closed"), tr("&Lock Wallet"), this);
     lockWalletAction->setStatusTip(tr("Lock spending keys. Staking and sending will require unlock."));
     lockWalletAction->setEnabled(false);
+    unlockWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_open"), tr("&Unlock Wallet..."), this);
+    unlockWalletAction->setStatusTip(tr("Unlock spending keys for sending and signing. Prefer Unlock for Staking Only if you only need to stake."));
+    unlockWalletAction->setEnabled(false);
     changePassphraseAction->setStatusTip(tr("Change the passphrase for spending keys and encrypted wallet files"));
     signMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/edit"), tr("Sign &Message..."), this);
     signMessageAction->setStatusTip(tr("Sign messages with your XPChain addresses to prove you own them"));
@@ -427,6 +464,7 @@ void XPChainGUI::createActions()
         connect(backupWalletAction, SIGNAL(triggered()), walletFrame, SLOT(backupWallet()));
         connect(changePassphraseAction, SIGNAL(triggered()), walletFrame, SLOT(changePassphrase()));
         connect(lockWalletAction, SIGNAL(triggered()), this, SLOT(lockWallet()));
+        connect(unlockWalletAction, SIGNAL(triggered()), this, SLOT(unlockWallet()));
         connect(signMessageAction, SIGNAL(triggered()), this, SLOT(gotoSignMessageTab()));
         connect(verifyMessageAction, SIGNAL(triggered()), this, SLOT(gotoVerifyMessageTab()));
         connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
@@ -486,6 +524,7 @@ void XPChainGUI::createMenuBar()
     {
         settings->addAction(encryptWalletAction);
         settings->addAction(decryptForMintingAction);
+        settings->addAction(unlockWalletAction);
         settings->addAction(lockWalletAction);
         settings->addAction(changePassphraseAction);
         settings->addAction(openStakingRewardSettingsAction);
@@ -625,7 +664,7 @@ bool XPChainGUI::addWallet(WalletModel *walletModel)
     display_name.remove("<br>"); // Potential fix for the observed UI glitch
     setWalletActionsEnabled(true);
     m_wallet_selector->addItem(display_name, name);
-    if (m_wallet_selector->count() == 2) {
+    if (m_wallet_selector->count() >= 1) {
         m_wallet_selector_label_action->setVisible(true);
         m_wallet_selector_action->setVisible(true);
     }
@@ -642,9 +681,9 @@ bool XPChainGUI::removeWallet(WalletModel* walletModel)
     m_wallet_selector->removeItem(index);
     if (m_wallet_selector->count() == 0) {
         setWalletActionsEnabled(false);
-    } else if (m_wallet_selector->count() == 1) {
-        m_wallet_selector_label_action->setVisible(false);
-        m_wallet_selector_action->setVisible(false);
+    } else if (m_wallet_selector->count() >= 1) {
+        m_wallet_selector_label_action->setVisible(true);
+        m_wallet_selector_action->setVisible(true);
     }
     updateWindowTitle();
     rpcConsole->removeWallet(walletModel);
@@ -703,6 +742,7 @@ void XPChainGUI::setWalletActionsEnabled(bool enabled)
     if (importAddressAction) importAddressAction->setEnabled(enabled);
     if (rescanWalletAction) rescanWalletAction->setEnabled(enabled);
     if (lockWalletAction) lockWalletAction->setEnabled(false);
+    if (unlockWalletAction) unlockWalletAction->setEnabled(false);
 }
 
 void XPChainGUI::createTrayIcon(const NetworkStyle *networkStyle)
@@ -1175,6 +1215,14 @@ void XPChainGUI::showEvent(QShowEvent *event)
     openRPCConsoleAction->setEnabled(true);
     aboutAction->setEnabled(true);
     optionsAction->setEnabled(true);
+
+#ifdef ENABLE_WALLET
+    // First show with no wallet loaded: open Set Up Wallet once.
+    if (walletFrame && !walletFrame->currentWalletView() && !m_offered_wallet_setup) {
+        m_offered_wallet_setup = true;
+        QTimer::singleShot(0, this, SLOT(walletSetup()));
+    }
+#endif
 }
 
 #ifdef ENABLE_WALLET
@@ -1261,6 +1309,7 @@ void XPChainGUI::setEncryptionStatus(int status)
         decryptForMintingAction->setEnabled(false);
         decryptForMintingAction->setChecked(false);
         if (lockWalletAction) lockWalletAction->setEnabled(false);
+        if (unlockWalletAction) unlockWalletAction->setEnabled(false);
         break;
     case WalletModel::Unlocked:
         labelWalletEncryptionIcon->show();
@@ -1268,11 +1317,12 @@ void XPChainGUI::setEncryptionStatus(int status)
             labelWalletEncryptionIcon->setPixmap(platformStyle->SingleColorIcon(":/icons/lock_staking").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
             labelWalletEncryptionIcon->setToolTip(
                 tr("Wallet file is open. Spending keys are <b>unlocked for staking only</b> — "
-                   "sending still requires a full unlock."));
+                   "sending still requires a full unlock.<br/>Click to lock the wallet."));
         } else {
             labelWalletEncryptionIcon->setPixmap(platformStyle->SingleColorIcon(":/icons/lock_open").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
             labelWalletEncryptionIcon->setToolTip(
-                tr("Wallet file is open and spending keys are <b>unlocked</b> (sending and signing allowed)."));
+                tr("Wallet file is open and spending keys are <b>unlocked</b> (sending and signing allowed).<br/>"
+                   "Click to lock the wallet."));
         }
         encryptWalletAction->setChecked(true);
         changePassphraseAction->setEnabled(true);
@@ -1280,19 +1330,23 @@ void XPChainGUI::setEncryptionStatus(int status)
         decryptForMintingAction->setEnabled(fWalletUnlockMintOnly);
         decryptForMintingAction->setChecked(fWalletUnlockMintOnly);
         if (lockWalletAction) lockWalletAction->setEnabled(true);
+        // Fully unlocked: no unlock needed. Staking-only unlock can still open full unlock via menu.
+        if (unlockWalletAction) unlockWalletAction->setEnabled(fWalletUnlockMintOnly);
         break;
     case WalletModel::Locked:
         labelWalletEncryptionIcon->show();
         labelWalletEncryptionIcon->setPixmap(platformStyle->SingleColorIcon(":/icons/lock_closed").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
         labelWalletEncryptionIcon->setToolTip(
             tr("Wallet is <b>encrypted</b>. The wallet <b>file may already be open</b>, "
-               "but spending keys are <b>locked</b> — unlock before sending or signing."));
+               "but spending keys are <b>locked</b> — unlock before sending or signing.<br/>"
+               "Click to unlock."));
         encryptWalletAction->setChecked(true);
         changePassphraseAction->setEnabled(true);
         encryptWalletAction->setEnabled(false); // TODO: decrypt currently not supported
         decryptForMintingAction->setEnabled(true);
         decryptForMintingAction->setChecked(false);
         if (lockWalletAction) lockWalletAction->setEnabled(false);
+        if (unlockWalletAction) unlockWalletAction->setEnabled(true);
         break;
     }
 }
@@ -1732,6 +1786,18 @@ void XPChainGUI::lockWallet()
 #endif
 }
 
+void XPChainGUI::unlockWallet()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame) return;
+    // Clear staking-only flag so AskPassphrase Unlock is a full spend unlock.
+    fWalletUnlockMintOnly = false;
+    if (decryptForMintingAction) decryptForMintingAction->setChecked(false);
+    walletFrame->unlockWallet();
+    updateWalletStatus();
+#endif
+}
+
 void XPChainGUI::createWallet()
 {
     createWalletInternal(false);
@@ -2102,39 +2168,80 @@ void XPChainGUI::migrateWallet()
 void XPChainGUI::openWallet()
 {
 #ifdef ENABLE_WALLET
-    // Try default wallet directory
     QString wallets_dir = QString::fromStdString(GetWalletDir().string());
-    
-    // Ensure the directory exists
     QDir().mkpath(wallets_dir);
 
-    QString path = QFileDialog::getOpenFileName(this, tr("Open Wallet"), wallets_dir,
-        tr("Wallet files (wallet.dat *.dat *.sqlite);;All Files (*)"));
+    QDir dir(wallets_dir);
+    QStringList candidates;
 
-    if (!path.isEmpty()) {
-        // If user picked a file like /path/to/wallet.dat, we want the parent directory name if it's in a subfolder,
-        // or just the filename if it's a standalone SQLite wallet.
+    // Named wallet directories (BDB wallet.dat or SQLite wallet.sqlite)
+    for (const QFileInfo& info : dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
+        const QString path = info.absoluteFilePath();
+        if (QFile::exists(path + QStringLiteral("/wallet.dat")) ||
+            QFile::exists(path + QStringLiteral("/wallet.sqlite"))) {
+            candidates << info.fileName();
+        }
+    }
+    // Standalone files directly under wallets/
+    for (const QFileInfo& info : dir.entryInfoList(QStringList() << "*.dat" << "*.sqlite" << "wallet.dat", QDir::Files, QDir::Name)) {
+        candidates << info.fileName();
+    }
+    candidates.removeDuplicates();
+    candidates.sort(Qt::CaseInsensitive);
+
+    QString wallet_name;
+    if (!candidates.isEmpty()) {
+        QDialog dlg(this);
+        dlg.setWindowTitle(tr("Open Wallet"));
+        QVBoxLayout* layout = new QVBoxLayout(&dlg);
+        layout->addWidget(new QLabel(tr("Wallets found in:\n%1").arg(wallets_dir), &dlg));
+        QListWidget* list = new QListWidget(&dlg);
+        list->addItems(candidates);
+        list->setCurrentRow(0);
+        layout->addWidget(list);
+        QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+        QPushButton* browse = buttons->addButton(tr("Browse…"), QDialogButtonBox::ActionRole);
+        layout->addWidget(buttons);
+        connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+        connect(list, &QListWidget::itemDoubleClicked, &dlg, &QDialog::accept);
+        bool browse_clicked = false;
+        connect(browse, &QPushButton::clicked, &dlg, [&]() { browse_clicked = true; dlg.reject(); });
+        if (dlg.exec() == QDialog::Accepted && list->currentItem()) {
+            wallet_name = list->currentItem()->text();
+        } else if (!browse_clicked) {
+            return;
+        }
+    }
+
+    if (wallet_name.isEmpty()) {
+        QString path = QFileDialog::getOpenFileName(this, tr("Open Wallet"), wallets_dir,
+            tr("Wallet files (wallet.dat *.dat *.sqlite);;All Files (*)"));
+        if (path.isEmpty()) return;
         QFileInfo fileInfo(path);
-        QString wallet_name;
-        
         if (fileInfo.fileName() == "wallet.dat") {
-            // Traditional BDB wallet in a folder
             wallet_name = fileInfo.absoluteDir().dirName();
         } else {
-            // Standalone SQLite wallet or other
             wallet_name = fileInfo.fileName();
         }
-
-        UniValue params(UniValue::VARR);
-        params.push_back(wallet_name.toStdString());
-
-        try {
-            m_node.executeRpc("loadwallet", params, "");
-        } catch (const UniValue& e) {
-            QMessageBox::critical(this, tr("Open Wallet Failed"), QString::fromStdString(e["message"].get_str()));
-        } catch (const std::exception& e) {
-            QMessageBox::critical(this, tr("Open Wallet Failed"), QString::fromStdString(e.what()));
+        // Prefer loading by name relative to wallets dir when possible
+        const QString wallets_abs = QDir(wallets_dir).absolutePath();
+        if (fileInfo.absoluteFilePath().startsWith(wallets_abs)) {
+            // keep wallet_name as relative leaf
         }
+    }
+
+    UniValue params(UniValue::VARR);
+    params.push_back(wallet_name.toStdString());
+    try {
+        m_node.executeRpc("loadwallet", params, "");
+    } catch (const UniValue& e) {
+        QString err = e.exists("message") ? QString::fromStdString(e["message"].get_str()) : QString::fromStdString(e.write());
+        QMessageBox::critical(this, tr("Open Wallet Failed"),
+            tr("Could not open wallet \"%1\".\n\n%2\n\nWallets must live under:\n%3")
+                .arg(wallet_name, err, wallets_dir));
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, tr("Open Wallet Failed"), QString::fromStdString(e.what()));
     }
 #endif
 }
@@ -2155,7 +2262,8 @@ void XPChainGUI::backupAllWallets()
         // Remove characters that are illegal in filenames
         name.remove(QRegExp("[\\\\/:*?\"<>|]"));
         
-        QString filename = dir + "/" + name + "_backup.dat";
+        const bool sqlite = wallet->databaseFormat() == "sqlite";
+        QString filename = dir + "/" + name + (sqlite ? "_backup.sqlite" : "_backup.dat");
         if (wallet->backupWallet(filename.toStdString())) {
             success_count++;
         } else {

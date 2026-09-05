@@ -16,9 +16,11 @@ QT_BEGIN_NAMESPACE
 class QComboBox;
 class QDateTimeEdit;
 class QFrame;
+class QLabel;
 class QLineEdit;
 class QMenu;
 class QModelIndex;
+class QPushButton;
 class QSignalMapper;
 class QTableView;
 QT_END_NAMESPACE
@@ -45,6 +47,11 @@ private:
     QComboBox *mintingCombo;
     MintingFilterProxy *mintingProxyModel;
     QMenu *contextMenu;
+    QFrame *guidanceFrame;
+    QLabel *guidanceLabel;
+    QPushButton *guidanceButton;
+
+    void updateGuidanceBanner();
 
 private Q_SLOTS:
     void contextualMenu(const QPoint &);
@@ -52,8 +59,10 @@ private Q_SLOTS:
     void copyTransactionId();
     void showHideAddress();
     void showHideTxID();
+    void guidanceButtonClicked();
 
 Q_SIGNALS:
+    void unlockForStakingRequested();
 
 public Q_SLOTS:
     void exportClicked();

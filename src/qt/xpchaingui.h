@@ -73,6 +73,7 @@ public:
     bool removeWallet(WalletModel* walletModel);
     void removeAllWallets();
 #endif // ENABLE_WALLET
+    bool m_offered_wallet_setup = false;
     bool enableWallet = false;
 
 protected:
@@ -134,6 +135,7 @@ private:
     QAction* backupWalletAction = nullptr;
     QAction* changePassphraseAction = nullptr;
     QAction* lockWalletAction = nullptr;
+    QAction* unlockWalletAction = nullptr;
     QAction* aboutQtAction = nullptr;
     QAction* openRPCConsoleAction = nullptr;
     QAction* openAction = nullptr;
@@ -285,6 +287,7 @@ private Q_SLOTS:
     /** Show unified wallet setup chooser */
     void walletSetup();
     void lockWallet();
+    void unlockWallet();
     /** Generate BIP39 mnemonic, confirm backup, create seeded wallet */
     void generateMnemonicWallet();
     /** Restore wallet using BIP39 mnemonic */
