@@ -171,6 +171,37 @@ void ReceiveCoinsDialog::updateDisplayUnit()
     }
 }
 
+
+void ReceiveCoinsDialog::on_quickCopyButton_clicked()
+{
+    if (!model || !model->getOptionsModel() || !model->getAddressTableModel())
+        return;
+
+    OutputType address_type = (OutputType)ui->addressType->currentData().toInt();
+    if (address_type == OutputType::BECH32M && !model->wallet().isDescriptor()) {
+        QMessageBox::warning(this, tr("Address generation failure"),
+            tr("Taproot (Bech32m) addresses require a descriptor wallet. "
+               "Create a new descriptor wallet to use Taproot features."));
+        return;
+    }
+    if (address_type == OutputType::BECH32M && !TaprootOutputsProtected()) {
+        QMessageBox::warning(this, tr("Address generation failure"),
+            tr("Taproot (Bech32m) addresses are not available until Taproot activates at block %1.")
+                .arg(Params().GetConsensus().TaprootHeight));
+        return;
+    }
+
+    const QString address = model->getAddressTableModel()->addRow(AddressTableModel::Receive, "", "", address_type);
+    if (address.isEmpty()) {
+        QMessageBox::warning(this, tr("Address generation failure"),
+            tr("Could not generate a new receiving address."));
+        return;
+    }
+    GUIUtil::setClipboard(address);
+    QMessageBox::information(this, tr("Address copied"),
+        tr("New receiving address copied to the clipboard:\n%1").arg(address));
+}
+
 void ReceiveCoinsDialog::on_receiveButton_clicked()
 {
     if(!model || !model->getOptionsModel() || !model->getAddressTableModel() || !model->getRecentRequestsTableModel())

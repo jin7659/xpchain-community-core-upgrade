@@ -39,22 +39,23 @@ WalletSetupDialog::WalletSetupDialog(QWidget* parent)
         btn->setStyleSheet(
             "QPushButton { text-align: left; padding: 10px 12px; }"
             "QPushButton:checked { font-weight: 600; }");
+        btn->setMinimumHeight(52);
         layout->addWidget(btn);
         group->addButton(btn);
         return btn;
     };
 
     m_btnCreate = addChoice(
-        tr("Create empty wallet"),
+        tr("Create empty wallet\nModern descriptor wallet (Taproot-ready). Uncheck Descriptor only for BIP39 restore targets."),
         tr("New wallet without a mnemonic. Use for watch-only, advanced import, or as a clean BIP39 restore target (leave Descriptor unchecked)."));
     m_btnGenerate = addChoice(
-        tr("Generate & backup mnemonic"),
+        tr("Generate & backup mnemonic\nBIP39 seed compatible with XPChain web / mobile recovery."),
         tr("Create a new BIP39 seed, confirm the backup, then create a seeded wallet."));
     m_btnRestore = addChoice(
-        tr("Restore from mnemonic"),
+        tr("Restore from mnemonic\nImport an existing BIP39 phrase into a legacy HD wallet."),
         tr("Import keys from an existing BIP39 mnemonic into a wallet."));
     m_btnOpen = addChoice(
-        tr("Open existing wallet file"),
+        tr("Open existing wallet file\nLoad a wallet already present in the wallets directory."),
         tr("Load a wallet that already exists on disk."));
 
     m_btnGenerate->setChecked(true);

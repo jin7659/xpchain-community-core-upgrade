@@ -558,6 +558,19 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QLabel" name="labelEmptyTransactions">
+            <property name="text">
+             <string>No transactions yet. Use Receive to get your first deposit address.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+</item>
          </layout>
         </widget>
        </item>

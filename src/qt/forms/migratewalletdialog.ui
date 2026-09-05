@@ -112,15 +112,12 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="loadNewCheckBox">
-     <property name="toolTip">
-      <string>Unload the Berkeley DB wallet and open the new SQLite wallet in this session.</string>
+    <widget class="QLabel" name="restartNoticeLabel">
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
      <property name="text">
-      <string>Switch to the migrated SQLite wallet after success</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
+      <string>XPChain will quit after a successful migration. Restart the app to use the SQLite wallet.</string>
      </property>
     </widget>
    </item>

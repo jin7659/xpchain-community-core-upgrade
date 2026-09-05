@@ -65,7 +65,10 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
 
     mintingPage = new QWidget(this);
     QVBoxLayout *vboxMinting = new QVBoxLayout();
-    mintingView = new MintingView(platformStyle, this);;
+    mintingView = new MintingView(platformStyle, this);
+    connect(mintingView, &MintingView::unlockForStakingRequested, this, [this]() {
+        decryptForMinting(true);
+    });
     vboxMinting->addWidget(mintingView);
     mintingPage->setLayout(vboxMinting);
 
@@ -347,9 +350,15 @@ void WalletView::backupWallet()
 {
     if (!walletModel) return;
 
+    QString filter = tr("Wallet Data (*.dat)");
+    QString suffix = "dat";
+    if (walletModel->wallet().databaseFormat() == "sqlite") {
+        filter = tr("SQLite Wallet (*.sqlite);;Wallet Data (*.dat)");
+        suffix = "sqlite";
+    }
     QString filename = GUIUtil::getSaveFileName(this,
         tr("Backup Wallet"), QString(),
-        tr("Wallet Data (*.dat)"), nullptr);
+        filter, nullptr);
 
     if (filename.isEmpty())
         return;

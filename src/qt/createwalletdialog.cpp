@@ -101,6 +101,7 @@ void CreateWalletDialog::setForMnemonicRestore(bool enabled)
 {
     if (!enabled) return;
     ui->descriptor_cb->setChecked(false);
+    ui->descriptor_cb->setEnabled(false);
     ui->descriptor_cb->setToolTip(tr(
         "BIP39 mnemonic restore requires a legacy HD keypath wallet. "
         "Descriptor wallets cannot import this mnemonic seed."));

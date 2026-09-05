@@ -550,42 +550,6 @@
         <translation>블록 따라잡기...</translation>
     </message>
     <message>
-        <source>Date: %1
-</source>
-        <translation>날짜: %1
-</translation>
-    </message>
-    <message>
-        <source>Amount: %1
-</source>
-        <translation>금액: %1
-</translation>
-    </message>
-    <message>
-        <source>Wallet: %1
-</source>
-        <translation>지갑: %1
-</translation>
-    </message>
-    <message>
-        <source>Type: %1
-</source>
-        <translation>종류: %1
-</translation>
-    </message>
-    <message>
-        <source>Label: %1
-</source>
-        <translation>라벨: %1
-</translation>
-    </message>
-    <message>
-        <source>Address: %1
-</source>
-        <translation>주소: %1
-</translation>
-    </message>
-    <message>
         <source>Sent transaction</source>
         <translation>거래 보내기</translation>
     </message>
@@ -740,6 +704,84 @@ Your wallet is participating in Proof-of-Stake consensus.</source>
 Please restart XPChain to use your modern SQLite wallet.</source>
         <translation>SQLite 포맷 업그레이드를 안전하게 완료하기 위해 XPChain을 정상 종료합니다.
 최신 SQLite 지갑을 사용하려면 지갑을 다시 시작해 주세요.</translation>
+    </message>
+    <message>
+        <source>&amp;Unlock Wallet...</source>
+        <translation>지갑 잠금 해제(&amp;U)...</translation>
+    </message>
+    <message>
+        <source>Wallet file is open. Spending keys are &lt;b&gt;unlocked for staking only&lt;/b&gt; — sending still requires a full unlock.&lt;br/&gt;Click to lock the wallet.</source>
+        <translation>지갑 파일이 열려 있습니다. 지출 키는 &lt;b&gt;스테이킹 전용으로 잠금 해제&lt;/b&gt;된 상태입니다 — 보내려면 전체 잠금 해제가 필요합니다.&lt;br/&gt;클릭하면 지갑을 잠급니다.</translation>
+    </message>
+    <message>
+        <source>Wallet file is open and spending keys are &lt;b&gt;unlocked&lt;/b&gt; (sending and signing allowed).&lt;br/&gt;Click to lock the wallet.</source>
+        <translation>지갑 파일이 열려 있고 지출 키가 &lt;b&gt;잠금 해제&lt;/b&gt;되어 있습니다(보내기·서명 가능).&lt;br/&gt;클릭하면 지갑을 잠급니다.</translation>
+    </message>
+    <message>
+        <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt;. The wallet &lt;b&gt;file may already be open&lt;/b&gt;, but spending keys are &lt;b&gt;locked&lt;/b&gt; — unlock before sending or signing.&lt;br/&gt;Click to unlock.</source>
+        <translation>지갑이 &lt;b&gt;암호화&lt;/b&gt;되어 있습니다. 지갑 &lt;b&gt;파일은 이미 열려 있을 수 있지만&lt;/b&gt; 지출 키는 &lt;b&gt;잠겨&lt;/b&gt; 있습니다 — 보내거나 서명하려면 잠금을 해제하세요.&lt;br/&gt;클릭하면 잠금 해제합니다.</translation>
+    </message>
+    <message>
+        <source>Wallets found in:
+%1</source>
+        <translation>다음 위치에서 찾은 지갑:
+%1</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>찾아보기…</translation>
+    </message>
+    <message>
+        <source>Could not open wallet "%1".
+
+%2
+
+Wallets must live under:
+%3</source>
+        <translation>지갑 "%1"을(를) 열 수 없습니다.
+
+%2
+
+지갑은 다음 경로 아래에 있어야 합니다:
+%3</translation>
+    </message>
+    <message>
+        <source>Staking may be active if this wallet has mature coins unlocked for staking.
+Open the Staking tab to check coin age and estimated odds.</source>
+        <translation>이 지갑에 스테이킹용으로 잠금 해제된 성숙 코인이 있으면 스테이킹이 활성화될 수 있습니다.
+코인 나이와 예상 확률은 스테이킹 탭에서 확인하세요.</translation>
+    </message>
+    <message>
+        <source>Staking is waiting: no spendable balance available in this wallet.</source>
+        <translation>스테이킹 대기 중: 이 지갑에 사용 가능한 잔액이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Open Wallet</source>
+        <translation>지갑 열기</translation>
+    </message>
+    <message>
+        <source>Wallet files (wallet.dat *.dat *.sqlite);;All Files (*)</source>
+        <translation>지갑 파일 (wallet.dat *.dat *.sqlite);;모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Unlock spending keys for sending and signing. Prefer Unlock for Staking Only if you only need to stake.</source>
+        <translation>보내기·서명용으로 지출 키의 잠금을 해제합니다. 스테이킹만 필요하면 ‘스테이킹 전용 잠금 해제’를 사용하세요.</translation>
+    </message>
+    <message>
+        <source>&amp;Generate &amp;&amp; Backup Mnemonic...</source>
+        <translation>니모닉 생성 및 백업(&amp;G)...</translation>
+    </message>
+    <message>
+        <source>&amp;Unlock Wallet for Staking Only</source>
+        <translation>스테이킹 전용 지갑 잠금 해제(&amp;U)</translation>
+    </message>
+    <message>
+        <source>Generate a new BIP39 mnemonic, confirm backup, and create a wallet seeded from it</source>
+        <translation>새 BIP39 니모닉을 만들고 백업을 확인한 뒤, 그 시드로 지갑을 생성합니다</translation>
+    </message>
+    <message>
+        <source>Restore keys from a BIP39 mnemonic into the current wallet (prefer a new empty wallet)</source>
+        <translation>BIP39 니모닉에서 키를 현재 지갑으로 복원합니다(새 빈 지갑 사용을 권장)</translation>
     </message>
 </context>
 <context>
@@ -1285,6 +1327,18 @@ Please restart XPChain to use your modern SQLite wallet.</source>
         <source>Could not write to file %1.</source>
         <translation>파일에 기록할 수 없음 %1</translation>
     </message>
+    <message>
+        <source>This wallet is locked. Unlock for staking to include your coins in Proof-of-Stake.</source>
+        <translation>이 지갑은 잠겨 있습니다. 코인을 지분 증명에 포함하려면 스테이킹용으로 잠금을 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Unlock for Staking…</source>
+        <translation>스테이킹용 잠금 해제…</translation>
+    </message>
+    <message>
+        <source>No spendable balance yet. Receive coins, wait for confirmations, then return here to check staking odds.</source>
+        <translation>아직 사용 가능한 잔액이 없습니다. 코인을 받은 뒤 확인을 기다린 다음, 여기로 돌아와 스테이킹 확률을 확인하세요.</translation>
+    </message>
 </context>
 <context>
     <name>ModalOverlay</name>
@@ -1716,6 +1770,10 @@ Please restart XPChain to use your modern SQLite wallet.</source>
     <message>
         <source>Migrate Now…</source>
         <translation>지금 마이그레이션…</translation>
+    </message>
+    <message>
+        <source>No transactions yet. Use Receive to get your first deposit address.</source>
+        <translation>아직 거래가 없습니다. 받기 탭에서 첫 입금 주소를 만드세요.</translation>
     </message>
 </context>
 <context>
@@ -2381,6 +2439,44 @@ Please restart XPChain to use your modern SQLite wallet.</source>
     <message>
         <source>Taproot (Bech32m) addresses are not supported by legacy Berkeley DB wallets. Please create a new modern (SQLite) wallet to use Taproot features.</source>
         <translation>탭루트(Bech32m) 주소는 레거시 Berkeley DB 지갑에서 지원되지 않습니다. 탭루트 기능을 사용하려면 새로운 현대식(SQLite) 지갑을 생성해 주세요.</translation>
+    </message>
+    <message>
+        <source>Taproot (Bech32m) addresses are not available until Taproot activates at block %1.</source>
+        <translation>탭루트(Bech32m) 주소는 블록 %1에서 탭루트가 활성화될 때까지 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Could not generate a new receiving address.</source>
+        <translation>새 수신 주소를 만들 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Create a new receiving address and copy it to the clipboard.</source>
+        <translation>새 수신 주소를 만들어 클립보드에 복사합니다.</translation>
+    </message>
+    <message>
+        <source>Generate &amp;&amp; copy address</source>
+        <translation>주소 생성 및 복사</translation>
+    </message>
+    <message>
+        <source>Address copied</source>
+        <translation>주소가 복사됨</translation>
+    </message>
+    <message>
+        <source>New receiving address copied to the clipboard:
+%1</source>
+        <translation>새 수신 주소가 클립보드에 복사되었습니다:
+%1</translation>
+    </message>
+    <message>
+        <source>Taproot (Bech32m) addresses require a descriptor wallet. Create a new descriptor wallet to use Taproot features.</source>
+        <translation>탭루트(Bech32m) 주소는 디스크립터 지갑이 필요합니다. 탭루트 기능을 사용하려면 새 디스크립터 지갑을 만드세요.</translation>
+    </message>
+    <message>
+        <source>Select the address type to use for the new receiving address. Legacy (Base58), P2SH-SegWit (Base58), SegWit (Bech32), or Taproot (Bech32m).</source>
+        <translation>새 수신 주소에 사용할 주소 형식을 선택하세요. 레거시(Base58), P2SH-SegWit(Base58), SegWit(Bech32), 또는 탭루트(Bech32m).</translation>
+    </message>
+    <message>
+        <source>Taproot (Bech32m) addresses are not available until Taproot activates at block %1. Coins sent to a Bech32m address before then are spendable by anyone.</source>
+        <translation>탭루트(Bech32m) 주소는 블록 %1에서 탭루트가 활성화될 때까지 사용할 수 없습니다. 그 전에 Bech32m 주소로 보낸 코인은 누구나 사용할 수 있습니다.</translation>
     </message>
 </context>
 <context>
@@ -3571,7 +3667,15 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <name>WalletFrame</name>
     <message>
         <source>No wallet has been loaded.</source>
-        <translation>지갑 불러오기가 안됩니다.</translation>
+        <translation>불러온 지갑이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Create, restore, or open a wallet to get started.</source>
+        <translation>시작하려면 지갑을 만들거나, 복원하거나, 열어 주세요.</translation>
+    </message>
+    <message>
+        <source>Set Up Wallet…</source>
+        <translation>지갑 설정…</translation>
     </message>
 </context>
 <context>
@@ -3654,6 +3758,10 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>SQLite Wallet (*.sqlite);;Wallet Data (*.dat)</source>
+        <translation>SQLite 지갑 (*.sqlite);;지갑 데이터 (*.dat)</translation>
     </message>
 </context>
 <context>
@@ -4260,7 +4368,7 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     </message>
     <message>
         <source>Copy this wallet into a new SQLite file. The original Berkeley DB file is kept.</source>
-        <translation>이 지갑을 새 SQLite 파일로 복사합니다. 원본 Berkeley DB 파일은 그대로 보존됩니다.</translation>
+        <translation>이 지갑을 새 SQLite 파일로 복사합니다. 원본 Berkeley DB 파일은 유지됩니다.</translation>
     </message>
     <message>
         <source>Destination</source>
@@ -4317,6 +4425,48 @@ Note:  Since the fee is calculated on a per-byte basis, a fee of &quot;100 mocha
     <message>
         <source>The original wallet file will be safely kept as a backup. Verify balances after migration.</source>
         <translation>원본 지갑 파일은 백업으로 안전하게 보관됩니다. 마이그레이션 완료 후 잔액을 확인해 주세요.</translation>
+    </message>
+    <message>
+        <source>XPChain will quit after a successful migration. Restart the app to use the SQLite wallet.</source>
+        <translation>마이그레이션이 성공하면 XPChain이 종료됩니다. SQLite 지갑을 사용하려면 앱을 다시 시작하세요.</translation>
+    </message>
+</context>
+<context>
+    <name>WalletSetupDialog</name>
+    <message>
+        <source>Create empty wallet
+Modern descriptor wallet (Taproot-ready). Uncheck Descriptor only for BIP39 restore targets.</source>
+        <translation>빈 지갑 만들기
+최신 디스크립터 지갑(탭루트 지원). BIP39 복원 대상일 때만 Descriptor를 해제하세요.</translation>
+    </message>
+    <message>
+        <source>Generate &amp; backup mnemonic
+BIP39 seed compatible with XPChain web / mobile recovery.</source>
+        <translation>니모닉 생성 및 백업
+XPChain 웹/모바일 복구와 호환되는 BIP39 시드입니다.</translation>
+    </message>
+    <message>
+        <source>Restore from mnemonic
+Import an existing BIP39 phrase into a legacy HD wallet.</source>
+        <translation>니모닉으로 복원
+기존 BIP39 구문을 레거시 HD 지갑으로 가져옵니다.</translation>
+    </message>
+    <message>
+        <source>Open existing wallet file
+Load a wallet already present in the wallets directory.</source>
+        <translation>기존 지갑 파일 열기
+wallets 디렉터리에 있는 지갑을 불러옵니다.</translation>
+    </message>
+    <message>
+        <source>Import keys from an existing BIP39 mnemonic into a wallet.</source>
+        <translation>기존 BIP39 니모닉에서 키를 지갑으로 가져옵니다.</translation>
+    </message>
+</context>
+<context>
+    <name>CreateWalletDialog</name>
+    <message>
+        <source>BIP39 mnemonic restore requires a legacy HD keypath wallet. Descriptor wallets cannot import this mnemonic seed.</source>
+        <translation>BIP39 니모닉 복원은 레거시 HD 키경로 지갑이 필요합니다. 디스크립터 지갑에는 이 니모닉 시드를 가져올 수 없습니다.</translation>
     </message>
 </context>
 </TS>

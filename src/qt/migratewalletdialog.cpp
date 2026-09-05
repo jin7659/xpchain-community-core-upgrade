@@ -42,19 +42,11 @@ MigrateWalletDialog::MigrateWalletDialog(QWidget* parent, WalletModel* _model) :
                 .arg(name.toHtmlEscaped()));
         ui->destinationEdit->setEnabled(false);
         ui->backupCheckBox->setEnabled(false);
-        ui->loadNewCheckBox->setEnabled(false);
         ui->replaceSourceCheckBox->setEnabled(false);
         ui->overwriteCheckBox->setEnabled(false);
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     }
 
-    // In-process wallet swap after migrate is unsafe; always restart instead.
-    ui->loadNewCheckBox->setChecked(false);
-    ui->loadNewCheckBox->setEnabled(false);
-    ui->loadNewCheckBox->setText(tr("XPChain will quit after migration so you can restart with SQLite (required)."));
-    ui->loadNewCheckBox->setToolTip(tr(
-        "Loading the migrated wallet in this same process is disabled to avoid Berkeley DB / staking thread issues. "
-        "XPChain quits after a successful migration; reopen the app to use the SQLite wallet."));
 
     connect(ui->replaceSourceCheckBox, &QCheckBox::toggled, this, &MigrateWalletDialog::onReplaceSourceToggled);
     connect(ui->destinationEdit, &QLineEdit::textChanged, this, &MigrateWalletDialog::updateOkButton);
@@ -85,7 +77,8 @@ bool MigrateWalletDialog::doBackup() const
 
 bool MigrateWalletDialog::loadNew() const
 {
-    return ui->loadNewCheckBox->isChecked();
+    // In-session switch is not supported; migration always requires a restart.
+    return false;
 }
 
 bool MigrateWalletDialog::inPlace() const
