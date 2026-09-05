@@ -1,0 +1,385 @@
+# 하드포크 전 개선 사항 (선행 조건 정리)
+
+목표 하드포크 페이로드는 **Taproot 스테이킹**과 **콜드 스테이킹**이다
+(`doc/architecture-separation-roadmap.md`의 P6 단계). 이 문서는 그 페이로드를
+설계·활성화하기 **전에** 끝내야 하는 작업을 위험도 순으로 정리한다.
+
+각 항목은 코드에서 확인한 사실만 담았다. 파일:줄 참조는 이 문서 작성 시점의
+`master` 기준이다.
+
+---
+
+## 0. 현재 체인 상태 (2026-09 기준 실측)
+
+| 항목 | 값 | 출처 |
+|------|-----|------|
+| 메인넷 높이 | **3,889,312** | `explorer.xpchain.co.kr/api/getblockcount` |
+| 제네시스 | 2018-10-23 (`1540301656`) | `chainparams.cpp:142` |
+| 블록 간격 | 60초 | `chainparams.cpp:86` |
+| PoW→PoS 전환 높이 | 10,275 | `chainparams.cpp:125` |
+| **`TaprootHeight`** | **3,000,000 — 약 889,000블록(1.7년) 전에 이미 통과** | `chainparams.cpp:83` |
+| 연 보상률 | 5% (하한 도달, `525600 * 5 < 높이`) | `pos/reward.cpp:41` |
+| 마지막 체크포인트 | 173,800 (2019-02경) | `chainparams.cpp` |
+| `nMinimumChainWork` / `defaultAssumeValid` | `0x00` / `0x00` | `chainparams.cpp:120,123` |
+| `chainTxData` | 2019-04-16 | `chainparams.cpp:177` |
+
+**중요:** Taproot 스크립트 규칙은 이미 메인넷에서 시행 중이다. Taproot는
+"앞으로 켤 기능"이 아니라 **이미 켜져 있는데 스테이킹만 안 되는 상태**다.
+
+---
+
+## A. 하드포크와 무관하게 지금 고쳐야 하는 것
+
+이 구간은 포크를 기다릴 이유가 없고, 미루는 동안 손실이 계속 누적된다.
+
+### A-1. 기본 주소 타입이 Taproot여서 새 주소로 받은 코인이 스테이킹되지 않는다
+
+```88:88:src/wallet/wallet.h
+constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32M};
+```
+
+`getnewaddress`를 옵션 없이 부르면 Taproot(bech32m) 주소가 나온다. 그런데 Taproot
+출력은 스테이킹할 수 없다(§B-1). 즉 **기본 설정을 쓰는 사용자는 받는 코인마다
+스테이킹 능력을 잃는다.** 실패는 조용하다 — 민터는 해당 UTXO를 건너뛰고
+`pubkey hash not found`만 로그에 남긴다(`wallet.cpp` `SignReward`).
+
+`-addresstype` 도움말에는 `bech32m`이 아예 나오지 않아, 사용자가 무엇을 받고 있는지
+알 방법도 없다:
+
+```60:60:src/wallet/init.cpp
+    gArgs.AddArg("-addresstype", strprintf("What type of addresses to use (\"legacy\", \"p2sh-segwit\", or \"bech32\", default: \"%s\")", FormatOutputType(DEFAULT_ADDRESS_TYPE)), false, OptionsCategory::WALLET);
+```
+
+**할 일**
+
+1. `DEFAULT_ADDRESS_TYPE`을 `BECH32`(P2WPKH)로 되돌린다. P2WPKH는 스테이킹 경로가
+   완전히 지원되는 타입이다.
+2. `-addresstype` / `-changetype` 도움말에 `bech32m`을 추가하고, 선택 시 스테이킹
+   불가임을 명시한다.
+3. `addresstype=bech32m`을 명시한 경우에만 Taproot 주소를 주고, 그때 경고를 띄운다.
+
+이 변경은 합의에 영향이 없다. 이미 발행된 bech32m 주소는 계속 수신·송금 가능하다.
+
+### A-2. 스테이킹 불가 잔액이 보이지 않는다
+
+지갑은 "스테이킹 가능한 잔액"과 "스테이킹 불가 잔액"을 구분해 보여주지 않는다.
+A-1을 고쳐도 이미 Taproot 주소로 받아둔 코인은 그대로 남으므로, 사용자가 스스로
+정리(자기 자신에게 P2WPKH로 재전송)할 수 있게 하려면 먼저 보여야 한다.
+
+**할 일**
+
+1. `getstakinginfo`(또는 `getwalletinfo`)에 스테이킹 불가 금액과 그 이유를 노출한다.
+2. GUI 개요 화면에 같은 정보를 표시하고, 자기 자신에게 통합 전송하는 안내를 제공한다.
+3. 민터가 UTXO를 건너뛸 때 이유를 집계해 주기적으로 한 번만 로그한다(현재는 매 루프
+   조용히 `continue`).
+
+---
+
+## B. 하드포크 전 필수 — 합의 분기 위험
+
+### B-1. 보상 계산이 부동소수점이고, 릴리스가 다섯 개 플랫폼으로 나간다
+
+```69:74:src/pos/reward.cpp
+    CAmount annual = nAmount * GetAnnualRate(nHeight, consensusParams);
+
+    double_t coefficient = dRewardCurveMaximum / (1.0 + (dRewardCurveMaximum / dRewardCurveBase - 1.0) * exp(-dRewardCurveSteepness * nTime));
+    coefficient = std::min(coefficient, dRewardCurveLimit);
+
+    return (CAmount) (annual * coefficient * nTime / (365 * 24 * 60 * 60));
+```
+
+이 값은 `ConnectBlock`에서 `blockReward`가 되고, 블록이 그보다 많이 지불하면
+거부된다(`validation.cpp:2149`). 따라서 **노드 간에 1사토시라도 결과가 다르면 체인이
+갈라진다.**
+
+위험의 크기를 측정했다. 계수(`coefficient`)에 1 ULP 차이만 나도 최종 절단 결과가
+바뀌는 비율:
+
+| 조건 | 결과 |
+|------|------|
+| 무작위 (금액 1~5,000,000 XPC, 나이 3~60일) 20만 건 | **0.038%** (약 2,600건 중 1건) |
+| 10,000,000 XPC / 60일에서 중간값 크기 | `2.59e20` — `2^53 ≈ 9.0e15`를 훨씬 초과 |
+
+중간 계산이 `2^53`을 넘어 정밀도를 잃는다는 점이 문제를 키운다. `annual * coefficient
+* nTime`이 먼저 계산되고 나눗셈이 마지막에 오기 때문이다.
+
+노출이 최근 커졌다. `release.yml`은 이제 **다섯 개 타깃**을 빌드한다:
+
+| 타깃 | libm / FPU |
+|------|-----------|
+| Linux x86_64 | glibc, SSE2 |
+| Windows x86_64 (mingw) | mingw/MSVCRT, SSE2 |
+| **Windows x86 (i686)** | mingw/MSVCRT, **x87 80비트 레지스터** |
+| macOS arm64 | Apple libm, NEON (FMA 축약) |
+| macOS x86_64 | Apple libm, SSE2 |
+
+`exp()`는 IEEE-754가 정확한 반올림을 요구하지 않는 함수다. 여기에 i686 빌드는
+`-mfpmath=sse`를 지정하지 않는다(`release.yml:154-158`). gcc의 32비트 x86 기본값은
+`-mfpmath=387`이고 `-msse2`는 비활성이므로(`gcc -m32 -Q --help=target`으로 확인),
+이 빌드는 `double` 중간값을 x87 80비트 레지스터에서 계산한다. 이는 64비트 빌드의
+SSE2 경로보다 **정밀도가 높아** 절단 결과가 달라진다.
+
+즉 서로 다른 `exp()` 구현 다섯 개와 서로 다른 부동소수점 레지스터 모델 세 개가 합의
+값을 계산한다. 체인이 지금까지 갈라지지 않은 것은 다중 플랫폼 패키징이 **최근에
+추가된** 것이기 때문이다(#24, #35, #36).
+
+**할 일 (순서가 중요)**
+
+1. 정수 전용 구현을 만든다. `exp()`는 고정소수점 급수 또는 사전 계산 룩업으로
+   대체한다. `nTime`이 `nStakeMinAge..nStakeMaxAge` 범위의 정수이므로 테이블화가
+   가능하다.
+2. **차분 테스트로 동등성을 증명한다.** 전 구간(높이 × 금액 × 나이)에서 기존
+   double 구현과 정수 구현의 출력을 비교한다. 특히 §A에서 측정한 경계 근처를
+   집중적으로 본다.
+3. **과거 체인 전체 재검증(리플레이)**으로 3,889,312 블록 전부에서 정수 구현이
+   기존과 동일한 `blockReward`를 내는지 확인한다(§C-4).
+4. 값이 완전히 일치하면 **하드포크 없이** 교체할 수 있다. 한 블록이라도 다르면 그
+   블록 이후로만 새 규칙이 적용되도록 **하드포크에 태운다**.
+
+### B-2. `CheckProofOfStakePure`가 검증 중인 블록이 아니라 현재 팁을 읽는다
+
+```76:79:src/pos/kernel.cpp
+    unsigned int nFlags = SCRIPT_VERIFY_NONE;
+    if (chainActive.Height() + 1 >= params.TaprootHeight) {
+        nFlags |= SCRIPT_VERIFY_TAPROOT;
+    }
+```
+
+같은 판단을 하는 다른 자리는 올바르게 `pindex->nHeight`를 쓴다:
+
+```1815:1815:src/validation.cpp
+    if (pindex->nHeight >= consensusparams.TaprootHeight) {
+```
+
+따라서 코인스테이크 서명 검증만 **현재 팁 기준**으로 스크립트 플래그를 정한다.
+`VerifyDB` 레벨 4(과거 블록 재검증)나 재구성 중에는 `chainActive.Height()`가
+`pindex->nHeight`와 다르므로, 같은 블록이 상황에 따라 다르게 판정될 수 있다.
+`src/pos/` 이동 이전부터 있던 문제이고(구 `src/kernel.cpp:65`), 함수 이름이 `Pure`인
+것과도 맞지 않는다.
+
+**할 일** 검증 대상 블록의 높이를 인자로 받아 사용한다. 메인넷은 이미
+`TaprootHeight`를 통과했으므로 현재 팁에서는 두 식이 같은 값을 내지만, 과거 블록
+재검증 경로에서는 다르다. 즉 **동작 변경이며 신중한 회귀 테스트가 필요하다**.
+
+### B-3. 스테이킹 가능한 스크립트 타입이 함수마다 다르다
+
+세 함수가 각각 다른 타입 집합을 허용한다.
+
+| 스크립트 타입 | `IsCoinStakeTx`<br>(`IsDestinationSame`) | `GetPubKeysFromCoinStakeTx`<br>(블록 서명) | `EqualDestination`<br>(분할 보상 코인베이스) | `CWallet::SignReward`<br>(지갑) |
+|---|---|---|---|---|
+| P2PKH | ✅ | ✅ | ✅ | ✅ |
+| P2WPKH | ✅ | ✅ | ✅ | ✅ |
+| P2SH(P2WPKH) | ✅ | ✅ | ✅ | ✅ |
+| P2PK | ✅ | ✅ | ❌ | ❌ (명시적 거부) |
+| P2WSH | ✅ | ✅ | ❌ | ❌ (명시적 거부) |
+| Multisig | ❌ (`sol.size() != 1`) | ✅ | ❌ | ❌ (명시적 거부) |
+| **P2TR** | ✅ | ❌ (`default: return false`) | ❌ | ❌ (`GetKeyForDestination` 실패) |
+
+참조: `pos/stake.cpp:22`(`IsDestinationSame`), `pos/stake.cpp:72`(`GetPubKeyFromScript`),
+`validation.cpp:4981`(`EqualDestination`), `wallet.cpp` `SignReward`.
+
+결과적으로 **합의는 허용하는데 지갑이 만들 수 없는 조합**(P2PK, P2WSH)과 **일부 경로만
+통과하는 조합**이 공존한다. 이 상태로 Taproot 스테이킹을 얹으면 어느 함수에 어떤
+분기를 추가해야 하는지 판단할 근거가 없다.
+
+**할 일** 하드포크 페이로드 설계 전에 "스테이킹 가능 타입"을 한 곳에서 정의하고 네
+함수가 모두 그것을 참조하게 한다. 이때 기존 체인에서 실제로 사용된 타입만 허용하도록
+좁히는 것은 소프트포크, 넓히는 것은 하드포크임에 주의한다.
+
+### B-4. 죽은 활성화 파라미터가 RPC에서 거짓을 보고한다
+
+`DEPLOYMENT_TAPROOT`는 enum에 선언되고(`consensus/params.h:25`) 세 네트워크 모두에
+설정되어 있으며 메인넷·테스트넷에서 `ALWAYS_ACTIVE`이지만, **어디서도 읽히지 않는다.**
+실제 게이트는 `TaprootHeight`다.
+
+그 결과 `getblockchaininfo`는 체인 첫 3,000,000블록 동안 "taproot 활성"이라고
+보고하면서 실제로는 시행하지 않았다. 지금은 높이가 지나 우연히 일치한다.
+
+**할 일** `DEPLOYMENT_TAPROOT`를 제거하고 `TaprootHeight`를 단일 출처로 남긴다.
+하드포크 활성화에 versionbits를 쓸지 높이를 쓸지 결정할 때(§C-1) 이 정리가 선행돼야
+한다.
+
+### B-5. `BLOCK_SIGNATURE_ADDITION`의 실제 활성 상태를 확인해야 한다
+
+블록 서명 강제는 BIP9 배포에 걸려 있다:
+
+```2139:2141:src/validation.cpp
+            if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::BLOCK_SIGNATURE_ADDITION, versionbitscache) == ThresholdState::ACTIVE) {
+                if (!CheckBlockSignature(block, state, chainparams.GetConsensus())) {
+```
+
+그런데 이 배포의 `nTimeout`은 `1585699200`(2020-04-01)로 이미 만료됐다
+(`chainparams.cpp:112`). BIP9는 시한 내에 락인되지 못하면 `FAILED`로 영구 고정된다.
+**`FAILED`라면 메인넷에서 블록 서명과 `nNonce == 0` 검사가 전혀 시행되지 않는 상태다.**
+
+익스플로러의 최근 블록이 `Nonce = 0`인 것은 활성화됐다는 정황이지만 증거는 아니다.
+
+**할 일** 메인넷 노드에서 `getblockchaininfo`의 `bip9_softforks` 항목으로 실제 상태를
+확인한다. `FAILED`면 블록 서명 강제 자체가 하드포크 페이로드에 포함돼야 한다.
+
+---
+
+## C. 하드포크 전 필수 — 검증 인프라
+
+### C-1. 활성화 메커니즘을 결정하고 테스트한다
+
+BIP9(versionbits)는 소프트포크용이다. 규칙을 **완화**하는 하드포크(Taproot 스테이킹
+허용, 콜드 스테이킹 스크립트 도입)는 구 노드가 새 블록을 거부하므로, 조정된 높이 기반
+활성화가 맞다. 이 코드베이스는 이미 `nSwitchHeight` / `TaprootHeight`로 높이 기반
+게이팅을 하고 있어 형식이 일관된다.
+
+**할 일**
+
+1. `nHardForkHeight`(가칭)를 `Consensus::Params`에 추가하고 세 네트워크에 설정한다.
+   메인넷 값은 배포 후 충분한 유예를 두고 정한다.
+2. regtest에서 **활성화 전 / 경계 / 활성화 후** 세 구간을 각각 검증하는 functional
+   테스트를 만든다. `feature_pos_staking.py`가 `nSwitchHeight` 경계에 대해 하는 것과
+   같은 형태다.
+3. 구 노드가 새 블록을 거부하는 것을 실제로 확인한다(하드포크임을 문서화하기 위해).
+
+### C-2. 재구성과 `VerifyDB` 레벨 4 테스트가 없다
+
+현재 functional 테스트는 재구성(reorg)과 `VerifyDB` 레벨 4를 다루지 않는다. 그런데
+§B-2의 버그는 정확히 그 두 경로에서만 드러난다.
+
+**할 일**
+
+1. PoS 구간에서 재구성을 강제하는 functional 테스트를 추가한다(경쟁 체인 2개 →
+   재구성 → 재검증).
+2. `-checklevel=4 -checkblocks=0`으로 전체 재검증하는 테스트를 추가한다.
+3. §B-2를 고치기 **전에** 이 테스트를 먼저 넣어 현재 동작을 고정한다.
+
+### C-3. 체인 메타데이터가 2019년에 멈춰 있다
+
+| 항목 | 현재 | 문제 |
+|------|------|------|
+| 마지막 체크포인트 | 173,800 | 전체의 4.5% 지점 |
+| `nMinimumChainWork` | `0x00` | IBD 중 저작업량 체인 거부 불가 |
+| `defaultAssumeValid` | `0x00` | 전 구간 스크립트 검증 (느림) |
+| `chainTxData` | 2019-04-16 | 동기화 진행률 표시가 부정확 |
+
+하드포크 배포는 사용자가 대량으로 재동기화하는 시점이다. 그때 IBD가 느리고 안전장치가
+비어 있으면 문제가 겹친다.
+
+**할 일** 하드포크 릴리스에 맞춰 네 값을 모두 갱신한다. PoS 체인에서
+`nMinimumChainWork`의 의미가 제한적이라는 점은 별도로 문서화한다.
+
+### C-4. 과거 체인 재검증 파이프라인이 없다
+
+§B-1의 정수화와 §B-2의 플래그 수정은 둘 다 "과거 3,889,312블록에서 판정이 바뀌지
+않는다"를 증명해야 안전하게 넣을 수 있다. 지금은 그걸 확인할 수단이 없다.
+
+**할 일**
+
+1. 메인넷 전체를 `-reindex-chainstate`로 재검증하는 절차를 문서화하고 CI 외부에서
+   주기적으로 돌린다.
+2. 정수 구현과 double 구현을 **동시에** 계산해 불일치 시 로그만 남기는 임시 계측
+   빌드를 만들어, 실제 체인 데이터에서 차이가 나는 블록이 있는지 확인한다.
+
+---
+
+## D. 하드포크 페이로드 설계 선행 정리
+
+여기까지는 "안전"이고, 이 구간은 "페이로드를 설계할 수 있는 상태 만들기"다.
+
+### D-1. `pos/`가 노드 전역 상태를 되짚는 구조를 끊는다
+
+`pos/kernel`과 `pos/stake`는 여전히 `validation.h`에서 `GetTransaction`,
+`ReadBlockFromDisk`, `mapBlockIndex`를 가져온다. 그래서 순환 의존성
+`pos -> validation -> pos` 두 개가 남아 있다
+(`test/lint/lint-circular-dependencies.sh`에 근거와 함께 기록됨).
+
+부수 효과가 크다. PoS 검증이 `txindex` 전체와 임의 디스크 읽기에 의존하므로 **프루닝이
+불가능하고 IBD가 느리다**. 하드포크로 새 스크립트 타입을 추가하면 검증 경로가 더
+무거워진다.
+
+**할 일** 체인 접근을 인자로 주입하는 인터페이스를 도입하고, 가능한 범위에서 UTXO
+기반 검증으로 옮긴다. `CheckProofOfStakePure`가 이미 그 방향의 부분 사례다.
+
+### D-2. 합의 오케스트레이션을 `pos/`로 모은다
+
+`VerifyCoinBaseTx`(약 85줄)와 `ConnectBlock`의 PoS 분기(약 60줄)가 아직
+`validation.cpp`에 있다. 분할 보상 코인베이스의 규칙이 노드 코드에 흩어져 있으면
+콜드 스테이킹 설계 시 보상 경로를 한 번에 검토할 수 없다.
+
+### D-3. 콜드 스테이킹은 보상 리다이렉트 문제를 먼저 해결해야 한다
+
+분할 보상 경로에는 **보상 수령 주소에 대한 제약이 없다.** `VerifyCoinBaseTx`는
+코인스테이크 출력의 키가 보상 목록에 서명했는지만 확인한다:
+
+```5079:5089:src/validation.cpp
+    if (!EqualDestination(block.vtx[1], pubkey)) {
+        return state.DoS(100, error("%s: pubkey does not match coinstake's output", __func__), REJECT_INVALID,
+                         "bad-cb");
+    }
+
+    uint256 hash = pos::GetRewardHash(rewardValues, block.vtx[1], block.nTime);
+    //printf("verify hash = %s\n",hash.ToString().c_str());
+    if (pubkey.Verify(hash, vchSig)) {
+        return true;
+    }
+    return state.DoS(100, error("%s: verification failed", __func__), REJECT_INVALID, "bad-cb");
+```
+
+즉 **코인스테이크 서명 키를 가진 쪽이 보상 수령지를 자유롭게 정한다.** 총액 상한만
+있고(`validation.cpp:2149`) 하한도 없다(하한 검사는 `vout.size() <= 2`인 단순 경로에만
+있다).
+
+콜드 스테이킹은 서명 키를 핫 지갑에 두는 구조다. 위 규칙을 그대로 두면 **핫 노드가
+원금은 못 건드리지만 보상 전액을 자기 주소로 돌릴 수 있다.** 이는 콜드 스테이킹의
+전제를 무너뜨린다.
+
+**할 일** 콜드 스테이킹 스크립트를 설계할 때 보상 수령지를 콜드 키에 고정하는 규칙을
+합의 수준에서 함께 넣는다. 이 규칙 자체가 하드포크 항목이므로, 페이로드 설계 시점에
+확정돼 있어야 한다.
+
+### D-4. Taproot 스테이킹은 네 곳을 고쳐야 한다
+
+Taproot 출력이 스테이킹되지 못하는 이유는 한 곳이 아니다.
+
+| 위치 | 현재 | 필요한 변경 |
+|------|------|-------------|
+| `CWallet::SignReward` (`wallet.cpp`) | `GetKeyForDestination`이 P2TR에서 빈 `CKeyID` 반환 → `pubkey hash not found` | Taproot 키 조회 경로 (지갑, 합의 아님) |
+| `pos::GetPubKeyFromScript` (`pos/stake.cpp:126`) | `default: return false` | `TX_WITNESS_V1_TAPROOT` 분기 (**합의**) |
+| `EqualDestination` (`validation.cpp:4981`) | P2TR 분기 없음 | Taproot 목적지 비교 (**합의**) |
+| `pos::CheckBlockSignature` (`pos/stake.cpp:185`) | `CPubKey::Verify` = ECDSA 전용 | x-only 키에 대한 Schnorr 검증 (**합의**) |
+
+세 곳이 합의 변경이다. 특히 마지막 항목은 블록 서명 알고리즘을 키 타입에 따라
+분기시키는 것이므로, `MakeBlockHashExcludedSignature`가 만드는 서명 대상 해시의
+정의까지 함께 확정해야 한다.
+
+---
+
+## 정리: 의존 순서
+
+```
+A-1, A-2  (기본 주소 타입, 가시성)
+   └─ 포크와 독립. 지금 즉시.
+
+C-2  (재구성 / VerifyDB 레벨 4 테스트)
+   └─ B-2를 고치기 전에 필요.
+
+B-5  (BLOCK_SIGNATURE_ADDITION 실제 상태 확인)
+   └─ 페이로드 범위를 결정하므로 가장 먼저 확인.
+
+B-4  (죽은 DEPLOYMENT_TAPROOT 제거)
+   └─ C-1의 활성화 방식 결정에 선행.
+
+C-4  (전체 체인 재검증 파이프라인)
+   └─ B-1, B-2의 안전성 증명 수단.
+
+B-1  (부동소수점 → 정수)     B-2  (팁 의존 스크립트 플래그)
+   └─ C-4 필요.                 └─ C-2, C-4 필요.
+
+B-3, D-1, D-2  (타입 집합 통일, 체인 접근 추상화, 오케스트레이션 이동)
+   └─ 페이로드 설계의 전제.
+
+C-1, C-3  (활성화 프레임, 체인 메타데이터)
+   └─ 릴리스 준비.
+
+D-3, D-4  (콜드 스테이킹 보상 규칙, Taproot 스테이킹 4개소)
+   └─ 실제 하드포크 페이로드. 위가 모두 끝난 뒤 설계.
+```
+
+가장 위험한 항목은 **B-1**이다. 하드포크 페이로드와 무관하게 이미 배포된
+다중 플랫폼 바이너리가 만드는 노출이고, 측정된 민감도가 낮지 않다.
