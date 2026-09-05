@@ -450,17 +450,22 @@ void XPChainGUI::createMenuBar()
     QMenu *file = appMenuBar->addMenu(tr("&File"));
     if(walletFrame)
     {
+        // Primary entry: Set Up Wallet covers create / mnemonic / restore / open.
+        // Direct actions live under Advanced to avoid duplicating those choices.
         file->addAction(walletSetupAction);
         file->addSeparator();
-        file->addAction(createWalletAction);
-        file->addAction(openWalletAction);
         file->addAction(closeWalletAction);
-        file->addAction(generateMnemonicAction);
-        file->addAction(importMnemonicAction);
         file->addAction(migrateWalletAction);
         file->addAction(backupAllWalletsAction);
-        file->addAction(openAction);
         file->addAction(backupWalletAction);
+        file->addAction(openAction);
+        file->addSeparator();
+        QMenu *fileAdvanced = file->addMenu(tr("&Advanced"));
+        fileAdvanced->addAction(createWalletAction);
+        fileAdvanced->addAction(openWalletAction);
+        fileAdvanced->addAction(generateMnemonicAction);
+        fileAdvanced->addAction(importMnemonicAction);
+        file->addSeparator();
         file->addAction(signMessageAction);
         file->addAction(verifyMessageAction);
         file->addSeparator();
@@ -1865,7 +1870,7 @@ void XPChainGUI::closeWallet()
     const QString display = name.isEmpty() ? tr("[default wallet]") : name;
     if (QMessageBox::question(this, tr("Close Wallet"),
             tr("Unload wallet \"%1\"?\n\n"
-               "You can open it again later from File → Open Wallet.")
+               "You can open it again later from File → Set Up Wallet or File → Advanced → Open Wallet.")
                 .arg(display),
             QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes) {
         return;

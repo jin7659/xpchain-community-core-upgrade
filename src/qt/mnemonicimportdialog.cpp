@@ -176,7 +176,7 @@ void MnemonicImportDialog::updateBackupWarning()
            "(“%1”). A backup is written to <code>%2/backup_before_mnemonic_*.dat</code> "
            "before import.<br/><br/>"
            "For a clean recovery, create a new empty wallet first "
-           "(button below, or File → Create Wallet), then restore into that wallet.")
+           "(button below, or File → Set Up Wallet / File → Advanced → Create Wallet), then restore into that wallet.")
             .arg(model ? QString::fromStdString(model->wallet().getWalletName()) : tr("(unknown)"))
             .arg(dir));
 }
