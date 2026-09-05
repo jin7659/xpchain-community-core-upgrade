@@ -4,7 +4,7 @@
 목적은 "PoS를 지키면서 비-PoS 코드를 이식"할 때, **무엇이 바뀌면 안 되는지**를 코드와 독립적으로
 못 박아두는 것이다. P1 이후의 모든 리팩터는 이 문서에 적힌 값·수식·불변식을 바꾸지 않아야 한다.
 
-기준 리비전: `src/validation.cpp`, `src/kernel.cpp`, `src/policy/stake.cpp`, `src/chainparams.cpp`
+기준 리비전: `src/validation.cpp`, `src/pos/`, `src/chainparams.cpp`
 (XPChain Core 0.27.0, Bitcoin Core 0.17.0 기반).
 
 > **주의:** 아래 값과 수식은 현재 메인넷을 검증하는 동작 그 자체다. 개선이 필요해 보이는 지점에는
@@ -70,7 +70,7 @@ P1에서 높이(또는 `pindexPrev`)를 **명시적 인자로 전달**하는 형
 PoS 높이의 블록은 다음을 만족해야 한다.
 
 1. `block.vtx.size() >= 2` — 코인베이스와 코인스테이크 (`CheckBlock`)
-2. `block.vtx[1]`이 유효한 코인스테이크 (`IsCoinStakeTx`, `src/policy/stake.cpp`)
+2. `block.vtx[1]`이 유효한 코인스테이크 (`IsCoinStakeTx`, `src/pos/stake_policy.cpp`)
    - `vin.size() == 1`
    - `vout.size() == 1`
    - `IsDestinationSame(prevTx->vout[n].scriptPubKey, vout[0].scriptPubKey)`
@@ -120,7 +120,7 @@ GetRewardHash := Hash( Σ(scriptPubKey ‖ nValue) ‖ nTime ‖ vtx[1]->vin[0] 
 
 ### 2.3 Taproot 출력은 스테이킹할 수 없다 (제품 영향 있음)
 
-`GetPubKeysFromCoinStakeTx()` → `GetPubKeyFromScript()`(`src/validation.cpp`)가 처리하는
+`GetPubKeysFromCoinStakeTx()` → `GetPubKeyFromScript()`(`src/pos/stake.cpp`)가 처리하는
 스크립트 타입은 다음뿐이다.
 
 `TX_PUBKEY`, `TX_MULTISIG`, `TX_PUBKEYHASH`, `TX_WITNESS_V0_KEYHASH`,
@@ -130,17 +130,12 @@ GetRewardHash := Hash( Σ(scriptPubKey ‖ nValue) ‖ nTime ‖ vtx[1]->vin[0] 
 **코인스테이크 출력이 bech32m(Taproot)이면 `CheckBlockSignature()`가 절대 성공할 수 없고,
 그 블록은 유효할 수 없다.** §2.1의 `EqualDestination()`도 P2SH-P2WPKH / P2PKH / P2WPKH만 안다.
 
-그런데 지갑의 기본 주소 타입은 Taproot다.
-
-```
-src/wallet/wallet.h:87
-constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32M};
-```
-
-이 기본값에는 `TaprootHeight` 활성 여부에 대한 게이트가 없다(`src/wallet/` 전체에
-`TaprootHeight` 참조가 없다). 즉 **`getnewaddress`를 기본값으로 받은 주소의 코인은 스테이킹할 수
-없다.** 스테이킹하려면 `-addresstype=bech32`(또는 legacy / p2sh-segwit)를 쓰거나
-`getnewaddress "" "bech32"`로 주소를 받아야 한다.
+지갑의 기본 주소 타입은 한때 Taproot였고, 그 기본값에는 `TaprootHeight` 활성 여부에 대한
+게이트가 없었다. 즉 `getnewaddress`를 기본값으로 받은 주소의 코인이 스테이킹 불가 상태가
+됐다. 지금은 기본값이 `BECH32`(P2WPKH)이고, `TaprootOutputsProtected()`가 팁에서 Taproot
+규칙이 시행되는지를 판정해 활성화 전에는 bech32m 주소 발급을 거부한다
+(`src/wallet/wallet.cpp`). Taproot 주소로 받은 코인은 활성화 후에도 여전히 스테이킹할 수
+없다는 점은 그대로다 — 그건 아래 P5-5에서 다룬다.
 
 증상이 늦게 드러나는 것도 문제다. 코인스테이크 **구조** 검사(`IsCoinStakeTx`,
 `IsDestinationSame`)는 Taproot 목적지를 정상 수락하므로, 마인터는 커널을 찾고 코인스테이크를
@@ -149,8 +144,8 @@ constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32M};
 
 이 제약은 다음 두 로드맵 항목의 선행 조건이다.
 
-- **P3-5 (Taproot 지갑 경로)** — 기본 주소 타입을 이대로 두면 신규 사용자의 잔고가
- 스테이킹 불가 상태가 된다. 기본값 변경 또는 PoS 서명 경로의 Taproot 지원 중 하나를 골라야 한다.
+- **P3-5 (Taproot 지갑 경로)** — 기본값은 `BECH32`로 되돌렸다. 남은 일은 PoS 서명 경로의
+ Taproot 지원이다.
 - **P5-5 (`TaprootHeight` 메인넷 활성 정책)** — PoS 서명 규칙에 Taproot를 추가하는 것은
  **합의 변경**이다. 활성 높이 결정과 함께 다뤄야 한다.
 
@@ -161,7 +156,7 @@ constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32M};
 
 ## 3. 커널 해시 (`CheckStakeKernelHash`)
 
-`src/kernel.cpp`. PoS의 심장이며 **바이트 단위로 보존해야 하는 유일한 해시 규칙**이다.
+`src/pos/kernel.cpp`. PoS의 심장이며 **바이트 단위로 보존해야 하는 유일한 해시 규칙**이다.
 
 ### 3.1 나이 요건
 
@@ -222,7 +217,7 @@ bnCoinDayWeight    = arith_uint256(nAmount) * nTimeWeight / COIN / 86400      //
 `ConnectBlock()` 진입 직후 호출된다(`src/validation.cpp`).
 
 ```
-CheckProofOfStake(block.vtx[1], block.nBits, hashProofOfStake, block.nTime)
+CheckProofOfStake(block.vtx[1], block.nBits, hashProofOfStake, block.nTime, pindex->nHeight, consensus)
 ```
 
 수행 순서:
@@ -230,7 +225,8 @@ CheckProofOfStake(block.vtx[1], block.nBits, hashProofOfStake, block.nTime)
 1. `GetTransaction(vin[0].prevout.hash, txPrev, ..., /*fAllowSlow=*/true)` — 이전 tx와 그 블록 해시
 2. 모든 입력의 이전 출력을 모아 `PrecomputedTransactionData`를 구성
 3. `CScriptCheck(txPrev->vout[n], tx, 0, nFlags, true, &txdata)` — 입력 0의 스크립트 검증
-   - `nFlags = SCRIPT_VERIFY_NONE`, 단 Taproot 활성 높이 이상이면 `SCRIPT_VERIFY_TAPROOT` 추가
+   - `nFlags = GetCoinStakeScriptFlags(nHeight, params)`: `SCRIPT_VERIFY_NONE`, 단 검증 중인
+     블록의 높이가 `TaprootHeight` 이상이면 `SCRIPT_VERIFY_TAPROOT` 추가
 4. `mapBlockIndex`에서 이전 블록 인덱스를 찾고 `ReadBlockFromDisk()`로 **블록 전체를 읽음**
 5. `CheckStakeKernelHash(nBits, prevBlock.GetBlockTime(), offset, txPrev->vout[n].nValue, n, block.nTime, ...)`
 
@@ -255,21 +251,24 @@ CheckProofOfStake(block.vtx[1], block.nBits, hashProofOfStake, block.nTime)
 이 치환은 규칙을 바꾸지 않으면서 프루닝 호환성과 O(1) 검증을 동시에 얻는다.
 P1(경계 고정) → P5(수렴) 사이에서 다룬다.
 
-### 4.2 Taproot 플래그의 문맥 오류
+### 4.2 Taproot 플래그의 문맥 (해결됨)
 
-3단계의 플래그 판정이 `chainActive.Height() + 1 >= TaprootHeight`로 되어 있다.
-검증 중인 **블록의 높이**가 아니라 **현재 활성 팁의 높이**를 본다.
-재구성(reorg)이나 `TestBlockValidity()` 경로에서는 두 값이 다를 수 있어,
-노드마다 다른 스크립트 플래그로 같은 블록을 검증할 여지가 있다.
+3단계의 플래그 판정은 한때 `chainActive.Height() + 1 >= TaprootHeight`였다. 검증 중인
+**블록의 높이**가 아니라 **현재 활성 팁의 높이**를 봤으므로, 재구성(reorg)이나 `VerifyDB`
+레벨 4 재검증 경로에서 같은 블록이 상황에 따라 다른 플래그로 판정될 수 있었다. 지금은
+`GetCoinStakeScriptFlags(nHeight, params)`가 검증 대상 블록의 높이만 본다
+(`src/pos/kernel.cpp`). 단위 테스트 `coinstake_script_flags_follow_block_height`가 경계를
+고정한다.
 
 | 네트워크 | `TaprootHeight` |
 |---|---|
-| main | 3 000 000 |
+| main | 4 200 000 (미도달, 약 2027-04 예상) |
 | test | 0 |
 | regtest | 0 |
 
-메인넷은 아직 활성 전이므로 **지금은 실제 분기 위험이 없다.**
-높이 3 000 000 이전에 `pindex->nHeight` 기준으로 고쳐야 한다(로드맵 P5-5와 함께 결정).
+메인넷 활성 높이는 미래에 있다. 활성화 경계를 지나는 동안 `chainActive.Height() + 1`은
+동기화 진행에 따라 움직이고 `pindex->nHeight`는 고정이므로, 위 수정이 없으면 바로 그
+구간에서 분기가 났다.
 
 같은 함수의 2단계도, 일부 입력의 이전 tx를 못 찾으면 `spent_outputs`를 버리고
 `PrecomputedTransactionData(*tx)`로 조용히 되돌아간다. Taproot 활성 후에는 sighash가 달라져
@@ -410,7 +409,12 @@ PoS 전용 `posLimit`은 없고, 계산된 `nBits`가 §3.3의 커널 해시 목
 | `BLOCK_SIGNATURE_ADDITION` | 2 | 2019-04-01 ~ 2020-04-01 | ALWAYS_ACTIVE |
 | `DEPLOYMENT_TAPROOT` | — | 높이 기반 (`TaprootHeight`) | 0 |
 
-`BLOCK_SIGNATURE_ADDITION`은 메인넷에서 이미 잠긴 소프트포크이며 §2.2의 규칙을 활성화한다.
+`DEPLOYMENT_TAPROOT`는 세 네트워크 모두에 설정되어 있지만 **어디서도 읽히지 않는다.** 실제
+게이트는 `TaprootHeight`다. `getblockchaininfo`가 이 배포를 근거로 거짓을 보고하는 문제는
+`doc/pre-hardfork-checklist.md` §B-4에 있다.
+
+`BLOCK_SIGNATURE_ADDITION`은 §2.2의 규칙을 활성화한다. 다만 `nTimeout`이 2020-04-01로
+만료돼 있어 메인넷에서 실제로 `ACTIVE`인지 `FAILED`인지는 확인이 필요하다(체크리스트 §B-5).
 
 ---
 

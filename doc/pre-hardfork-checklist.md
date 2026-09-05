@@ -13,11 +13,11 @@
 
 | 항목 | 값 | 출처 |
 |------|-----|------|
-| 메인넷 높이 | **3,889,312** | `explorer.xpchain.co.kr/api/getblockcount` |
+| 메인넷 높이 | **3,889,343** (2026-09-05 02:25 UTC) | `explorer.xpchain.co.kr/api/getblockcount` |
 | 제네시스 | 2018-10-23 (`1540301656`) | `chainparams.cpp:142` |
-| 블록 간격 | 60초 | `chainparams.cpp:86` |
+| 블록 간격 | 목표 60초 / 실측 58.6~61.1초 (최근 10만/3만/1만 블록) | `chainparams.cpp:86` |
 | PoW→PoS 전환 높이 | 10,275 | `chainparams.cpp:125` |
-| **`TaprootHeight`** | **3,000,000 — 약 889,000블록(1.7년) 전에 이미 통과** | `chainparams.cpp:83` |
+| **`TaprootHeight`** | **4,200,000 — 미도달, 약 310,000블록(7개월) 뒤** (§A-1로 변경, 이전 값 3,000,000) | `chainparams.cpp:83` |
 | 연 보상률 | 5% (하한 도달, `525600 * 5 < 높이`) | `pos/reward.cpp:41` |
 | 마지막 체크포인트 | 173,800 (2019-02경) | `chainparams.cpp` |
 | `nMinimumChainWork` / `defaultAssumeValid` | `0x00` / `0x00` | `chainparams.cpp:120,123` |
@@ -46,12 +46,15 @@
 | 지갑 기본 주소 | P2WPKH | **P2TR (bech32m)** |
 
 즉 Taproot는 "이미 켜진 기능"이 아니라 **이 빌드에만 존재하는, 네트워크와 합의가
-어긋난 상태**다. `TaprootHeight = 3000000`은 커밋 작성 시점(당시 높이 약 3,703,000)에
+어긋난 상태**였다. `TaprootHeight = 3000000`은 커밋 작성 시점(당시 높이 약 3,703,000)에
 이미 지난 값이었으므로, 이 빌드는 약 889,000개의 과거 블록에 Taproot 규칙을
-**소급 적용**한다.
+**소급 적용**했다.
 
 이 사실이 아래 §A-1의 성격을 바꾼다. 문제는 "스테이킹이 안 된다"가 아니라
 **"네트워크가 그 출력을 누구나 쓸 수 있는 것으로 취급한다"**다.
+
+§A-1의 수정으로 위 표의 오른쪽 열은 "4,200,000 이상에서 Taproot 규칙 적용 / 기본 주소는
+P2WPKH"가 됐다. 소급 적용은 없어졌고, 활성화는 예정된 이벤트가 됐다.
 
 ---
 
@@ -61,6 +64,10 @@
 고칠 수 있는 유일한 시점**이다. 배포 후에는 같은 수정이 조정된 하드포크를 요구한다.
 
 ### A-1. `TaprootHeight`를 미래로 옮기고, 그때까지 bech32m을 기본값에서 뺀다
+
+> **상태: 코드 수정 완료.** 메인넷 `TaprootHeight = 4200000`(약 2027-04 도달 예상), 기본 주소
+> 타입은 `BECH32`로 복귀, 활성화 전 bech32m 발급은 거부. 아래 "할 일" 1·2번(활성화 높이 아래
+> witness v1 전수 확인, 본인 P2TR 잔액 회수)은 동기화된 메인넷 노드가 필요해 남아 있다.
 
 두 값이 함께 문제를 만든다.
 
@@ -107,22 +114,28 @@ constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32M};
 
 **할 일 (순서대로)**
 
-1. 선택할 활성화 높이 **아래에 witness v1 출력이 하나도 없음을 전수 확인**한다
-   (표본이 아니라 전 구간). 있으면 그 지출이 Taproot 규칙을 통과하는지 개별 판정한다.
-2. 자신이 테스트로 만든 P2TR 잔액이 있으면 P2WPKH로 회수한다. 활성화 전까지 그
-   출력은 네트워크에서 보호되지 않는다.
-3. `TaprootHeight`(메인넷)를 v0.27.0 정식 배포 후 업그레이드 유예를 둔 미래 높이로
-   설정한다. 60초 블록이므로 1개월 ≈ 43,200블록, 3개월 ≈ 129,600블록이다.
-   테스트넷·regtest는 `0`으로 유지해 테스트가 계속 Taproot 경로를 타게 한다.
-4. `DEFAULT_ADDRESS_TYPE`을 `BECH32`(P2WPKH)로 되돌린다. `-addresstype`에
-   `bech32m`을 명시한 경우에만 Taproot 주소를 발급하고, 활성화 높이 이전이면
-   **자금이 보호되지 않는다는 경고**를 띄운다.
-5. `-addresstype` / `-changetype` 도움말에 `bech32m`을 추가한다. 현재 목록에 아예
-   없어서 사용자가 무엇을 받는지 알 방법이 없다:
-
-```60:60:src/wallet/init.cpp
-    gArgs.AddArg("-addresstype", strprintf("What type of addresses to use (\"legacy\", \"p2sh-segwit\", or \"bech32\", default: \"%s\")", FormatOutputType(DEFAULT_ADDRESS_TYPE)), false, OptionsCategory::WALLET);
-```
+1. **[남음 — 노드 필요]** 활성화 높이 **아래에 witness v1 출력이 하나도 없음을 전수
+   확인**한다(표본이 아니라 전 구간). 있으면 그 지출이 Taproot 규칙을 통과하는지 개별
+   판정한다. `contrib/devtools/scan-witness-programs.py`가 동기화된 노드의 RPC로 전
+   구간을 훑는다.
+2. **[남음 — 노드 필요]** 자신이 테스트로 만든 P2TR 잔액이 있으면 P2WPKH로 회수한다.
+   활성화 전까지 그 출력은 네트워크에서 보호되지 않는다.
+3. **[완료]** `TaprootHeight`(메인넷)를 미래 높이로 설정했다. 실측 블록 간격은 최근
+   1만/3만/10만 블록에서 각각 61.1초 / 59.8초 / 58.6초이므로 하루 약 1,440블록이다.
+   높이 3,889,343(2026-09-05)에서 **4,200,000**은 약 310,000블록 뒤, 약 7개월 후다.
+   유예 자체보다 §C-1의 묶음 활성화(Taproot + Taproot 스테이킹 + 콜드 스테이킹)를
+   담을 수 있는 폭을 기준으로 골랐다. 테스트넷·regtest는 `0`으로 유지해 테스트가 계속
+   Taproot 경로를 타게 한다.
+4. **[완료]** `DEFAULT_ADDRESS_TYPE`을 `BECH32`(P2WPKH)로 되돌렸다. 활성화 여부는
+   `TaprootOutputsProtected()`가 팁 기준으로 판정한다. 명시적으로 요청한 bech32m은
+   활성화 높이를 담은 오류로 **거부**하고, `-addresstype`/`-changetype`에서 온 bech32m은
+   bech32로 대체한 뒤 시작 시 경고한다. 위험이 "스테이킹 불가"가 아니라 "누구나 쓸 수
+   있음"이므로 경고보다 거부를 골랐다. GUI는 활성화 전까지 Bech32m 항목을 감춘다.
+   막은 경로: `getnewaddress`, `getrawchangeaddress`, `TransactionChangeType()`의 잔돈,
+   `fundrawtransaction`/`walletcreatefundedpsbt`의 `change_type`, GUI 수신 화면,
+   `paymentserver`의 환불 주소. `addmultisigaddress`/`createmultisig`는 스크립트에 대한
+   bech32m이 P2WSH로 폴백하므로 가드가 필요 없다.
+5. **[완료]** `-addresstype` / `-changetype` 도움말에 `bech32m`을 추가했다.
 
 **로드맵에 미치는 영향:** Taproot가 아직 네트워크에서 활성이 아니므로, **Taproot
 활성화와 Taproot 스테이킹(§D-4)을 하나의 조정된 활성화로 묶을 수 있다.** 계획했던
@@ -208,6 +221,10 @@ SSE2 경로보다 **정밀도가 높아** 절단 결과가 달라진다.
 
 ### B-2. `CheckProofOfStakePure`가 검증 중인 블록이 아니라 현재 팁을 읽는다
 
+> **상태: 완료** — `GetCoinStakeScriptFlags(nHeight, params)`로 분리하고 `ConnectBlock`이
+> `pindex->nHeight`를 넘긴다. 전역 `Params()`를 읽던 `CheckProofOfStake` 오버로드도 제거했다.
+> 단위 테스트 `coinstake_script_flags_follow_block_height`가 경계를 고정한다.
+
 ```76:79:src/pos/kernel.cpp
     unsigned int nFlags = SCRIPT_VERIFY_NONE;
     if (chainActive.Height() + 1 >= params.TaprootHeight) {
@@ -229,12 +246,11 @@ SSE2 경로보다 **정밀도가 높아** 절단 결과가 달라진다.
 
 **할 일** 검증 대상 블록의 높이를 인자로 받아 사용한다.
 
-§A-1에서 `TaprootHeight`를 미래로 옮기면 이 항목의 성격이 바뀐다. 지금은 메인넷
-높이가 3,000,000을 훨씬 넘겨서 두 식이 팁에서 우연히 같은 값을 내지만, 활성화 높이가
+이 항목을 A-1과 같은 PR에 묶은 이유가 있다. `TaprootHeight`가 과거에 있던 동안은 메인넷
+높이가 3,000,000을 훨씬 넘겨서 두 식이 팁에서 우연히 같은 값을 냈다. 활성화 높이가
 미래가 되면 **활성화 경계를 지나는 동안 두 식이 실제로 다른 값을 낸다**
 (`chainActive.Height() + 1`은 동기화 진행에 따라 움직이고 `pindex->nHeight`는
-고정이다). 즉 A-1을 먼저 하면 이 버그가 실제로 발현하는 창이 열린다. **A-1과 함께
-고쳐야 한다.**
+고정이다). A-1만 하면 이 버그가 발현하는 창이 열린다.
 
 ### B-3. 스테이킹 가능한 스크립트 타입이 함수마다 다르다
 
@@ -436,19 +452,20 @@ Taproot 출력이 스테이킹되지 못하는 이유는 한 곳이 아니다. T
 ```
 [v0.27.0 정식 배포 전에 반드시]
 
-A-1 + B-2  (TaprootHeight → 미래, bech32m 기본값 해제, 팁 의존 플래그 수정)
-   └─ 함께 고쳐야 한다. A-1만 하면 B-2가 발현하는 창이 열린다.
-   └─ 선행: 활성화 높이 아래 witness v1 출력 전수 확인.
-   └─ 배포량이 0인 지금이 이 변경의 유일한 무비용 시점이다.
+A-1 + B-2  [완료]  (TaprootHeight → 4,200,000, bech32m 기본값 해제, 팁 의존 플래그 수정)
+   └─ 함께 고쳤다. A-1만 하면 B-2가 발현하는 창이 열린다.
+   └─ 남음: 활성화 높이 아래 witness v1 출력 전수 확인 (동기화된 노드 필요).
+      contrib/devtools/scan-witness-programs.py
 
 C-2  (재구성 / VerifyDB 레벨 4 테스트)
-   └─ B-2를 고치기 전에 현재 동작을 고정하는 데 필요.
+   └─ 원래는 B-2보다 먼저 넣어 현재 동작을 고정하는 것이 정석이었다. 배포 전에
+      A-1을 넣어야 해서 순서를 바꿨으므로, 이제 가장 먼저 할 일이다.
 
 B-5  (BLOCK_SIGNATURE_ADDITION 실제 상태 확인)
-   └─ 페이로드 범위를 결정하므로 가장 먼저 확인.
+   └─ 페이로드 범위를 결정하므로 가장 먼저 확인. 동기화된 노드 필요.
 
 B-4  (죽은 DEPLOYMENT_TAPROOT 제거)
-   └─ C-1의 활성화 방식 결정에 선행. A-1과 같이 처리하면 자연스럽다.
+   └─ C-1의 활성화 방식 결정에 선행.
 
 A-2  (스테이킹 불가 / 미보호 잔액 가시화)
    └─ A-1 이후. 이미 만들어진 P2TR 잔액을 사용자가 회수할 수 있게 한다.
@@ -473,9 +490,10 @@ A-1의 TaprootHeight + D-4 (Taproot 스테이킹) + D-3 (콜드 스테이킹 보
    └─ Taproot가 아직 네트워크에서 활성이 아니므로 세 개를 한 번에 켤 수 있다.
 ```
 
-**지금 당장 가장 중요한 것은 A-1**이다. `TaprootHeight`가 과거로 설정된 채
-v0.27.0이 배포되면, 첫 P2TR 지출이 곧 체인 분기다. 배포량이 아직 0이므로 지금은
-파라미터 한 줄 수정으로 끝나지만, 배포 후에는 조정된 하드포크가 필요해진다.
+**A-1은 코드 수정이 끝났다.** `TaprootHeight`가 과거로 설정된 채 v0.27.0이 배포되면
+첫 P2TR 지출이 곧 체인 분기였고, 배포량이 0인 동안이라 파라미터와 기본값 수정으로
+끝났다. 배포 후였다면 조정된 하드포크가 필요했다. 남은 것은 활성화 높이 아래
+witness v1 출력이 없다는 전수 확인이다.
 
 **중장기로 가장 위험한 것은 B-1**이다. 하드포크 페이로드와 무관하게, 다중 플랫폼
 바이너리를 배포하는 것 자체가 만드는 노출이고 측정된 민감도가 낮지 않다.

@@ -4,8 +4,8 @@ XPChain Core version 0.27.0 (pre-release)
 
 This is a community upgrade release relative to the 0.17.0-4 packaging line.
 It focuses on wallet storage modernization (SQLite / SQLCipher), mnemonic
-recovery, Taproot-related wallet/consensus support, CI coverage, and project
-metadata updates for the `xpchain-community-core-upgrade` repository.
+recovery, scheduled Taproot support, CI coverage, and project metadata
+updates for the `xpchain-community-core-upgrade` repository.
 
 `_CLIENT_VERSION_IS_RELEASE` is currently `false` until a formal tagged release
 is published from this repository. Set it to `true` when cutting the official
@@ -61,7 +61,19 @@ Wallet: mnemonic recovery and safety
 Consensus / protocol-related wallet features
 --------------------------------------------
 
-- Taproot-related activation parameters and wallet/GUI support updates.
+- Taproot (BIP341, BIP342) validation support is included, but Taproot is
+  **not active yet**. Mainnet activates at block 4,200,000; testnet and
+  regtest are active from genesis. Until the activation height, a node
+  without Taproot support accepts any spend of a witness v1 output, so coins
+  held at a bech32m address are not protected by consensus.
+- Accordingly the wallet no longer defaults to bech32m. `getnewaddress` and
+  `getrawchangeaddress` reject an explicitly requested `bech32m` type before
+  activation, `-addresstype=bech32m` / `-changetype=bech32m` fall back to
+  `bech32` and warn at startup, and the GUI hides the Bech32m option. If you
+  already hold coins at a bech32m address, move them to a bech32 address.
+- The coinstake script flags now come from the height of the block being
+  validated rather than from the active tip, so a block is judged the same
+  during a reorg or a `-checklevel=4` rescan as it is when first connected.
 - Mining reward scaling divisor corrected (10^8 → 10^4) where applicable.
 
 Build, CI, and packaging
