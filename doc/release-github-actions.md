@@ -33,7 +33,9 @@ git push origin preview-install
 ```
 
 - Workflow: **Preview release (Linux + Windows + macOS)**
-- GitHub Releases에 **draft prerelease** 로 업로드 (`SHA256SUMS.txt` 포함)
+- GitHub Releases에 **공개 prerelease** 로 업로드 (`SHA256SUMS.txt` 포함)
+  - `prerelease: true`, `draft: false` — Releases 페이지에서 누구나 다운로드 가능
+  - 정식 `v*` 릴리즈와 구분되며, “Latest”에는 표시되지 않음
 - 각 OS별 설치 방법은 `contrib/install/README-INSTALL.txt` 참고
 
 | OS | 파일 | 설치 |

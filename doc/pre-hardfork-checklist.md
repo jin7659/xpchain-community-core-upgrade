@@ -35,7 +35,7 @@
 `TaprootHeight = 3000000`, `DEPLOYMENT_TAPROOT`, 그리고
 `DEFAULT_ADDRESS_TYPE = BECH32M`이 모두 들어 있다. 이 커밋을 포함하는 유일한 공개
 릴리스는 `v0.27.0-rc1`(2026-09-03, 프리릴리스)이고 **전체 자산 다운로드 합계가 1건**,
-나머지 두 태그(`preview-gui`, `preview-install`)는 아직 draft다.
+나머지 두 태그(`preview-gui`, `preview-install`)는 이전에 draft였고, 이후 preview 워크플로는 공개 prerelease로 게시한다.
 
 따라서 실제 상태는 다음과 같다.
 
