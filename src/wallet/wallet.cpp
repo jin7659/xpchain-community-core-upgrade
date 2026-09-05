@@ -88,6 +88,20 @@ std::shared_ptr<CWallet> GetWallet(const std::string& name)
     return nullptr;
 }
 
+bool TaprootOutputsProtected()
+{
+    LOCK(cs_main);
+    return chainActive.Height() >= Params().GetConsensus().TaprootHeight;
+}
+
+OutputType ProtectedOutputType(OutputType type)
+{
+    if (type == OutputType::BECH32M && !TaprootOutputsProtected()) {
+        return OutputType::BECH32;
+    }
+    return type;
+}
+
 // Custom deleter for shared_ptr<CWallet>.
 static void ReleaseWallet(CWallet* wallet)
 {
@@ -2718,7 +2732,7 @@ OutputType CWallet::TransactionChangeType(OutputType change_type, const std::vec
     }
 
     // else use m_default_address_type for change
-    return m_default_address_type;
+    return ProtectedOutputType(m_default_address_type);
 }
 
 bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CReserveKey& reservekey, CAmount& nFeeRet,
@@ -4347,6 +4361,12 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(const std::string& name, 
     if (!gArgs.GetArg("-changetype", "").empty() && !ParseOutputType(gArgs.GetArg("-changetype", ""), walletInstance->m_default_change_type)) {
         InitError(strprintf("Unknown change type '%s'", gArgs.GetArg("-changetype", "")));
         return nullptr;
+    }
+
+    if ((walletInstance->m_default_address_type == OutputType::BECH32M ||
+         walletInstance->m_default_change_type == OutputType::BECH32M) &&
+        !TaprootOutputsProtected()) {
+        InitWarning(strprintf(_("Taproot does not activate until block %d, and coins sent to a bech32m address before then are spendable by anyone. The wallet will keep using bech32 until activation."), Params().GetConsensus().TaprootHeight));
     }
 
     if (gArgs.IsArgSet("-mintxfee")) {

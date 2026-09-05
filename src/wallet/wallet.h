@@ -42,6 +42,18 @@ bool HasWallets();
 std::vector<std::shared_ptr<CWallet>> GetWallets();
 std::shared_ptr<CWallet> GetWallet(const std::string& name);
 
+/**
+ * Whether consensus enforces the Taproot rules at the current chain tip.
+ *
+ * Below the activation height a witness v1 output is spendable by anyone as far
+ * as nodes without Taproot support are concerned, so the wallet must not hand
+ * out bech32m addresses until this returns true.
+ */
+bool TaprootOutputsProtected();
+
+/** BECH32M mapped to BECH32 while Taproot outputs are unprotected, any other type unchanged */
+OutputType ProtectedOutputType(OutputType type);
+
 //! Default for -keypool
 // Default keypool size: defined in walletutil.h
 // (static const unsigned int DEFAULT_KEYPOOL_SIZE = 1000;)
@@ -85,7 +97,7 @@ enum class FeeEstimateMode;
 // (CKeyPool is now defined in walletutil.h above)
 
 //! Default for -addresstype
-constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32M};
+constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::BECH32};
 
 //! Default for -changetype
 constexpr OutputType DEFAULT_CHANGE_TYPE{OutputType::CHANGE_AUTO};

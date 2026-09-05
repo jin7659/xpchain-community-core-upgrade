@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <chainparams.h>
 #include <wallet/wallet.h>
 #include <outputtype.h>
 
@@ -107,7 +108,9 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         ui->addressType->addItem(tr("Base58 (P2SH-SegWit)"), (int)OutputType::P2SH_SEGWIT);
         ui->addressType->addItem(tr("Bech32 (SegWit)"), (int)OutputType::BECH32);
         
-        if (!model->isLegacy()) {
+        // Taproot outputs are spendable by anyone until the activation height, so
+        // the option only appears once consensus enforces the Taproot rules.
+        if (!model->isLegacy() && TaprootOutputsProtected()) {
             ui->addressType->addItem(tr("Bech32m (Taproot)"), (int)OutputType::BECH32M);
         }
 
@@ -138,20 +141,13 @@ void ReceiveCoinsDialog::clear()
     ui->reqMessage->setText("");
     // Default to wallet's default address type
     if (model) {
-        OutputType default_type = model->wallet().getDefaultAddressType();
+        OutputType default_type = ProtectedOutputType(model->wallet().getDefaultAddressType());
         if (model->isLegacy() && default_type == OutputType::BECH32M) {
             default_type = OutputType::BECH32; // Fallback for legacy
         }
 
-        if (default_type == OutputType::BECH32M) {
-            ui->addressType->setCurrentIndex(3);
-        } else if (default_type == OutputType::BECH32) {
-            ui->addressType->setCurrentIndex(2);
-        } else if (default_type == OutputType::P2SH_SEGWIT) {
-            ui->addressType->setCurrentIndex(1);
-        } else {
-            ui->addressType->setCurrentIndex(0);
-        }
+        int index = ui->addressType->findData((int)default_type);
+        ui->addressType->setCurrentIndex(index != -1 ? index : 0);
     }
     updateDisplayUnit();
 }
@@ -187,6 +183,13 @@ void ReceiveCoinsDialog::on_receiveButton_clicked()
         QMessageBox::warning(this, tr("Address generation failure"),
             tr("Taproot (Bech32m) addresses are not supported by legacy Berkeley DB wallets. "
                "Please create a new modern (SQLite) wallet to use Taproot features."));
+        return;
+    }
+    if (address_type == OutputType::BECH32M && !TaprootOutputsProtected()) {
+        QMessageBox::warning(this, tr("Address generation failure"),
+            tr("Taproot (Bech32m) addresses are not available until Taproot activates at block %1. "
+               "Coins sent to a Bech32m address before then are spendable by anyone.")
+                .arg(Params().GetConsensus().TaprootHeight));
         return;
     }
     address = model->getAddressTableModel()->addRow(AddressTableModel::Receive, label, "", address_type);
