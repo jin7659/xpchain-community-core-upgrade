@@ -219,7 +219,7 @@ jobs:
             xpchain-*-macos.tar.gz
 
   publish:
-    name: Publish draft prerelease
+    name: Publish public prerelease
     runs-on: ubuntu-22.04
     needs: [linux, windows64, macos]
     steps:
@@ -249,6 +249,10 @@ jobs:
             | macOS | `*-macos.dmg` | drag **XPChain-Core.app** to Applications |
 
             See `README-INSTALL.txt` inside each archive. Not a formal v0.27.0 release.
+
+            Marked as a GitHub **prerelease** (publicly downloadable). Formal releases use `v*` tags.
+          # Public prerelease: anyone can download from Releases.
+          # Keep draft:false so assets are not limited to repo collaborators.
           prerelease: true
-          draft: true
+          draft: false
           files: out/*
