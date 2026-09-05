@@ -5,9 +5,7 @@
 #include <pos/stake.h>
 
 #include <consensus/merkle.h>
-#include <crypto/sha256.h>
 #include <hash.h>
-#include <key_io.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <pubkey.h>

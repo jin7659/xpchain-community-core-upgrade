@@ -9,12 +9,8 @@
 #include <chain.h>
 #include <chainparams.h>
 #include <hash.h>
-#include <index/txindex.h>
-#include <init.h>
 #include <script/interpreter.h>
 #include <streams.h>
-#include <timedata.h>
-#include <txdb.h>
 #include <uint256.h>
 #include <util.h>
 #include <validation.h>
