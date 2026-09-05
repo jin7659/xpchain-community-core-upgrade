@@ -135,6 +135,25 @@ optimize-pngs.py
 A script to optimize png files in the bitcoin
 repository (requires pngcrush).
 
+scan-witness-programs.py
+========================
+
+Scans a range of blocks on a synced node for outputs that pay to a witness
+program of version 1 or higher (Taproot and any future version).
+
+This exists for the Taproot activation. Below the activation height, a node
+without Taproot support accepts any spend of a witness v1 output, and at
+activation such an output becomes subject to the Taproot rules. So before an
+activation height is settled, the chain below it has to be checked for outputs
+that would either be swept by anyone in the meantime or become unspendable at
+activation. See `doc/pre-hardfork-checklist.md`.
+
+    ./contrib/devtools/scan-witness-programs.py --datadir ~/.xpchain --end 4200000
+
+The exit status is 0 when the scanned range contains no such output, 1 when it
+contains at least one, and 2 on error. Talks JSON-RPC directly and does not
+need `-txindex`.
+
 security-check.py and test-security-check.py
 ============================================
 
