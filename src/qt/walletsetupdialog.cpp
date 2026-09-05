@@ -36,9 +36,25 @@ WalletSetupDialog::WalletSetupDialog(QWidget* parent)
         btn->setCheckable(true);
         btn->setAutoExclusive(true);
         btn->setToolTip(tip);
+        // Match wallet accent (#1f6feb / #6cb6ff) so the selected choice is obvious.
         btn->setStyleSheet(
-            "QPushButton { text-align: left; padding: 10px 12px; }"
-            "QPushButton:checked { font-weight: 600; }");
+            "QPushButton {"
+            "  text-align: left;"
+            "  padding: 10px 12px;"
+            "  border: 1px solid #3d444d;"
+            "  border-radius: 4px;"
+            "  background-color: transparent;"
+            "}"
+            "QPushButton:hover {"
+            "  border-color: #1f6feb;"
+            "  background-color: rgba(31, 111, 235, 40);"
+            "}"
+            "QPushButton:checked {"
+            "  font-weight: 600;"
+            "  color: #6cb6ff;"
+            "  border: 1px solid #1f6feb;"
+            "  background-color: rgba(31, 111, 235, 70);"
+            "}");
         btn->setMinimumHeight(52);
         layout->addWidget(btn);
         group->addButton(btn);
@@ -49,8 +65,8 @@ WalletSetupDialog::WalletSetupDialog(QWidget* parent)
         tr("Create empty wallet\nModern descriptor wallet (Taproot-ready). Uncheck Descriptor only for BIP39 restore targets."),
         tr("New wallet without a mnemonic. Use for watch-only, advanced import, or as a clean BIP39 restore target (leave Descriptor unchecked)."));
     m_btnGenerate = addChoice(
-        tr("Generate & backup mnemonic\nBIP39 seed compatible with XPChain web / mobile recovery."),
-        tr("Create a new BIP39 seed, confirm the backup, then create a seeded wallet."));
+        tr("Create wallet with new mnemonic\nGenerate a BIP39 seed, back it up, then create a new seeded wallet."),
+        tr("Starts a new wallet: generate a BIP39 seed, confirm the backup, then create a wallet from that seed. Does not attach a mnemonic to an existing wallet."));
     m_btnRestore = addChoice(
         tr("Restore from mnemonic\nImport an existing BIP39 phrase into a legacy HD wallet."),
         tr("Import keys from an existing BIP39 mnemonic into a wallet."));
