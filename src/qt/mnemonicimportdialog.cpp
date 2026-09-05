@@ -298,8 +298,7 @@ void MnemonicImportDialog::on_importButton_clicked()
 
     if (model->wallet().isDescriptor()) {
         setStatus(StatusError, tr(
-            "This is a descriptor wallet. BIP39 mnemonic restore needs a legacy HD wallet.
-"
+            "This is a descriptor wallet. BIP39 mnemonic restore needs a legacy HD wallet.\n"
             "Create an empty non-descriptor wallet first (Create empty wallet / File → Advanced → Create Wallet with Descriptor unchecked), then restore into it."));
         return;
     }
