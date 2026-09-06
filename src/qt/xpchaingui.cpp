@@ -1282,7 +1282,9 @@ void XPChainGUI::dropEvent(QDropEvent *event)
 bool XPChainGUI::eventFilter(QObject *object, QEvent *event)
 {
     // When following the system theme, re-apply if the OS palette changes.
-    if (event->type() == QEvent::ApplicationPaletteChange) {
+    // Only handle the application-level event: Qt delivers ApplicationPaletteChange
+    // to many widgets, and re-applying QSS for each one freezes the UI.
+    if (object == qApp && event->type() == QEvent::ApplicationPaletteChange) {
         const QString pref = clientModel && clientModel->getOptionsModel()
             ? clientModel->getOptionsModel()->getTheme()
             : GUIUtil::getThemeSetting();

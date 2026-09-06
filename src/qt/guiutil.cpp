@@ -992,13 +992,24 @@ bool isLightTheme(const QString& themePreference)
 
 void applyTheme(const QString& themePreference)
 {
+    // setStyleSheet() is expensive and can itself emit palette/style events.
+    // Skip no-op reapplications and block re-entrant calls while applying.
+    static QString s_appliedTheme;
+    static bool s_applying = false;
+
     const QString name = effectiveTheme(themePreference);
+    if (s_applying || name == s_appliedTheme)
+        return;
+
+    s_applying = true;
     QFile qssFile(QStringLiteral(":/styles/%1").arg(name));
     if (qssFile.open(QFile::ReadOnly | QFile::Text)) {
         qApp->setStyleSheet(QLatin1String(qssFile.readAll()));
     } else {
         qApp->setStyleSheet(QString());
     }
+    s_appliedTheme = name;
+    s_applying = false;
 }
 
 void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
