@@ -79,6 +79,12 @@ void OptionsModel::Init(bool resetSettings)
         settings.setValue("fCoinControlFeatures", false);
     fCoinControlFeatures = settings.value("fCoinControlFeatures", false).toBool();
 
+    if (!settings.contains("theme"))
+        settings.setValue("theme", "dark");
+    strTheme = settings.value("theme", "dark").toString();
+    if (strTheme != "light" && strTheme != "dark" && strTheme != "system")
+        strTheme = "dark";
+
     // These are shared with the core or have a command-line parameter
     // and we want command-line parameters to overwrite the GUI settings.
     //
@@ -291,6 +297,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return settings.value("language");
         case CoinControlFeatures:
             return fCoinControlFeatures;
+        case Theme:
+            return strTheme;
         case Prune:
             return settings.value("bPrune");
         case PruneSize:
@@ -412,6 +420,15 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             if (settings.value("language") != value) {
                 settings.setValue("language", value);
                 setRestartRequired(true);
+            }
+            break;
+        case Theme:
+            if (strTheme != value.toString()) {
+                strTheme = value.toString();
+                if (strTheme != "light" && strTheme != "dark" && strTheme != "system")
+                    strTheme = "dark";
+                settings.setValue("theme", strTheme);
+                Q_EMIT themeChanged(strTheme);
             }
             break;
         case CoinControlFeatures:

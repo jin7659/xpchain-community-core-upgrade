@@ -205,6 +205,15 @@ namespace GUIUtil
 
     qreal calculateIdealFontSize(int width, const QString& text, QFont font, qreal minPointSize = 4, qreal startPointSize = 14);
 
+    /** Theme preference in QSettings ("theme"): system | light | dark */
+    QString getThemeSetting();
+    /** True when the OS appearance is currently dark (Qt5-friendly heuristic). */
+    bool isSystemDarkTheme();
+    /** Resolve preference to stylesheet name ("light" or "dark"). */
+    QString effectiveTheme(const QString& themePreference = QString());
+    /** Load and apply the XPChain QSS theme to the whole application. */
+    void applyTheme(const QString& themePreference = QString());
+
     class ClickableLabel : public QLabel
     {
         Q_OBJECT

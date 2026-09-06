@@ -2092,7 +2092,27 @@ You can open it again later from File → Set Up Wallet or File → Advanced →
     </message>
     <message>
         <source>The user interface language can be set here. This setting will take effect after restarting %1.</source>
-        <translation>사용자 인터페이스 언어를 여기서 설정할 수 있습니다. 이 설정은 %1을 다시 시작할때 적용됩니다.</translation>
+        <translation>사용자 인터페이스 언어를 여기서 설정할 수 있습니다. 이 설정은 %1을(를) 다시 시작한 뒤에 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>&amp;Theme:</source>
+        <translation>테마(&amp;T):</translation>
+    </message>
+    <message>
+        <source>Choose Light or Dark, or Match system to follow the operating system appearance.</source>
+        <translation>라이트 또는 다크를 선택하거나, 시스템에 맞춤으로 운영체제 외관을 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Match system</source>
+        <translation>시스템에 맞춤</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>라이트</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>다크</translation>
     </message>
     <message>
         <source>&amp;Unit to show amounts in:</source>
