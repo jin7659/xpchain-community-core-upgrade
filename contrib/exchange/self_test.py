@@ -101,6 +101,22 @@ class DepositFilterTests(unittest.TestCase):
                 "txid": "dd",
                 "vout": 0,
             },
+            {
+                "category": "stake",
+                "confirmations": 20,
+                "address": list(allow)[0],
+                "amount": 0.5,
+                "txid": "ee",
+                "vout": 1,
+            },
+            {
+                "category": "receive",
+                "confirmations": 0,
+                "address": list(allow)[0],
+                "amount": 3,
+                "txid": "ff",
+                "vout": 0,
+            },
         ]
         credits = iter_credits(txs, allow, minconf=1)
         self.assertEqual(len(credits), 1)

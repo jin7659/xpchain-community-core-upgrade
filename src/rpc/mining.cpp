@@ -206,6 +206,7 @@ static UniValue getmininginfo(const JSONRPCRequest& request)
             "  \"networkhashps\": nnn,      (numeric) The network hashes per second\n"
             "  \"pooledtx\": n              (numeric) The size of the mempool\n"
             "  \"chain\": \"xxxx\",           (string) current network name as defined in BIP70 (main, test, regtest)\n"
+            "  \"minting\": true|false,     (boolean) Whether this node will attempt PoS minting (-minting)\n"
             "  \"warnings\": \"...\"          (string) any network and blockchain warnings\n"
             "}\n"
             "\nExamples:\n"
@@ -224,6 +225,9 @@ static UniValue getmininginfo(const JSONRPCRequest& request)
     obj.pushKV("networkhashps",    getnetworkhashps(request));
     obj.pushKV("pooledtx",         (uint64_t)mempool.size());
     obj.pushKV("chain",            Params().NetworkIDString());
+    // Exchange hot wallets must run with -minting=0. Expose the flag so readiness
+    // probes can verify it without scraping logs or guessing from wallet txs.
+    obj.pushKV("minting",          gArgs.GetBoolArg("-minting", true));
     obj.pushKV("warnings",         GetWarnings("statusbar"));
     return obj;
 }

@@ -20,11 +20,12 @@ Run the exchange deposit wallet with minting disabled:
 
 ```bash
 xpchaind -minting=0 -wallet=exchange_hot
+# Confirm: xpchain-cli getmininginfo | jq .minting   # must be false
 ```
 
 | Flag | Why |
 |------|-----|
-| `-minting=0` | Prevents staking customer UTXOs. Minting generates **coinstake** transactions that can look like deposits. |
+| `-minting=0` | Prevents staking customer UTXOs. Confirm with `getmininginfo.minting == false`. Minting generates **coinstake** transactions that can look like deposits. |
 | Dedicated wallet | Isolates customer funds from operational/staking wallets. |
 
 Recommended additional settings:

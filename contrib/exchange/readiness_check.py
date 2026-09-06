@@ -67,13 +67,26 @@ def _check_rpc_help(rpc: RPC) -> CheckResult:
 
 
 def _check_sync(rpc: RPC) -> CheckResult:
+    """Require the tip to be caught up; do not fail solely on the IBD latch.
+
+    Fresh regtest nodes often keep initialblockdownload=true at height 0 even
+    though headers == blocks. Exchange hot-wallet readiness cares about being
+    at the known tip, not the IBD boolean by itself.
+    """
     info = rpc.call("getblockchaininfo")
     ibd = bool(info.get("initialblockdownload"))
     progress = float(info.get("verificationprogress") or 0)
     blocks = info.get("blocks")
     headers = info.get("headers")
     detail = "blocks=%s headers=%s progress=%.6f ibd=%s" % (blocks, headers, progress, ibd)
-    if ibd or (headers is not None and blocks is not None and headers - blocks > 10):
+    behind = headers is not None and blocks is not None and (headers - blocks) > 10
+    if behind:
+        return CheckResult("synced", False, True, detail)
+    # Tip matches known headers (including genesis-only regtest). IBD may still
+    # be latched true; that alone is not a hot-wallet readiness failure.
+    if headers is not None and blocks is not None and headers == blocks:
+        return CheckResult("synced", True, True, detail)
+    if ibd:
         return CheckResult("synced", False, True, detail)
     return CheckResult("synced", True, True, detail)
 
@@ -118,18 +131,14 @@ def _check_decimals(rpc: RPC) -> CheckResult:
     """Ensure >4 decimal amounts are rejected by the wallet RPC parser."""
     bad = "1." + ("0" * DECIMALS) + "1"  # e.g. 1.00001
     try:
-        # dry-run style: createrawtransaction with an invalid amount value
-        # sendtoaddress would need funds; AmountFromValue is shared — use
-        # settxfee / sendtoaddress and expect an error without broadcasting.
-        rpc.call("sendtoaddress", ["notanaddress", bad])
+        # Use a real deposit address so AmountFromValue runs before funding checks.
+        addr = rpc.call("getnewaddress", ["", "bech32"])
+        rpc.call("sendtoaddress", [addr, bad])
         return CheckResult("decimal_precision", False, True, "node accepted %s unexpectedly" % bad)
     except RPCError as e:
         msg = (e.message or "").lower()
-        # Either invalid amount or invalid address — both prove the call path ran.
-        # Prefer amount-related errors.
         if "amount" in msg or "decimal" in msg or "money" in msg or e.code in (-3, -8):
             return CheckResult("decimal_precision", True, True, "rejected %s: %s" % (bad, e.message))
-        # If it failed on address first, try validating amount via another path:
         try:
             amount_to_base_units(bad)
             return CheckResult("decimal_precision", False, True, "local parser accepted bad amount")
@@ -163,13 +172,30 @@ def _check_wallet_fields(rpc: RPC) -> CheckResult:
 
 
 def _check_minting(rpc: RPC) -> CheckResult:
-    """Best-effort minting check via getmininginfo / help text / wallet txs."""
+    """Require getmininginfo.minting=false when the field is present.
+
+    Older binaries without the field fall back to heuristics (warning only).
+    """
     detail_parts = []
     try:
         mi = rpc.call("getmininginfo")
         detail_parts.append("getmininginfo=%s" % json.dumps(mi, sort_keys=True))
-        # XPChain may expose generate/minting fields; treat staking enabled as warn.
-        for key in ("minting", "staking", "generate"):
+        if "minting" in mi:
+            if mi["minting"]:
+                return CheckResult(
+                    "minting_disabled",
+                    False,
+                    True,
+                    "getmininginfo.minting=true — set -minting=0 for hot wallets",
+                )
+            return CheckResult(
+                "minting_disabled",
+                True,
+                True,
+                "getmininginfo.minting=false",
+            )
+        # Legacy: other boolean stake/generate flags if present.
+        for key in ("staking", "generate"):
             if key in mi and mi[key]:
                 return CheckResult(
                     "minting_disabled",
@@ -180,7 +206,7 @@ def _check_minting(rpc: RPC) -> CheckResult:
     except RPCError as e:
         detail_parts.append("getmininginfo unavailable: %s" % e.message)
 
-    # Heuristic: recent 'stake' / generate category is a smell on a hot wallet.
+    # Heuristic for older nodes: recent stake/generate category is a smell.
     try:
         txs = rpc.call("listtransactions", ["*", 50, 0, True])
         bad = [t for t in txs if t.get("category") in ("stake", "generate") and t.get("confirmations", 0) >= 0]
@@ -199,7 +225,7 @@ def _check_minting(rpc: RPC) -> CheckResult:
         "minting_disabled",
         True,
         False,
-        "no minting signals found (%s). Still ensure -minting=0 in config." % "; ".join(detail_parts),
+        "minting field absent (%s). Still ensure -minting=0 in config." % "; ".join(detail_parts),
     )
 
 

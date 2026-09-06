@@ -67,6 +67,7 @@ BASE_SCRIPTS = [
     'wallet_tool.py',
     'wallet_backup.py',
     'feature_pos_staking.py',
+    'feature_exchange_hotwallet.py',
     # vv Tests less than 5m vv
     'feature_block.py',
     'rpc_fundrawtransaction.py',

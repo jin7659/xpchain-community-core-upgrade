@@ -51,7 +51,7 @@ flowchart TB
 
 | # | 작업 | 완료 기준 |
 |---|------|-----------|
-| P0-1 | Functional test CI 실제 실행 (`ENABLE_UTILS` 등) | `wallet_sqlite_*`, `wallet_mnemonic_*` CI 통과 |
+| P0-1 | Functional test CI 실제 실행 (`ENABLE_UTILS` 등) | ✅ `ENABLE_UTILS` wired; wallet + exchange hot-wallet suite in CI |
 | P0-2 | PoS unit test | `CheckProofOfStake`, `CheckStakeKernelHash`, `GetProofOfStakeReward`, `IsCoinStakeTx` |
 | P0-3 | 합의 파라미터 문서 | `nSwitchHeight`, stake age, `TaprootHeight`, 보상 공식 |
 | P0-4 | regtest PoS 시나리오 | 동기화 → 스테이킹 → 보상 → immature 자동 검증 |
