@@ -49,7 +49,7 @@ When serializing amounts in your database, store integers in base units (1 XPC =
 ### Address length and format
 
 - Support addresses up to **at least 80 characters**.
-- Accept **bech32** (`xp...` on mainnet, `txp...` on testnet/regtest) as the default format.
+- Accept **bech32** (`xpc...` on mainnet, `txpc...` on testnet, `xpcrt...` on regtest) as the default format.
 - Legacy and P2SH-Segwit addresses may still appear from older users; do not hard-code 34-character limits.
 
 ### Address validation
@@ -57,7 +57,7 @@ When serializing amounts in your database, store integers in base units (1 XPC =
 Validate addresses with your node's RPC before accepting a user withdrawal:
 
 ```bash
-xpchain-cli validateaddress "xp1q..."
+xpchain-cli validateaddress "xpc1q..."
 ```
 
 Or derive deposit addresses only from your own wallet:
@@ -117,7 +117,7 @@ Follow your standard confirmation policy (e.g. 6–20 confirmations). Handle cha
 Use the node's wallet RPC:
 
 ```bash
-xpchain-cli sendtoaddress "xp1q..." 12.3456
+xpchain-cli sendtoaddress "xpc1q..." 12.3456
 ```
 
 Or batch with `sendmany`.
@@ -186,9 +186,27 @@ Before mainnet:
 5. [ ] Test wallet backup, restore, and `rescanblockchain`.
 6. [ ] Load-test RPC deposit polling or ZMQ under expected volume.
 
+## Listing / onboarding toolkit
+
+Use [`contrib/exchange/`](../contrib/exchange/) to speed up exchange listing paperwork and integration QA:
+
+| Tool | Use |
+|------|-----|
+| `listing_facts.py` | Markdown/JSON fact sheet for listing forms |
+| `readiness_check.py` | Hot-wallet node readiness probe |
+| `sample_deposit_monitor.py` | Reference deposit poller (filters immature/coinstake) |
+| `listing_application_template.md` | Copy-paste listing application tables |
+
+```bash
+./contrib/exchange/listing_facts.py --format md
+./contrib/exchange/readiness_check.py --datadir ~/.xpchain
+python3 contrib/exchange/self_test.py
+```
+
 ## Support and References
 
 - Project README exchange section: [../README.md](../README.md)
+- Exchange toolkit: [../contrib/exchange/README.md](../contrib/exchange/README.md)
 - Wallet upgrade / mnemonic recovery: [wallet-upgrade.md](wallet-upgrade.md)
 - Issue tracker: [xpchain-community-core-upgrade](https://github.com/jinseob-dev/xpchain-community-core-upgrade)
 
