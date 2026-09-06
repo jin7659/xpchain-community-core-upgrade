@@ -15,6 +15,7 @@ class WalletModel;
 QT_BEGIN_NAMESPACE
 class QComboBox;
 class QDateTimeEdit;
+class QEvent;
 class QFrame;
 class QLabel;
 class QLineEdit;
@@ -41,6 +42,9 @@ public:
         Minting60days,
     };
 
+protected:
+    void changeEvent(QEvent *event) override;
+
 private:
     WalletModel *model;
     QTableView *mintingView;
@@ -51,7 +55,12 @@ private:
     QLabel *guidanceLabel;
     QPushButton *guidanceButton;
 
+    QLabel *youngColorSwatch;
+    QLabel *matureColorSwatch;
+    QLabel *oldColorSwatch;
+
     void updateGuidanceBanner();
+    void updateThemeColors();
 
 private Q_SLOTS:
     void contextualMenu(const QPoint &);

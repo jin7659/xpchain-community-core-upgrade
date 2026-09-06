@@ -568,7 +568,12 @@ void XPChainGUI::createToolBars()
 #ifdef ENABLE_WALLET
         QWidget *spacer = new QWidget();
         spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        spacer->setAttribute(Qt::WA_StyledBackground, false);
+        spacer->setStyleSheet(QStringLiteral("background: transparent; border: none;"));
         toolbar->addWidget(spacer);
+
+        /* Soft divider before the wallet selector (styled via QToolBar::separator in theme QSS) */
+        m_wallet_selector_separator_action = toolbar->addSeparator();
 
         m_wallet_selector = new QComboBox();
         connect(m_wallet_selector, SIGNAL(currentIndexChanged(int)), this, SLOT(setCurrentWalletBySelectorIndex(int)));
@@ -580,6 +585,7 @@ void XPChainGUI::createToolBars()
         m_wallet_selector_label_action = appToolBar->addWidget(m_wallet_selector_label);
         m_wallet_selector_action = appToolBar->addWidget(m_wallet_selector);
 
+        m_wallet_selector_separator_action->setVisible(false);
         m_wallet_selector_label_action->setVisible(false);
         m_wallet_selector_action->setVisible(false);
 #endif
@@ -665,6 +671,7 @@ bool XPChainGUI::addWallet(WalletModel *walletModel)
     setWalletActionsEnabled(true);
     m_wallet_selector->addItem(display_name, name);
     if (m_wallet_selector->count() >= 1) {
+        m_wallet_selector_separator_action->setVisible(true);
         m_wallet_selector_label_action->setVisible(true);
         m_wallet_selector_action->setVisible(true);
     }
@@ -681,7 +688,11 @@ bool XPChainGUI::removeWallet(WalletModel* walletModel)
     m_wallet_selector->removeItem(index);
     if (m_wallet_selector->count() == 0) {
         setWalletActionsEnabled(false);
+        m_wallet_selector_separator_action->setVisible(false);
+        m_wallet_selector_label_action->setVisible(false);
+        m_wallet_selector_action->setVisible(false);
     } else if (m_wallet_selector->count() >= 1) {
+        m_wallet_selector_separator_action->setVisible(true);
         m_wallet_selector_label_action->setVisible(true);
         m_wallet_selector_action->setVisible(true);
     }

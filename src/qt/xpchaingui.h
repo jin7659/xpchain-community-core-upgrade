@@ -142,6 +142,7 @@ private:
     QAction* openStakingRewardSettingsAction = nullptr;
     QAction* showHelpMessageAction = nullptr;
     QAction* m_wallet_selector_label_action = nullptr;
+    QAction* m_wallet_selector_separator_action = nullptr;
     QAction* m_wallet_selector_action = nullptr;
     QAction* mintingAction = nullptr;
 

@@ -14,6 +14,7 @@
 #include <ui_interface.h>
 
 #include <QComboBox>
+#include <QEvent>
 #include <QFrame>
 #include <QPushButton>
 #include <QHBoxLayout>
@@ -29,41 +30,39 @@
 
 MintingView::MintingView(const PlatformStyle *platformStyle, QWidget *parent) :
     QWidget(parent), model(0), mintingView(0), mintingProxyModel(0),
-    guidanceFrame(0), guidanceLabel(0), guidanceButton(0)
+    guidanceFrame(0), guidanceLabel(0), guidanceButton(0),
+    youngColorSwatch(0), matureColorSwatch(0), oldColorSwatch(0)
 {
     QHBoxLayout *hlayout = new QHBoxLayout();
     hlayout->setContentsMargins(0,0,0,0);
 
-    QString legendBoxStyle = "background-color: rgb(%1,%2,%3); border: 1px solid black;";
-
-    QLabel *youngColor = new QLabel(" ");
-    youngColor->setMaximumHeight(15);
-    youngColor->setMaximumWidth(10);
-    youngColor->setStyleSheet(legendBoxStyle.arg(COLOR_MINT_YOUNG.red()).arg(COLOR_MINT_YOUNG.green()).arg(COLOR_MINT_YOUNG.blue()));
+    youngColorSwatch = new QLabel(" ");
+    youngColorSwatch->setMaximumHeight(15);
+    youngColorSwatch->setMaximumWidth(10);
     QLabel *youngLegend = new QLabel(tr("transaction is too young"));
     youngLegend->setContentsMargins(5,0,15,0);
 
-    QLabel *matureColor = new QLabel(" ");
-    matureColor->setMaximumHeight(15);
-    matureColor->setMaximumWidth(10);
-    matureColor->setStyleSheet(legendBoxStyle.arg(COLOR_MINT_MATURE.red()).arg(COLOR_MINT_MATURE.green()).arg(COLOR_MINT_MATURE.blue()));
+    matureColorSwatch = new QLabel(" ");
+    matureColorSwatch->setMaximumHeight(15);
+    matureColorSwatch->setMaximumWidth(10);
     QLabel *matureLegend = new QLabel(tr("transaction is mature"));
     matureLegend->setContentsMargins(5,0,15,0);
 
-    QLabel *oldColor = new QLabel(" ");
-    oldColor->setMaximumHeight(15);
-    oldColor->setMaximumWidth(10);
-    oldColor->setStyleSheet(legendBoxStyle.arg(COLOR_MINT_OLD.red()).arg(COLOR_MINT_OLD.green()).arg(COLOR_MINT_OLD.blue()));
+    oldColorSwatch = new QLabel(" ");
+    oldColorSwatch->setMaximumHeight(15);
+    oldColorSwatch->setMaximumWidth(10);
     QLabel *oldLegend = new QLabel(tr("transaction has reached maximum probability"));
     oldLegend->setContentsMargins(5,0,15,0);
 
+    updateThemeColors();
+
     QHBoxLayout *legendLayout = new QHBoxLayout();
     legendLayout->setContentsMargins(10,10,0,0);
-    legendLayout->addWidget(youngColor);
+    legendLayout->addWidget(youngColorSwatch);
     legendLayout->addWidget(youngLegend);
-    legendLayout->addWidget(matureColor);
+    legendLayout->addWidget(matureColorSwatch);
     legendLayout->addWidget(matureLegend);
-    legendLayout->addWidget(oldColor);
+    legendLayout->addWidget(oldColorSwatch);
     legendLayout->addWidget(oldLegend);
     legendLayout->insertStretch(-1);
 
@@ -317,4 +316,34 @@ void MintingView::showHideTxID()
 {
     mintingView->horizontalHeader()->setSectionHidden(MintingTableModel::TxHash,
         !(mintingView->horizontalHeader()->isSectionHidden(MintingTableModel::TxHash)));
+}
+
+void MintingView::updateThemeColors()
+{
+    const bool light = GUIUtil::isLightTheme();
+    const QColor young = light ? COLOR_MINT_YOUNG_LIGHT : COLOR_MINT_YOUNG;
+    const QColor mature = light ? COLOR_MINT_MATURE_LIGHT : COLOR_MINT_MATURE;
+    const QColor old = light ? COLOR_MINT_OLD_LIGHT : COLOR_MINT_OLD;
+    const QString box = QStringLiteral("background-color: rgb(%1,%2,%3); border: 1px solid %4;");
+    const QString border = light ? QStringLiteral("#8b949e") : QStringLiteral("#000000");
+    if (youngColorSwatch) {
+        youngColorSwatch->setStyleSheet(box.arg(young.red()).arg(young.green()).arg(young.blue()).arg(border));
+    }
+    if (matureColorSwatch) {
+        matureColorSwatch->setStyleSheet(box.arg(mature.red()).arg(mature.green()).arg(mature.blue()).arg(border));
+    }
+    if (oldColorSwatch) {
+        oldColorSwatch->setStyleSheet(box.arg(old.red()).arg(old.green()).arg(old.blue()).arg(border));
+    }
+    if (mintingView) {
+        mintingView->viewport()->update();
+    }
+}
+
+void MintingView::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::StyleChange || event->type() == QEvent::PaletteChange) {
+        updateThemeColors();
+    }
+    QWidget::changeEvent(event);
 }
