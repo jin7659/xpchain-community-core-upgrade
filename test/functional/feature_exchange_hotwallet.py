@@ -77,6 +77,9 @@ class ExchangeHotWalletTest(BitcoinTestFramework):
     def run_test(self):
         node = self.nodes[0]
 
+        self.log.info("Mine one block so tip state is non-IBD-ambiguous")
+        node.generate(1)
+
         self.log.info("getmininginfo.minting is false when started with -minting=0")
         mi = node.getmininginfo()
         assert "minting" in mi
