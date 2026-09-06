@@ -1,6 +1,10 @@
 Repository Tools
 ---------------------
 
+### [Exchange listing toolkit](/contrib/exchange) ###
+Fact sheets, hot-wallet readiness checks, and a reference deposit monitor to
+speed up XPChain exchange onboarding. See also `doc/exchange-integration.md`.
+
 ### [Developer tools](/contrib/devtools) ###
 Specific tools for developers working on this repository.
 Contains the script `github-merge.py` for merging GitHub pull requests securely and signing them using GPG.
