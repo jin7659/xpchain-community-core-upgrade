@@ -44,7 +44,7 @@ python3 contrib/exchange/self_test.py
 
 1. **Decimals = 4** (not Bitcoin’s 8) — fact sheet + readiness check.
 2. **Bech32 HRP** `xpc` / `txpc` / `xpcrt` and long addresses — fact sheet + address checks.
-3. **`-minting=0`** on hot wallets — readiness heuristic + docs.
+3. **`-minting=0` (verify via `getmininginfo.minting == false`)** on hot wallets — readiness heuristic + docs.
 4. **Immature (~100 blocks)** must not be credited as available — monitor filters + docs.
 5. **RPC map** for deposit / withdraw / validate — fact sheet `required_rpcs`.
 

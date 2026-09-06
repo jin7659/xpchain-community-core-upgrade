@@ -132,9 +132,17 @@ jobs:
           grep -q '^ENABLE_UTILS=true' test/config.ini
           grep -q '^ENABLE_XPCHAIND=true' test/config.ini
 
+      - name: Exchange toolkit offline self-test
+        run: |
+          python3 contrib/exchange/self_test.py
+
       - name: Proof-of-stake functional test
         run: |
           python3 test/functional/test_runner.py feature_pos_staking.py
+
+      - name: Exchange hot-wallet functional test
+        run: |
+          python3 test/functional/test_runner.py feature_exchange_hotwallet.py
 
       - name: Wallet functional tests
         run: |

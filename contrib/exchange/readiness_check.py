@@ -163,13 +163,30 @@ def _check_wallet_fields(rpc: RPC) -> CheckResult:
 
 
 def _check_minting(rpc: RPC) -> CheckResult:
-    """Best-effort minting check via getmininginfo / help text / wallet txs."""
+    """Require getmininginfo.minting=false when the field is present.
+
+    Older binaries without the field fall back to heuristics (warning only).
+    """
     detail_parts = []
     try:
         mi = rpc.call("getmininginfo")
         detail_parts.append("getmininginfo=%s" % json.dumps(mi, sort_keys=True))
-        # XPChain may expose generate/minting fields; treat staking enabled as warn.
-        for key in ("minting", "staking", "generate"):
+        if "minting" in mi:
+            if mi["minting"]:
+                return CheckResult(
+                    "minting_disabled",
+                    False,
+                    True,
+                    "getmininginfo.minting=true — set -minting=0 for hot wallets",
+                )
+            return CheckResult(
+                "minting_disabled",
+                True,
+                True,
+                "getmininginfo.minting=false",
+            )
+        # Legacy: other boolean stake/generate flags if present.
+        for key in ("staking", "generate"):
             if key in mi and mi[key]:
                 return CheckResult(
                     "minting_disabled",
@@ -180,7 +197,7 @@ def _check_minting(rpc: RPC) -> CheckResult:
     except RPCError as e:
         detail_parts.append("getmininginfo unavailable: %s" % e.message)
 
-    # Heuristic: recent 'stake' / generate category is a smell on a hot wallet.
+    # Heuristic for older nodes: recent stake/generate category is a smell.
     try:
         txs = rpc.call("listtransactions", ["*", 50, 0, True])
         bad = [t for t in txs if t.get("category") in ("stake", "generate") and t.get("confirmations", 0) >= 0]
@@ -199,7 +216,7 @@ def _check_minting(rpc: RPC) -> CheckResult:
         "minting_disabled",
         True,
         False,
-        "no minting signals found (%s). Still ensure -minting=0 in config." % "; ".join(detail_parts),
+        "minting field absent (%s). Still ensure -minting=0 in config." % "; ".join(detail_parts),
     )
 
 

@@ -44,7 +44,7 @@ Draft-only asset today: `XPChain-Core.dmg` on the untagged draft release (not a 
 - `wallet_encryption.py`
 - `wallet_backup.py`
 
-`wallet_multiwallet.py` is temporarily excluded: `GetWalletDir` auto-creates `wallets/` and breaks that test’s datadir-layout assumptions.
+`wallet_multiwallet.py` is included in CI. `feature_exchange_hotwallet.py` covers hot-wallet readiness (`getmininginfo.minting`, 4-decimal amounts, bech32 HRP, deposit category filters).
 
 ## Wallet upgrade checks
 

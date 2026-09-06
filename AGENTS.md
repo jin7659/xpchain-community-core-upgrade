@@ -66,24 +66,29 @@ startup/update script does **not** run `make`; rebuild manually after pulling co
 - Unit tests: `./src/test/test_xpchain` (302 cases).
 - Functional tests: `python3 test/functional/test_runner.py <tests...> --jobs 2`.
 
-Two functional-harness caveats (both are why CI's functional job is currently a silent
-no-op / false green):
+Functional tests are enabled in CI (`ENABLE_UTILS` is wired via
+`@BUILD_XPCHAIN_UTILS_TRUE@` in `test/config.ini.in`). The Linux functional job
+asserts that `test/config.ini` contains `ENABLE_UTILS=true` before running tests,
+so a silent zero-test green is not possible.
 
-1. `test/config.ini.in` still references the pre-rebrand automake conditional
-   `@BUILD_BITCOIN_UTILS_TRUE@` (the real one is `BUILD_XPCHAIN_UTILS`). As a result the
-   generated `test/config.ini` never sets `ENABLE_UTILS`, so `test_runner.py` prints
-   "No functional tests to run" and exits 0 without running anything. Workaround: in the
-   generated (gitignored) `test/config.ini`, replace the
-   `@BUILD_BITCOIN_UTILS_TRUE@ENABLE_UTILS=true` line with `ENABLE_UTILS=true`. Re-running
-   `./configure` regenerates the broken file, so re-apply after configuring.
-2. This 0.17-era framework does **not** support `--timeout-factor` (`create_cache.py` rejects
-   it); omit that flag even though CI passes it.
+CI currently runs:
 
-With the harness fixed, the SQLCipher suite `wallet_sqlite_encryption.py` passes. Several
-other `wallet_*` functional tests (`wallet_backup`, `wallet_encryption`,
-`wallet_migrate_sqlite`, `wallet_multiwallet`, `wallet_sqlite_default`) currently fail due
-to pre-existing code/test mismatches unrelated to environment setup (CI never actually
-executed them, per caveat 1).
+- `feature_pos_staking.py`
+- `feature_exchange_hotwallet.py` (hot-wallet readiness / 4-decimal / bech32 / deposit filters)
+- Wallet suite: `wallet_sqlite_encryption.py`, `wallet_sqlite_default.py`, `wallet_migrate_sqlite.py`, `wallet_mnemonic_bip44.py`, `wallet_mnemonic_rescan.py`, `wallet_encryption.py`, `wallet_backup.py`, `wallet_multiwallet.py`
+
+Offline exchange toolkit checks (no node required):
+
+```
+python3 contrib/exchange/self_test.py
+```
+
+Notes:
+
+1. This 0.17-era framework does **not** support `--timeout-factor` (`create_cache.py` rejects
+   it); omit that flag.
+2. Descriptor / PSBT / Taproot wallet parity remains on the architecture roadmap (P3) and is
+   intentionally deferred; exchange hot wallets do not require it for deposit/withdraw.
 
 ### Running the node (regtest example)
 
