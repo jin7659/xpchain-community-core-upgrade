@@ -83,7 +83,7 @@ QPushButton:disabled {
 }
 
 /* Inputs & LineEdits */
-QLineEdit, QTextEdit, QPlainTextEdit {
+QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox {
     background-color: #1c1c1c;
     border: 1px solid #2d2d2d;
     border-radius: 6px;
@@ -92,9 +92,94 @@ QLineEdit, QTextEdit, QPlainTextEdit {
     selection-background-color: #106ba3;
 }
 
-QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QAbstractSpinBox:focus {
     border: 1px solid #106ba3;
     background-color: #222222;
+}
+
+QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {
+    background-color: #2a2a2a;
+    border: none;
+    width: 16px;
+}
+
+QAbstractSpinBox::up-button:hover, QAbstractSpinBox::down-button:hover {
+    background-color: #333333;
+}
+
+/* Combo boxes */
+QComboBox {
+    background-color: #1c1c1c;
+    border: 1px solid #2d2d2d;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #e0e0e0;
+    min-height: 20px;
+}
+
+QComboBox:hover, QComboBox:focus {
+    border: 1px solid #106ba3;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    selection-background-color: #106ba3;
+    selection-color: #ffffff;
+    color: #e0e0e0;
+}
+
+/* Main toolbar (tabs + wallet selector) */
+QToolBar {
+    background-color: #121212;
+    border: none;
+    border-bottom: 1px solid #252525;
+    spacing: 2px;
+    padding: 4px 6px;
+}
+
+QToolBar::separator {
+    background-color: #3d3d3d;
+    width: 1px;
+    margin: 6px 10px;
+}
+
+QToolBar QToolButton {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #e0e0e0;
+    margin: 0px 1px;
+}
+
+QToolBar QToolButton:hover {
+    background-color: #252525;
+    border: none;
+}
+
+QToolBar QToolButton:checked,
+QToolBar QToolButton:pressed {
+    background-color: #1f3a4d;
+    border: none;
+    color: #ffffff;
+}
+
+QToolBar QLabel {
+    background: transparent;
+    border: none;
+    color: #e0e0e0;
+}
+
+QToolBar QComboBox {
+    background-color: #1c1c1c;
+    border: 1px solid #2d2d2d;
+    min-width: 120px;
 }
 
 /* Tables & Trees */

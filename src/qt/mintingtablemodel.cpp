@@ -407,19 +407,22 @@ QVariant MintingTableModel::data(const QModelIndex &index, int role) const
         }
         break;
       case Qt::BackgroundColorRole:
-        int minAge = Params().GetConsensus().nStakeMinAge / 60 / 60 / 24;
-        int maxAge = Params().GetConsensus().nStakeMaxAge / 60 / 60 / 24;
-        if(rec->getAge() < minAge)
         {
-            return COLOR_MINT_YOUNG;
-        }
-        else if (rec->getAge() >= minAge && rec->getAge() < maxAge)
-        {
-            return COLOR_MINT_MATURE;
-        }
-        else
-        {
-            return COLOR_MINT_OLD;
+            int minAge = Params().GetConsensus().nStakeMinAge / 60 / 60 / 24;
+            int maxAge = Params().GetConsensus().nStakeMaxAge / 60 / 60 / 24;
+            const bool light = GUIUtil::isLightTheme();
+            if(rec->getAge() < minAge)
+            {
+                return light ? COLOR_MINT_YOUNG_LIGHT : COLOR_MINT_YOUNG;
+            }
+            else if (rec->getAge() >= minAge && rec->getAge() < maxAge)
+            {
+                return light ? COLOR_MINT_MATURE_LIGHT : COLOR_MINT_MATURE;
+            }
+            else
+            {
+                return light ? COLOR_MINT_OLD_LIGHT : COLOR_MINT_OLD;
+            }
         }
         break;
 

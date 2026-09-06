@@ -985,6 +985,11 @@ QString effectiveTheme(const QString& themePreference)
     return QStringLiteral("dark");
 }
 
+bool isLightTheme(const QString& themePreference)
+{
+    return effectiveTheme(themePreference) == QLatin1String("light");
+}
+
 void applyTheme(const QString& themePreference)
 {
     const QString name = effectiveTheme(themePreference);

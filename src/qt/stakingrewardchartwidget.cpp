@@ -8,6 +8,7 @@
 #include <qt/transactionrecord.h>
 #include <qt/xpchainunits.h>
 #include <qt/optionsmodel.h>
+#include <qt/guiutil.h>
 #include <amount.h>
 
 #include <QPainter>
@@ -160,15 +161,23 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
     const int w = width();
     const int h = height();
 
-    // 카드 배경 (모던 다크/세미트랜스패런트 테마)
-    QColor bgColor(22, 27, 34, 220);
-    QColor borderColor(48, 54, 61);
+    const bool light = GUIUtil::isLightTheme();
+    const QColor bgColor = light ? QColor(255, 255, 255, 245) : QColor(22, 27, 34, 220);
+    const QColor borderColor = light ? QColor(208, 215, 222) : QColor(48, 54, 61);
+    const QColor titleColor = light ? QColor(27, 31, 36) : QColor(230, 237, 243);
+    const QColor accentColor = light ? QColor(9, 105, 218) : QColor(88, 166, 255);
+    const QColor mutedColor = light ? QColor(87, 96, 106) : QColor(139, 148, 158);
+    const QColor gridColor = light ? QColor(208, 215, 222) : QColor(48, 54, 61);
+    const QColor emptyDot = light ? QColor(175, 184, 193) : QColor(48, 54, 61);
+    const QColor tipBg = light ? QColor(255, 255, 255, 250) : QColor(13, 17, 23, 245);
+    const QColor tipText = light ? QColor(27, 31, 36) : QColor(201, 209, 217);
+
     painter.setBrush(bgColor);
     painter.setPen(QPen(borderColor, 1));
     painter.drawRoundedRect(QRectF(0.5, 0.5, w - 1.0, h - 1.0), 8, 8);
 
     // 차트 제목
-    painter.setPen(QColor(230, 237, 243));
+    painter.setPen(titleColor);
     QFont fontTitle = font();
     fontTitle.setPointSize(10);
     fontTitle.setBold(true);
@@ -178,7 +187,7 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
     // 우측 이번 달 요약
     int unit = walletModel && walletModel->getOptionsModel() ? walletModel->getOptionsModel()->getDisplayUnit() : XPChainUnits::XPC;
     QString currentStr = tr("This month: %1").arg(XPChainUnits::formatWithUnit(unit, m_currentMonthTotal, false, XPChainUnits::separatorAlways));
-    painter.setPen(QColor(88, 166, 255));
+    painter.setPen(accentColor);
     QFont fontSub = font();
     fontSub.setPointSize(9);
     fontSub.setBold(true);
@@ -200,11 +209,11 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
     const int baselineY = h - paddingBottom;
 
     // 베이스라인 가이드선
-    painter.setPen(QPen(QColor(48, 54, 61), 1));
+    painter.setPen(QPen(gridColor, 1));
     painter.drawLine(14, baselineY, w - 14, baselineY);
 
     if (!hasAnyData) {
-        painter.setPen(QColor(139, 148, 158));
+        painter.setPen(mutedColor);
         QFont fontEmpty = font();
         fontEmpty.setPointSize(9);
         painter.setFont(fontEmpty);
@@ -219,7 +228,7 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
         bool isHovered = (i == m_hoveredIndex);
 
         // X축 월 라벨
-        painter.setPen(isHovered ? QColor(88, 166, 255) : QColor(139, 148, 158));
+        painter.setPen(isHovered ? accentColor : mutedColor);
         QFont fontX = font();
         fontX.setPointSize(8);
         fontX.setBold(isHovered);
@@ -243,7 +252,7 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
             painter.fillPath(barPath, barGradient);
         } else {
             // 실적이 없는 달은 작은 점(dot) 표시
-            painter.setBrush(QColor(48, 54, 61));
+            painter.setBrush(emptyDot);
             painter.setPen(Qt::NoPen);
             painter.drawEllipse(QPoint(rect.x() + rect.width() / 2, baselineY - 2), 2, 2);
         }
@@ -274,15 +283,15 @@ void StakingRewardChartWidget::paintEvent(QPaintEvent *event)
         int tipY = qMax(34, rect.top() - tipH - 6);
 
         QRect tipRect(tipX, tipY, tipW, tipH);
-        painter.setBrush(QColor(13, 17, 23, 245));
-        painter.setPen(QPen(QColor(56, 139, 253), 1));
+        painter.setBrush(tipBg);
+        painter.setPen(QPen(accentColor, 1));
         painter.drawRoundedRect(tipRect, 6, 6);
 
-        painter.setPen(QColor(201, 209, 217));
+        painter.setPen(tipText);
         painter.setFont(fontTip);
         painter.drawText(QRect(tipX + 8, tipY + 4, tipW - 16, 14), Qt::AlignLeft, tipLine1);
 
-        painter.setPen(QColor(88, 166, 255));
+        painter.setPen(accentColor);
         fontTip.setBold(true);
         painter.setFont(fontTip);
         painter.drawText(QRect(tipX + 8, tipY + 18, tipW - 16, 14), Qt::AlignLeft, tipLine2);

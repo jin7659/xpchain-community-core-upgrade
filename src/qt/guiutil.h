@@ -211,6 +211,8 @@ namespace GUIUtil
     bool isSystemDarkTheme();
     /** Resolve preference to stylesheet name ("light" or "dark"). */
     QString effectiveTheme(const QString& themePreference = QString());
+    /** True when the effective (resolved) theme is light. */
+    bool isLightTheme(const QString& themePreference = QString());
     /** Load and apply the XPChain QSS theme to the whole application. */
     void applyTheme(const QString& themePreference = QString());
 
