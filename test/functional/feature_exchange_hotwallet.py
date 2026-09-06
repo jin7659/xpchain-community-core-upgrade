@@ -18,7 +18,13 @@ import subprocess
 import sys
 
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import assert_equal, assert_greater_than, assert_raises_rpc_error
+from test_framework.util import (
+    assert_equal,
+    assert_greater_than,
+    assert_raises_rpc_error,
+    get_auth_cookie,
+    rpc_port,
+)
 
 EXCHANGE_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "contrib", "exchange")
@@ -33,6 +39,9 @@ class ExchangeHotWalletTest(BitcoinTestFramework):
         self.extra_args = [["-minting=0"]]
 
     def run_readiness(self, node, expect_ok):
+        # TestNode has no .rpc_port attribute; node.rpc_port would hit __getattr__
+        # and become an AuthServiceProxyWrapper. Use util.rpc_port(index) instead.
+        rpc_user, rpc_password = get_auth_cookie(node.datadir)
         cmd = [
             sys.executable,
             os.path.join(EXCHANGE_DIR, "readiness_check.py"),
@@ -41,9 +50,11 @@ class ExchangeHotWalletTest(BitcoinTestFramework):
             "--rpcconnect",
             "127.0.0.1",
             "--rpcport",
-            str(node.rpc_port),
-            "--datadir",
-            node.datadir,
+            str(rpc_port(node.index)),
+            "--rpcuser",
+            rpc_user,
+            "--rpcpassword",
+            rpc_password,
             "--json",
             "--strict",
         ]
