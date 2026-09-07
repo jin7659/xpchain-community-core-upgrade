@@ -59,10 +59,10 @@ private:
     QLabel *matureColorSwatch;
     QLabel *oldColorSwatch;
 
-    void updateGuidanceBanner();
     void updateThemeColors();
 
 private Q_SLOTS:
+    void updateGuidanceBanner();
     void contextualMenu(const QPoint &);
     void copyAddress();
     void copyTransactionId();
