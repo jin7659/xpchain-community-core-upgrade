@@ -192,7 +192,10 @@ void MintingView::setModel(WalletModel *_model)
         mintingView->horizontalHeader()->resizeSection(
                 MintingTableModel::MintProbability, 120);
 
-        connect(_model, SIGNAL(encryptionStatusChanged()), this, SLOT(updateGuidanceBanner()));
+        connect(_model, &WalletModel::encryptionStatusChanged, this, &MintingView::updateGuidanceBanner);
+        connect(_model, &WalletModel::balanceChanged, this, [this](const interfaces::WalletBalances&) {
+            updateGuidanceBanner();
+        });
     }
     updateGuidanceBanner();
 }

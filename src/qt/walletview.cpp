@@ -311,6 +311,7 @@ void WalletView::decryptForMinting(bool status)
             updateEncryptionStatus();
             return;
          }
+        updateEncryptionStatus();
     }
     else
     {
@@ -322,6 +323,7 @@ void WalletView::decryptForMinting(bool status)
 
         walletModel->setWalletLocked(true);
         fWalletUnlockMintOnly = false;
+        updateEncryptionStatus();
     }
 }
 
